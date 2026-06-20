@@ -188,11 +188,12 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Responsive Echo-UI:** Eigenes scrollbares Knotenbrett mit Pfadlinien, Belohnungsmarkern, Erreichbarkeits-Glow, Affix-/Beutevorschau, Armeewahl, Risiko- und Ergebnisdialog; separate Mobil- und Desktop-Abnahme.
 - **Zuschauer-Modus & Save:** Der Berater räumt gedrosselt schaffbare Echos und öffnet neue Zyklen, ohne Aufbauaktionen zu verdrängen. Save-Schema v8 migriert alte Spielstände und persistiert Seed, Karte, abgeschlossene Knoten, Zyklus und Stabilität.
 
-Phase 23 – Fehlende Grafik-Assets (Bildgenerierung erforderlich)
-- **Kreaturen-Sprites nachliefern:** Das Sprite-Sheet `assets/creature-sprites.png` deckt bislang nur Schleim, Goblin, Wolf, Oger, Echsenmensch und Ork ab. Alle übrigen Linien (u. a. Greif/Harpyie, Geist/Fee, Baumhirte/Pflanze, Phönix, Kobold, Hasenmensch, Tengu, Meervolk, Skelett/Lich, Imp/Dämon, Vampir, Golem, Insekten, Drachen) nutzen nur einen Emoji-Fallback und brauchen erkennbare Portraits.
-- **Illustrierte Kartengrafik:** Hintergrundbild für die Abenteuer-/Umgebungskarte (Karte-Tab), damit sie über das (in Phase 19 verschönerte) Knoten-Board hinaus wie eine echte gezeichnete Landkarte wirkt – analog zum Desktop-Reichspanorama `assets/tempest-kingdom-desktop.png`.
-- **Workflow:** PNG per Built-in-Imagegen erzeugen → mit `dev/remove-chroma.js` transparent stellen → in `assets/` ablegen und in Beschwörung/Karten/Armeen verdrahten (wie `creature-sprites.png`).
-- **Hinweis:** erfordert ein Bildgenerierungs-Tool; in der reinen Code-Umgebung (Claude Code, ohne Imagegen/Netzzugang) nicht erzeugbar – Assets müssen extern beigesteuert werden.
+[x] **Phase 23 – Vollständige Kreaturenportraits & illustrierte Weltkarte (2026-06-20)**
+- **Alle 20 Kreaturenlinien bebildert:** Ein neues 4×4-Atlas ergänzt Geist, Greif, Baumhirte, Phönix, Kobold, Hasenmensch, Tengu, Meervolk, Untot, Dämon, Vampir, Golem, Insekt und Drache. Zusammen mit dem vorhandenen Atlas verwenden keine spielbaren Linien mehr den Emoji-Fallback.
+- **Kohärenter lokaler Stil:** `assets/creature-sprites-extended-source.png` wurde per Built-in-Imagegen im Stil des vorhandenen Sheets erzeugt; `assets/creature-sprites-extended.png` besitzt per lokalem Chroma-Key-Workflow echte Alpha-Transparenz. Alle 14 belegten Zellen wurden auf Inhalt, die zwei Leerzellen und transparente Ränder geprüft.
+- **Illustrierte Abenteuerkarte:** `assets/tempest-adventure-map.png` führt als 1536×1024-Landschaft vom hellen Jura-Wald über Höhlen, Sumpf, Ruinen und Dämonengrenze bis zu Drachenbergen, Himmelsfesten und Schattenreich. Das bestehende Knoten-/Wegenetz bleibt vollständig interaktiv und lesbar darüber.
+- **Durchgängige UI-Verdrahtung:** Beschwörung, Kreaturenkarten, Armeeauswahl, Expeditionen und Anführerportraits verwenden beide Atlanten responsiv; CSS-Crops decken alle Reihen und Spalten ohne neue Laufzeitabhängigkeit ab.
+- **Offline & Regression:** Sämtliche PNGs liegen lokal in `assets/`; DOM-Test prüft alle 20 Sprite-Klassen. Separate Chromium-Abnahmen zeigen die neuen Portraits bei 390×844 und die illustrierte Karte bei 1440×900.
 
 Phase 24 - Simulationen / tests sollten mehr tiefe haben. Nicht immer nur die selben einheiten / skills benutzen. Mehr varianz oder randomness.
  
@@ -204,12 +205,12 @@ Phase 26 installiere UE 5.8 MCP
 - Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
 - Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough}.test.js`, `dev/balance.js` und `dev/shots.js`.
 
-### Verifikation (Stand 2026-06-20, nach Phase 22)
-- `dev/sim.test.js` → 236/236 Logiktests bestanden (inkl. deterministischer Generierung, Pfad-/Affix-/Belohnungsintegrität, Echo-Kampf, Boss, Zykluswechsel, Neuverwebung und Save-v8-Migration).
-- `dev/domtest.test.js` → 67/67 DOM-Rendertests bestanden (inkl. Echo-Netz, Erreichbarkeitsstatus, Belohnungs-/Affixmodal und drei Risikostufen).
+### Verifikation (Stand 2026-06-20, nach Phase 23)
+- `dev/sim.test.js` → 238/238 Logiktests bestanden (inkl. beider lokaler Grafikassets sowie deterministischer Echo-Generierung und Save-v8-Migration).
+- `dev/domtest.test.js` → 68/68 DOM-Rendertests bestanden (inkl. lokaler Portraits für alle 20 Kreaturenlinien, Echo-Netz und Affixmodal).
 - `dev/playthrough.test.js` → 61/61 Durchspiel-Checks bestanden (komplette Sitzung inkl. Echo-Pfad, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
 - `bun run balance` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton; Echo-Zyklen 1/3/5/10 steigen in Kraft, Beute und Affixdichte.
-- Screenshot-Suite: 23 Aufnahmen im echten Chromium (inkl. Echo-Netz und -Modal bei 390×844 sowie Echo-Netz bei 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
+- Screenshot-Suite: 25 Aufnahmen im echten Chromium (inkl. vollständiger Portraitauswahl bei 390×844, illustrierter Weltkarte und Echo-Netz bei 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
 - Talentbaum zusätzlich im echten Chromium bei 390×844 und 1440×900 geprüft; keine Browserfehler, mobile horizontale Zweig-Navigation und Desktop-Dreispaltenansicht funktionieren.
 - Runenschmiede zusätzlich im echten Chromium bei 390×844 und 1440×900 sowie das mobile Aufwertungsmodal geprüft; keine Browserfehler oder Seitenüberbreite.
 - Offline-/HTTP-Smoke-Test: `index.html` lädt alle klassischen Scripts über `file://`; index.html, CSS und alle fünf JS-Dateien liefern lokal HTTP 200 mit korrektem Content-Type.

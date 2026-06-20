@@ -131,8 +131,10 @@ Level / Seelen / Material / Herrscher-Stufe). **Manche Linien verzweigen sich** 
 zwischen zwei Pfaden (z. B. Hobgoblin → Goblin-Lord *oder* Goblin-Schamane). 78 Formen in
 20 Linien – von Schleim und Goblin über Kobold, Hasenmensch, Tengu und Meervolk bis Drache und Phönix.
 
-Schleime, Goblins, Wölfe, Oger, Echsenmenschen und Orks besitzen eigene lokal gespeicherte
-Monster-Portraits. Dadurch bleiben sie auch auf kleinen Handy-Karten sofort unterscheidbar.
+Alle 20 Kreaturenlinien besitzen eigene lokal gespeicherte Monster-Portraits. Zwei
+transparente Atlanten decken damit auch Geist, Greif, Baumhirte, Phönix, Kobold,
+Hasenmensch, Tengu, Meervolk, Untot, Dämon, Vampir, Golem, Insekt und Drache ab. Dadurch
+bleiben die Völker auch auf kleinen Handy-Karten sofort unterscheidbar.
 
 ### Skills
 Jede benannte Kreatur hat **Skill-Slots** (Kapazität nach Rang, 2–6). Signatur-Skills kommen über Linie
@@ -214,7 +216,8 @@ Im Tab *Karte* (frei nach der ersten Namensgebung).
   Ausblick**. Reihenfolge: Wald von Jura → Tiefe Höhlen → Giftsumpf → Vergessene Ruinen →
   Dämonengrenze → Drachengebirge → Schattenreich → Himmelsfeste → Thron der Götter.
 - **Abenteuerkarte:** Territorien, Außenanlagen und Fundorte bilden ein verzweigtes Wegenetz.
-  Armeen ziehen nur über direkt verbundene Wege; ungesicherte Orte blockieren den Durchmarsch.
+  Eine illustrierte Landschaft führt sichtbar vom Jura-Wald bis ins Schattenreich. Armeen
+  ziehen nur über direkt verbundene Wege; ungesicherte Orte blockieren den Durchmarsch.
 - **Außenanlagen:** Manaquelle, Jagdlager, Magistahlmine, Handelsposten, Archiv und
   Seelenbrunnen werden von Wachen verteidigt. Nach der Eroberung produzieren sie jede Sekunde
   und können bis **Stufe 3** ausgebaut werden.

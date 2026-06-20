@@ -17,8 +17,9 @@ Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberb
 ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
 Die Desktop-Ansicht besitzt eine vollwertige Strategie-Spieloberfläche mit Seitenleiste,
 Ressourcen-HUD, interaktivem Tempest-Panorama, großer Abenteuerkarte und nahezu
-bildschirmfüllender Kampfbühne. Erkennbare lokale Monster-Portraits für die zentralen
-Völker ersetzen dort die reinen Emoji-Platzhalter; das Spiel bleibt vollständig offline.
+bildschirmfüllender Kampfbühne. Alle 20 Kreaturenlinien besitzen erkennbare lokale
+Monster-Portraits; eine illustrierte Weltlandschaft liegt hinter dem strategischen
+Knotenbrett. Das Spiel bleibt vollständig offline.
 Die Magie ist in aktive Kampf-/Abenteuerzauber der Arkanen Akademie, dauerhafte
 Reichsrituale und den Königreichs-Forschungsbaum getrennt.
 
@@ -66,7 +67,7 @@ Den ganzen Ordner aufs Gerät kopieren und `index.html` im mobilen Browser öffn
 ```
 index.html          Minimales Grundgerüst: Topbar, Tab-Container, Navigation, Modal-/Toast-Wurzel
 style.css           Responsives Theme (mobile Fallback + Desktop-Spiel-Shell)
-assets/             Lokale Kreaturen-Sprites und Desktop-Königreichspanorama
+assets/             Zwei lokale Kreaturen-Atlanten, Königreichspanorama und Abenteuerkarte
 js/
   data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
                     Evolutionsketten, Skills/Aspekte, Magie, Baupläne/Schmiedekomponenten/Sets, Regionen,
@@ -186,8 +187,8 @@ Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test dev/sim.test.js`         | `1 pass` · `236 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `67 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/sim.test.js`         | `1 pass` · `238 bestanden, 0 fehlgeschlagen` |
+| `bun test dev/domtest.test.js`     | `1 pass` · `68 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
 | `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
 
@@ -211,7 +212,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
-# → 23 PNGs in dev/screenshots/, darunter Mobile-/Desktop-Echo-Netz und Rasterkampf
+# → 25 PNGs in dev/screenshots/, darunter Kreaturenportraits, illustrierte Weltkarte und Echo-Netz
 ```
 
 ---

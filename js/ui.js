@@ -90,9 +90,9 @@
   }
 
   // ---------- Modal ----------
-  function openModal(title, contentNode, emoji) {
+  function openModal(title, contentNode, emoji, extraClass) {
     closeModal();
-    var modal = el('div', { class: 'modal' }, [
+    var modal = el('div', { class: 'modal' + (extraClass ? ' ' + extraClass : '') }, [
       el('div', { class: 'modal-head' }, [
         emoji ? el('div', { class: 'card-emoji', text: emoji }) : null,
         el('h3', { text: title }),
@@ -278,7 +278,11 @@
       var sc = screen.scrollTop;
       clear(screen);
       var fn = this.views[this.activeTab];
-      screen.appendChild(fn ? fn.call(this) : el('div'));
+      var view = fn ? fn.call(this) : el('div');
+      view.className = (view.className ? view.className + ' ' : '') + 'game-view game-view-' + this.activeTab;
+      screen.setAttribute('data-view', this.activeTab);
+      $('app').setAttribute('data-view', this.activeTab);
+      screen.appendChild(view);
       screen.scrollTop = sc;
     },
 
@@ -323,7 +327,37 @@
         var rp = SYS.rulerPower(s);
         var rxpNeed = SYS.rulerXpForLevel(s.herrscher.level);
 
-        box.appendChild(el('div', { class: 'hero' }, [
+        function sceneLink(tab, icon, label, hint, pos) {
+          if (!SYS.tabUnlocked(s, tab)) return null;
+          return el('button', {
+            type: 'button',
+            class: 'scene-hotspot scene-hotspot-' + tab,
+            style: 'left:' + pos[0] + '%;top:' + pos[1] + '%',
+            onclick: function () { self.activeTab = tab; self.renderTabbar(); self.render(); }
+          }, [
+            el('span', { class: 'scene-hotspot-icon', text: icon }),
+            el('span', { class: 'scene-hotspot-copy' }, [el('b', { text: label }), el('small', { text: hint })])
+          ]);
+        }
+        box.appendChild(el('section', { class: 'kingdom-scene', 'aria-label': 'Interaktive Ansicht des Königreichs Tempest' }, [
+          el('div', { class: 'scene-shade' }),
+          el('div', { class: 'scene-heading' }, [
+            el('span', { class: 'scene-kicker', text: 'HAUPTSTADT DES JURA-BUNDES' }),
+            el('h1', { text: s.reich }),
+            el('p', { text: 'Dein Monsterreich wächst mit jeder Entscheidung.' })
+          ]),
+          sceneLink('reich', '🏰', 'Stadtbezirke', 'Bauen & ausbauen', [51, 40]),
+          sceneLink('magie', '🔮', 'Arkane Akademie', 'Zauber & Forschung', [31, 34]),
+          sceneLink('schmiede', '⚒️', 'Große Schmiede', 'Ausrüstung fertigen', [72, 43]),
+          sceneLink('karte', '🗺️', 'Abenteuertor', 'Armeen befehligen', [22, 72]),
+          el('div', { class: 'scene-status' }, [
+            el('span', { text: '👑 ' + stage.name }),
+            el('span', { text: '⚔ ' + fmt(rp) + ' Kampfkraft' }),
+            el('span', { text: '🏳 ' + s.claimedRegions.length + ' Territorien' })
+          ])
+        ]));
+
+        box.appendChild(el('div', { class: 'hero ruler-card' }, [
           el('div', { class: 'hero-top' }, [
             el('div', { class: 'hero-emoji', text: stage.icon }),
             el('div', { style: 'flex:1;min-width:0' }, [
@@ -386,7 +420,7 @@
         // Zuschauer-/Auto-Modus
         var watchOn = !!(s.settings && s.settings.watch);
         var watchDetailed = !!(s.settings && s.settings.watchDetailed);
-        var watchCard = el('div', { class: 'card' + (watchOn ? ' watch-on' : '') }, [
+        var watchCard = el('div', { class: 'card watch-card' + (watchOn ? ' watch-on' : '') }, [
           el('div', { class: 'card-head' }, [
             el('div', { class: 'card-emoji', text: '👁️' }),
             el('div', { class: 'card-title' }, [
@@ -1674,12 +1708,14 @@
           statuses.length ? el('div', { class: 'battle-status', text: statuses.join(' · ') }) : null
         ]);
       }
-      content.appendChild(el('div', { class: 'battle-round', text: 'RUNDE ' + cbt.round + ' · ' + SYS.RISK[cbt.risk].icon + ' ' + SYS.RISK[cbt.risk].name }));
+      var battleHeader = el('div', { class: 'battle-hud' });
+      battleHeader.appendChild(el('div', { class: 'battle-round', text: 'RUNDE ' + cbt.round + ' · ' + SYS.RISK[cbt.risk].icon + ' ' + SYS.RISK[cbt.risk].name }));
       var current = cbt.status === 'active' ? SYS.battleCurrentActor(cbt) : null;
-      content.appendChild(el('div', { class: 'battle-initiative' }, (cbt.turnOrder || []).map(function (token, i) {
+      battleHeader.appendChild(el('div', { class: 'battle-initiative' }, (cbt.turnOrder || []).map(function (token, i) {
         var a = token.charAt(0) === 'p' ? cbt.party[Number(token.slice(1))] : cbt.enemies[Number(token.slice(1))];
         return a && !a.dead ? el('span', { class: 'battle-init-token ' + a.side + (i === cbt.turnCursor ? ' current' : '') + (i < cbt.turnCursor ? ' done' : ''), title: a.name, text: a.icon }) : null;
       })));
+      content.appendChild(battleHeader);
       var reachable = {};
       if (current && current.side === 'party') SYS.battleReachableCells(cbt, current).forEach(function (cell) { reachable[cell.x + ',' + cell.y] = true; });
       var board = el('div', { class: 'battle-board element-' + region.element, role: 'grid', 'aria-label': 'Taktisches Kampffeld 7 mal 5' });
@@ -1707,20 +1743,21 @@
           })(bx, by);
         }
       }
-      content.appendChild(board);
+      var fieldColumn = el('div', { class: 'battle-field-column' }, board);
+      var commandPanel = el('aside', { class: 'battle-command-panel' });
       var rosterGrid = el('div', { class: 'battle-rosters' });
       var enemyGrid = el('div', { class: 'battle-grid enemies' }); cbt.enemies.forEach(function (a) { enemyGrid.appendChild(unitCard(a, true)); }); rosterGrid.appendChild(enemyGrid);
       var partyGrid = el('div', { class: 'battle-grid party' }); cbt.party.forEach(function (a) { partyGrid.appendChild(unitCard(a, false)); }); rosterGrid.appendChild(partyGrid);
-      content.appendChild(rosterGrid);
+      commandPanel.appendChild(rosterGrid);
 
       if (cbt.status === 'active') {
         var actor = current;
-        content.appendChild(el('div', { class: 'section-label', text: actor.icon + ' ' + actor.name + ' ist am Zug' }));
+        commandPanel.appendChild(el('div', { class: 'section-label', text: actor.icon + ' ' + actor.name + ' ist am Zug' }));
         var enemySel = el('select', { class: 'btn battle-target' });
         cbt.enemies.forEach(function (e, i) { if (!e.dead) enemySel.appendChild(el('option', { value: String(i), text: 'Ziel: ' + e.name + ' · ' + e.hp + ' LP' })); });
         var allySel = el('select', { class: 'btn battle-target' });
         cbt.party.forEach(function (a, i) { if (!a.dead) allySel.appendChild(el('option', { value: String(i), text: 'Heilziel: ' + a.name + ' · ' + a.hp + '/' + a.maxHp + ' LP' })); });
-        content.appendChild(enemySel); content.appendChild(allySel);
+        commandPanel.appendChild(enemySel); commandPanel.appendChild(allySel);
         var actions = el('div', { class: 'battle-actions' });
         actor.abilities.forEach(function (id) {
           var ab = GD.battleAbility(id);
@@ -1735,19 +1772,20 @@
           var r = SYS.battleWait(s); if (!r.ok) { toast(r.reason, 'bad'); return; }
           self.persist(s); self.openBattleModal();
         }, { small: true, disabled: !!actor.waited, cost: 'später handeln' }));
-        content.appendChild(actions);
-        content.appendChild(btn('🏳️ Rückzug', function () { SYS.fleeCombat(s); self.persist(s); self.openBattleModal(); }, { small: true, cls: 'btn-danger' }));
+        commandPanel.appendChild(actions);
+        commandPanel.appendChild(btn('🏳️ Rückzug', function () { SYS.fleeCombat(s); self.persist(s); self.openBattleModal(); }, { small: true, cls: 'btn-danger' }));
       } else {
         var result = cbt.result || {};
-        content.appendChild(el('div', { class: 'battle-result ' + (result.won ? 'win' : 'loss') }, [
+        commandPanel.appendChild(el('div', { class: 'battle-result ' + (result.won ? 'win' : 'loss') }, [
           el('div', { class: 'battle-result-icon', text: result.won ? '🏆' : '☠️' }),
           el('h3', { text: result.won ? 'Sieg' : (result.fled ? 'Rückzug' : 'Niederlage') }),
           result.won ? el('p', { text: 'Beute: ' + costText(result.gains || {}) + (result.drop ? ' · Fund: ' + result.drop.name : '') }) : el('p', { text: result.dead ? (result.dead + ' Einheit(en) endgültig gefallen.') : (result.wounded + ' Einheit(en) verwundet.') })
         ]));
-        content.appendChild(btn('Ergebnis bestätigen', function () { SYS.closeCombat(s); closeModal(); self.commit(); }, { cls: 'btn-gold' }));
+        commandPanel.appendChild(btn('Ergebnis bestätigen', function () { SYS.closeCombat(s); closeModal(); self.commit(); }, { cls: 'btn-gold' }));
       }
-      content.appendChild(el('div', { class: 'battle-log' }, cbt.log.slice().reverse().map(function (line) { return el('div', { text: line }); })));
-      openModal('Kampf · ' + region.name, content, '⚔️');
+      fieldColumn.appendChild(el('div', { class: 'battle-log' }, cbt.log.slice().reverse().map(function (line) { return el('div', { text: line }); })));
+      content.appendChild(el('div', { class: 'battle-arena-layout' }, [fieldColumn, commandPanel]));
+      openModal('Kampf · ' + region.name, content, '⚔️', 'battle-modal');
     },
 
     openCounterModal: function (rv) {

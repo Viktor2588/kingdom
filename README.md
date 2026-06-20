@@ -9,8 +9,10 @@ Rivalen-Dämonenlords verteidigen.
 
 Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberbare und
 ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
-Erkennbare lokale Monster-Portraits für die zentralen Völker ersetzen dort die reinen
-Emoji-Platzhalter; das Spiel bleibt vollständig offline.
+Die Desktop-Ansicht besitzt eine vollwertige Strategie-Spieloberfläche mit Seitenleiste,
+Ressourcen-HUD, interaktivem Tempest-Panorama, großer Abenteuerkarte und nahezu
+bildschirmfüllender Kampfbühne. Erkennbare lokale Monster-Portraits für die zentralen
+Völker ersetzen dort die reinen Emoji-Platzhalter; das Spiel bleibt vollständig offline.
 Die Magie ist in aktive Kampf-/Abenteuerzauber der Arkanen Akademie, dauerhafte
 Reichsrituale und den Königreichs-Forschungsbaum getrennt.
 
@@ -24,7 +26,8 @@ Reichsrituale und den Königreichs-Forschungsbaum getrennt.
 - **Reines HTML + CSS + JavaScript** – kein Build-Schritt, keine Frameworks, keine
   externen Bibliotheken/CDNs.
 - **Offline- & `file://`-tauglich:** Datei aufs Handy kopieren, im Browser öffnen → läuft.
-- **Mobile-first:** untere Tab-Leiste, große Tap-Ziele, responsiv bis Desktop.
+- **Desktop-first ab 1100 px:** Strategie-HUD und breite Spielansichten; darunter bleibt
+  die mobile Tab-/Kartenansicht mit großen Tap-Zielen erhalten.
 - **Spielstand** via `localStorage` (Auto-Save + manuell, versioniertes Schema, Reset).
 - **UI-Sprache Deutsch.** Spielgefühl: Aufbau & Management.
 - Die **datengetriebene UI wird per JavaScript aus Daten gerendert** (sichere DOM-Erzeugung,
@@ -56,7 +59,8 @@ Den ganzen Ordner aufs Gerät kopieren und `index.html` im mobilen Browser öffn
 
 ```
 index.html          Minimales Grundgerüst: Topbar, Tab-Container, Navigation, Modal-/Toast-Wurzel
-style.css           Mobile-first Theme (dunkles Fantasy-Design)
+style.css           Responsives Theme (mobile Fallback + Desktop-Spiel-Shell)
+assets/             Lokale Kreaturen-Sprites und Desktop-Königreichspanorama
 js/
   data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
                     Evolutionsketten, Skills/Aspekte, Magie, Rezepte/Sets, Regionen,
@@ -73,8 +77,8 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
   domtest.js        DOM-Rendertest (jsdom)
   playthrough.js    Komplettes Headless-Durchspiel (jsdom)
   balance.js        Balance-Analyse der Kraftkurven (Node)
-  shots.js          Handy-Screenshots via Playwright/Chromium
-  screenshots/      Erzeugte PNGs (390×844)
+  shots.js          Mobile-/Desktop-Screenshots via Playwright/Chromium
+  screenshots/      Erzeugte PNGs (390×844 und 1440×900)
 ```
 
 ### Architektur-Prinzipien
@@ -182,9 +186,10 @@ Erwartete Ausgabe (Soll-Stand):
 
 ### Screenshots (optional, Linux/WSL)
 
-`dev/shots.js` fotografiert alle Tabs + Modals im Handy-Viewport (390×844) und meldet
-Browser-Laufzeitfehler. Es braucht Playwright/Chromium plus ein paar System-Libs. Ohne
-root (z. B. in WSL):
+`dev/shots.js` fotografiert alle Tabs und Modals im Handy-Viewport (390×844) sowie die
+wichtigsten Spielansichten auf Desktop (1440×900), prüft zusätzlich 1366×768 auf
+horizontale Seitenüberbreite und meldet Browser-Laufzeitfehler. Es braucht
+Playwright/Chromium plus ein paar System-Libs. Ohne root (z. B. in WSL):
 
 ```bash
 # Playwright + Chromium
@@ -199,7 +204,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu node dev/shots.js
-# → 12 PNGs in dev/screenshots/, darunter taktischer Kampf und sichtbarer Auto-Modus
+# → 20 PNGs in dev/screenshots/, darunter Mobile-/Desktop-Karte und Rasterkampf
 ```
 
 ---

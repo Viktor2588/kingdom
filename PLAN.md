@@ -145,19 +145,24 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - Magie-UI in drei klar sichtbare Ebenen getrennt: Feldmagie, Reichsrituale und Königreichsausbau/Forschung.
 - Save-Schema v5 ergänzt gelerntes Feldzauberbuch, Abklingzeiten und Armee-Barrieren kompatibel.
 
-Phase 18 todo
-- Ich finde die gesamte optik der app ehere wie eine html seite und nicht wie ein spiel. Wie können wir das graphisch aufwerten ? Vielleicht macht es Sinn die Mobile kompatibilität erstmal zu droppen und ein richtig geiles Desktop game experience zu schaffen ?
+[x] **Phase 18 – Desktop-Spielerlebnis & visuelle Inszenierung (2026-06-20)**
+- **Desktop-first Spiel-Shell ab 1100 px:** permanente Seitenleiste, Ressourcen-HUD, großzügige Spielfläche, eigenständige Desktop-Typografie und einheitliche Fantasy-Strategie-Panels statt einer zentrierten 720-px-App-Spalte.
+- **Interaktives Tempest-Panorama:** lokale, per Built-in-Imagegen erzeugte 1536×1024-Königreichsgrafik mit anklickbaren Hotspots für Stadtbezirke, Akademie, Schmiede und Abenteuerkarte; Status-HUD direkt in der Szene.
+- **Kernansichten als Spielbildschirme:** Abenteuerkarte nutzt die volle Desktopbreite mit größeren Orten und Wegen; Rasterkampf läuft als fast bildschirmfüllende Bühne mit großem 7×5-Feld, Initiative-HUD, separatem Befehlsbereich und Kampfchronik.
+- **Management für Desktop:** Reich, Kreaturen, Magie, Forschung und Schmiede verwenden mehrspaltige, visuell differenzierte Layouts und größere Portrait-/Ausrüstungsflächen.
+- **Mobile bewusst erhalten:** Unterhalb 1100 px bleibt die bewährte daumenfreundliche Tab-/Kartenansicht vollständig funktionsfähig; kein Engine-Wechsel und keine Aufgabe von Offline-/`file://`-Betrieb oder Save-Kompatibilität.
+- **Visuelle Regression:** Screenshot-Suite auf 20 Aufnahmen erweitert (13 Mobile, 7 Desktop bei 1440×900), zusätzlicher Überbreiten-Check bei 1366×768.
 
  
 ### Dateien
 - Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
 - Dev-Tests (nicht Teil des Spiels): `dev/sim.js` (Logik, `node dev/sim.js`), `dev/domtest.js` (DOM via jsdom).
 
-### Verifikation (Stand 2026-06-20, nach Phase 17)
+### Verifikation (Stand 2026-06-20, nach Phase 18)
 - `node dev/sim.js` → 201/201 Logiktests bestanden (inkl. Herrscherarmee, Abenteuerkarte, Rasterkampf, Assets/Inhalte, getrennte Feldmagie, Cooldowns und Save-Migration).
 - `node dev/domtest.js` → 57/57 DOM-Rendertests bestanden (alle Views/Modals inkl. 2D-Abenteuerkarte, Rasterkampf, Assets sowie getrennte Magie-UI/Abenteuerzauber).
 - `node dev/playthrough.js` → 57/57 Durchspiel-Checks bestanden (komplette Sitzung, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
 - `node dev/balance.js` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton.
-- `node dev/shots.js` → 12 frische Screenshots im echten Chromium (Handy-Viewport 390×844), keine Browserfehler; darunter taktische Kampfbühne und sichtbarer Auto-Dialog.
+- `node dev/shots.js` → 20 frische Screenshots im echten Chromium (13× Handy 390×844, 7× Desktop 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
 - Offline-/HTTP-Smoke-Test: `index.html` lädt alle klassischen Scripts über `file://`; index.html, CSS und alle fünf JS-Dateien liefern lokal HTTP 200 mit korrektem Content-Type.
 - Hinweis: Headless-Screenshots (`dev/shots.js`) brauchen Playwright/Chromium unter `/tmp/tempest-shots` + Chromium-Systemlibs (`LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu`); jsdom-Tests brauchen `jsdom@22` unter `/tmp/tempest-domtest`.

@@ -137,6 +137,43 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.screenshot({ path: path.join(out, '12-armeegruppe.png') });
   console.log('  📸 12-armeegruppe.png');
 
+  // Desktop-Abnahme: dieselbe Sitzung bei 1440×900 in der neuen Spiel-Shell.
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close');
+    if (close) close.click();
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await shot('uebersicht', '13-desktop-uebersicht');
+  await shot('karte', '14-desktop-karte');
+  await shot('reich', '16-desktop-reich');
+  await shot('kreaturen', '17-desktop-kreaturen');
+  await shot('magie', '18-desktop-magie');
+  await shot('schmiede', '19-desktop-schmiede');
+  await page.evaluate(function () {
+    var T = window.__TEMPEST__, S = T.state, SYS = T.SYS;
+    SYS.closeCombat(S);
+    SYS.startCombat(S, 'wald', [], true, 'normal');
+    window.GameUI.openBattleModal();
+  });
+  await page.waitForTimeout(180);
+  await page.screenshot({ path: path.join(out, '15-desktop-kampf.png') });
+  console.log('  📸 15-desktop-kampf.png');
+
+  // Zweite typische Desktopgröße: keine horizontale Seitenüberbreite.
+  await page.evaluate(function () { var close = document.querySelector('.modal-close'); if (close) close.click(); });
+  await page.setViewportSize({ width: 1366, height: 768 });
+  var desktopOverflow = await page.evaluate(function () {
+    var tabs = ['uebersicht', 'reich', 'kreaturen', 'magie', 'schmiede', 'karte'];
+    var bad = [];
+    tabs.forEach(function (tab) {
+      window.GameUI.activeTab = tab; window.GameUI.renderTabbar(); window.GameUI.render();
+      if (document.documentElement.scrollWidth > window.innerWidth || document.body.scrollWidth > window.innerWidth) bad.push(tab);
+    });
+    return bad;
+  });
+  if (desktopOverflow.length) errors.push('desktop-overflow: ' + desktopOverflow.join(', '));
+  else console.log('  ✓ Desktop-Regressionscheck 1366×768 ohne Seitenüberbreite');
+
   // Echter Browser-Regressionscheck: Reset darf durch beforeunload nicht zurückgespeichert werden.
   var resetOk = await page.evaluate(function () {
     var T = window.__TEMPEST__;
@@ -150,5 +187,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 13 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 20 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

@@ -201,6 +201,39 @@ Phase 25 - Brain storm Wie kriegen wir eine Graphik wie Heroes of might & magic 
 
 Phase 26 installiere UE 5.8 MCP
 
+## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
+Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
+
+Phase 27 – Code-Architektur: Monolithen modularisieren
+- Befund: `js/systems.js` (~2590 Zeilen), `js/ui.js` (~2170) und `js/data.js` (~1090) sind Einzeldateien. Beim parallelen Mehr-Phasen-Workflow (mehrere Worktrees gleichzeitig) erzeugen sie große, konfliktträchtige Diffs/Merges.
+- Ziel: thematische Aufteilung **ohne Build-Schritt** — weiterhin klassische `<script>`-Tags, Namensraum `Game*`. Z. B. `systems/` (produktion, kampf, armee, magie, echo, auto-modus), `data/` (kreaturen, gebäude, magie, regionen, talente, schmiede). `index.html` lädt die Teile in fester Reihenfolge.
+- Nutzen: deutlich weniger Merge-Konflikte, schnellere Orientierung, gezieltere Tests. Save-Kompatibilität & Offline-/`file://`-Betrieb bleiben unberührt.
+
+Phase 28 – CI-Pipeline: Tests vor jedem Deploy
+- Befund: Es existiert nur `.github/workflows/deploy.yml`; `bun test`/`balance` laufen ausschließlich lokal. Rote Regressionen können ungebremst nach `main` und auf Pages gelangen.
+- Ziel: `ci.yml`, das bei Push/PR `bun install` + `bun test` (und optional `bun run balance` mit Schwellenwerten) ausführt; Deploy nur bei grün (bzw. Deploy hängt am bestandenen CI).
+- Nutzen: schützt den schnellen Multi-Phasen-Merge-Flow automatisch vor stillen Brüchen.
+
+Phase 29 – Automatisierte Balance- & Content-Integritätstests
+- Befund: `dev/balance.js` ist reine Konsolenanalyse (Heuristiken/Flags, **keine Assertions**). Inhalte (Echo-Affixe, Talente, Schmiede-Qualität) wachsen schnell; Balance wird nur „per Auge" geprüft. (Ergänzt Phase 24.)
+- Ziel: Balance-/Content-Heuristiken als echte `bun test`-Assertions — Rang-Bänder, Regions-/Echo-Monotonie, Talent-Bonus-Summen, Schmiede-Aufwertungskurven, vollständige `data.js`-Querverweise. Läuft in CI (Phase 28).
+- Nutzen: Balance- und Datenfehler scheitern automatisch statt unbemerkt durchzurutschen.
+
+Phase 30 – Save-Robustheit: Export/Import + Quota-/Korruptions-Schutz
+- Befund: `state.js` kapselt save/load in try/catch, **verschluckt Fehler aber still** (`return false`); kein Backup/Export; bei vollem oder korruptem `localStorage` droht stiller Verlust. Schema ist bereits v8 mit `normalize`-Migration.
+- Ziel: manueller Export/Import des Spielstands (JSON-Datei bzw. Clipboard) als Backup & Gerätewechsel; bei `QuotaExceeded`/Parse-Fehler klare Rückmeldung + Recovery (letzter guter Stand / Reset-Angebot); leichte Schema-Validierung beim Laden.
+- Nutzen: kein stiller Datenverlust; Spielstände mitnehmbar zwischen Geräten/Browsern.
+
+Phase 31 – Performance: Tick-/Auto-/Offline-Profiling & Caching
+- Befund: `production()`/`computeBonuses()` werden pro Tick neu berechnet; Vorspulen = 300 Ticks, Offline-Fortschritt potenziell tausende; Bestand (Stapel, Echos, Talente) wächst.
+- Ziel: Hotpaths messen; Bonus-/Produktionsberechnung memoisieren und gezielt invalidieren statt jedes Tick komplett neu; Vorspulen/Offline gebündelt rechnen; Tick-Marathon als Benchmark im Test.
+- Nutzen: flüssiger auf Handys, schnelleres Vorspulen, weniger CPU-/Akkuverbrauch.
+
+Phase 32 – Offline-Härtung: PWA (Service Worker + Web-App-Manifest)
+- Befund: kein Service Worker / Manifest; Offline funktioniert nur via `file://` + localStorage. Über die Pages-URL (http) gibt es keinen Asset-Cache → ohne Netz keine Ladbarkeit.
+- Ziel: `manifest.webmanifest` (Name, Icons, Theme, `display: standalone`) + Service Worker, der `index.html`, CSS, JS und `assets/` cached → installierbar („Zum Startbildschirm hinzufügen") und garantiert offline auch über Pages. `file://`-Betrieb intakt lassen (SW nur unter http(s) registrieren).
+- Nutzen: echtes installierbares Offline ohne manuelles Dateikopieren.
+
 ### Dateien
 - Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
 - Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough}.test.js`, `dev/balance.js` und `dev/shots.js`.

@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 5;
+  var VERSION = 6;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -70,6 +70,7 @@
         level: 1,
         xp: 0,
         stage: 0,
+        talents: {},
         skills: ['verschlinger'],
         skillProgress: { verschlinger: { level: 1, xp: 0 } },
         equipment: emptyEquipment()
@@ -168,6 +169,22 @@
     s.herrscher.skills.forEach(function (id) {
       if (!s.herrscher.skillProgress[id]) s.herrscher.skillProgress[id] = { level: 1, xp: 0 };
     });
+    // Talentbaum v6: nur bekannte Knoten und gültige Ränge übernehmen. Ein
+    // beschädigter/älterer Spielstand kann niemals mehr Punkte behalten, als
+    // sein Herrscher durch Level und Evolutionsstufen verdient hat.
+    if (!s.herrscher.talents || typeof s.herrscher.talents !== 'object' || Array.isArray(s.herrscher.talents)) s.herrscher.talents = {};
+    var cleanTalents = {};
+    GD().talents.forEach(function (talent) {
+      var rank = Math.max(0, Math.min(talent.maxRank, Math.floor(Number(s.herrscher.talents[talent.id]) || 0)));
+      if (rank > 0) cleanTalents[talent.id] = rank;
+    });
+    var earnedTalentPoints = Math.max(0, (s.herrscher.level || 1) - 1) + Math.max(0, s.herrscher.stage || 0) * 2;
+    var spentTalentPoints = Object.keys(cleanTalents).reduce(function (sum, id) { return sum + cleanTalents[id]; }, 0);
+    for (var ti = GD().talents.length - 1; ti >= 0 && spentTalentPoints > earnedTalentPoints; ti--) {
+      var tid = GD().talents[ti].id, remove = Math.min(cleanTalents[tid] || 0, spentTalentPoints - earnedTalentPoints);
+      if (remove) { cleanTalents[tid] -= remove; spentTalentPoints -= remove; if (!cleanTalents[tid]) delete cleanTalents[tid]; }
+    }
+    s.herrscher.talents = cleanTalents;
     if (!s.settings || typeof s.settings !== 'object') s.settings = { watch: false };
     fill(s.settings, def.settings);
     if (!Array.isArray(s.settings.watchHistory)) s.settings.watchHistory = [];

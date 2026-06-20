@@ -215,6 +215,22 @@ s.resources.seelen += 100;
 var rsac = SYS.sacrificeSouls(s, 50);
 ok(rsac.ok && rsac.xp === 100, 'Seelen opfern -> Herrscher-EP');
 
+console.log('--- Herrscher-Talentbaum (Phase 20) ---');
+var sT = GST.createDefault(); sT.herrscher.level = 12; sT.herrscher.stage = 1; sT.resources.gold = 10000;
+ok(GD.talents.length === 15 && GD.talentBranches.length === 3, '15 Talente in drei Spezialisierungszweigen definiert');
+ok(SYS.talentPointsEarned(sT) === 13 && SYS.talentPointsAvailable(sT) === 13, 'Talentpunkte aus Level und Evolutionsstufe berechnet');
+ok(!SYS.canAllocateTalent(sT, 't_seelensinn').ok, 'höherer Knoten ist an Zweigschwelle und Vorgänger gebunden');
+var talentPowerBefore = SYS.rulerPower(sT), commandBefore = SYS.armyCommandCapacity(sT, SYS.rulerArmyGroup(sT));
+for (var tp = 0; tp < 3; tp++) ok(SYS.allocateTalent(sT, 't_magicule_koerper').ok, 'Magicule-Körper Rang ' + (tp + 1) + ' investiert');
+ok(SYS.canAllocateTalent(sT, 't_seelensinn').ok && SYS.allocateTalent(sT, 't_seelensinn').ok, 'Folgeknoten nach drei Zweigpunkten freigeschaltet');
+for (var tb = 0; tb < 3; tb++) SYS.allocateTalent(sT, 't_tempest_banner');
+ok(SYS.allocateTalent(sT, 't_logistik').ok, 'Herrschaft-Pfad bis Kriegslogistik erreichbar');
+ok(SYS.rulerPower(sT) > talentPowerBefore && SYS.armyCommandCapacity(sT, SYS.rulerArmyGroup(sT)) > commandBefore, 'Talente verändern Herrscherkraft und Kommandolimit direkt');
+ok(!SYS.canRefundTalent(sT, 't_magicule_koerper').ok, 'tragender Talentpunkt kann nicht unter abhängigen Knoten entfernt werden');
+ok(SYS.refundTalent(sT, 't_seelensinn').ok, 'nicht mehr tragender Folgeknoten kann gegen Gold zurückerstattet werden');
+var talentSave = GST.normalize(JSON.parse(JSON.stringify(sT)));
+ok(talentSave.version === 6 && SYS.talentRank(talentSave, 't_magicule_koerper') === 3, 'Talentbelegung übersteht Save-v6-Roundtrip');
+
 console.log('--- Expedition (Auto-Kampf) ---');
 gob.job = 'armee';
 var rstart = SYS.startExpedition(s, 'wald', [gob.uid], true);

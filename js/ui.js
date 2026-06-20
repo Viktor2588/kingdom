@@ -136,6 +136,13 @@
       var self = this;
       var rm = $('ruler-mini');
       rm.onclick = function () { self.openRulerModal(); };
+      var wt = $('watch-toggle');
+      if (wt) wt.onclick = function () {
+        var s = self.state;
+        s.settings.watch = !s.settings.watch;
+        toast(s.settings.watch ? '👁️ Zuschauer-Modus an' : '⏸ Zuschauer-Modus aus', s.settings.watch ? 'gold' : '');
+        self.commit();
+      };
     },
 
     // Nach jeder Aktion: neue Freischaltungen melden, speichern + neu zeichnen
@@ -242,6 +249,13 @@
         el('span', { class: 'rm-emoji', text: stage.icon }),
         el('span', { class: 'rm-lvl', text: 'Lv ' + s.herrscher.level })
       ]);
+      var wt = $('watch-toggle');
+      if (wt) {
+        var watching = !!(s.settings && s.settings.watch);
+        if (!wt.textContent) wt.textContent = '👁️';
+        wt.classList.toggle('on', watching);
+        wt.title = watching ? 'Zuschauer-Modus läuft – tippen zum Stoppen' : 'Zuschauer-Modus starten';
+      }
     },
 
     // ---------- Tabbar ----------
@@ -327,16 +341,18 @@
         var rp = SYS.rulerPower(s);
         var rxpNeed = SYS.rulerXpForLevel(s.herrscher.level);
 
-        function sceneLink(tab, icon, label, hint, pos) {
+        function sceneLink(tab, icon, label, hint, pos, size) {
           if (!SYS.tabUnlocked(s, tab)) return null;
+          var style = 'left:' + pos[0] + '%;top:' + pos[1] + '%';
+          if (size) style += ';--hs-w:' + size[0] + 'px;--hs-h:' + size[1] + 'px';
           return el('button', {
             type: 'button',
             class: 'scene-hotspot scene-hotspot-' + tab,
-            style: 'left:' + pos[0] + '%;top:' + pos[1] + '%',
+            style: style,
+            'aria-label': label + ' – ' + hint,
             onclick: function () { self.activeTab = tab; self.renderTabbar(); self.render(); }
           }, [
-            el('span', { class: 'scene-hotspot-icon', text: icon }),
-            el('span', { class: 'scene-hotspot-copy' }, [el('b', { text: label }), el('small', { text: hint })])
+            el('span', { class: 'scene-hotspot-copy' }, [el('b', { text: icon + ' ' + label }), el('small', { text: hint })])
           ]);
         }
         box.appendChild(el('section', { class: 'kingdom-scene', 'aria-label': 'Interaktive Ansicht des Königreichs Tempest' }, [
@@ -346,10 +362,10 @@
             el('h1', { text: s.reich }),
             el('p', { text: 'Dein Monsterreich wächst mit jeder Entscheidung.' })
           ]),
-          sceneLink('reich', '🏰', 'Stadtbezirke', 'Bauen & ausbauen', [51, 40]),
-          sceneLink('magie', '🔮', 'Arkane Akademie', 'Zauber & Forschung', [31, 34]),
-          sceneLink('schmiede', '⚒️', 'Große Schmiede', 'Ausrüstung fertigen', [72, 43]),
-          sceneLink('karte', '🗺️', 'Abenteuertor', 'Armeen befehligen', [22, 72]),
+          sceneLink('reich', '🏰', 'Stadtbezirke', 'Bauen & ausbauen', [48, 35], [152, 122]),
+          sceneLink('magie', '🔮', 'Arkane Akademie', 'Zauber & Forschung', [30, 42], [112, 96]),
+          sceneLink('schmiede', '⚒️', 'Große Schmiede', 'Ausrüstung fertigen', [61, 33], [104, 88]),
+          sceneLink('karte', '🗺️', 'Abenteuertor', 'Armeen befehligen', [20, 76], [122, 94]),
           el('div', { class: 'scene-status' }, [
             el('span', { text: '👑 ' + stage.name }),
             el('span', { text: '⚔ ' + fmt(rp) + ' Kampfkraft' }),
@@ -441,7 +457,7 @@
               toast(s.settings.watchDetailed ? '🎬 Sichtbare Einzelschritte aktiviert' : '⚡ Schneller Auto-Modus aktiviert', 'gold');
               self.commit();
             }, { small: true, cls: watchDetailed ? 'btn-gold' : '' }),
-            btn('⏩ Vorspulen 30 s', function () { self.fastForward(30); }, { small: true })
+            btn('⏩ Vorspulen 5 min', function () { self.fastForward(300); }, { small: true })
           ]),
           watchDetailed ? el('div', { class: 'card-desc', text: 'Einzelschritte erscheinen als kurzer Dialog; der Berater pausiert jeweils 3 Sekunden.' }) : null
         ]);
@@ -1884,6 +1900,72 @@
       openModal('Affinität wählen', content, '🌟');
     },
 
+    openTalentModal: function () {
+      var s = this.state, self = this;
+      var earned = SYS.talentPointsEarned(s), spent = SYS.talentPointsSpent(s), available = SYS.talentPointsAvailable(s);
+      var content = el('div', { class: 'talent-screen' });
+      content.appendChild(el('div', { class: 'talent-summary' }, [
+        el('div', null, [el('strong', { text: available }), el('span', { text: ' freie Punkte' })]),
+        el('div', null, [el('strong', { text: spent }), el('span', { text: ' investiert' })]),
+        el('div', null, [el('strong', { text: earned }), el('span', { text: ' verdient' })]),
+        el('button', { type: 'button', class: 'info-btn', 'aria-label': 'Talentbaum erklären', onclick: function () { self.openHelpModal('talente'); } }, [el('span', { text: 'ℹ️' })])
+      ]));
+      content.appendChild(el('p', { class: 'muted talent-intro', text: 'Ab Level 2 ein Punkt pro Herrscher-Level sowie zwei Punkte je neuer Evolutionsstufe. Investiere von oben nach unten; Schlussknoten verlangen 15 Punkte im Zweig.' }));
+
+      var viewport = el('div', { class: 'talent-tree-viewport' });
+      var tree = el('div', { class: 'talent-tree' });
+      GD.talentBranches.forEach(function (branch) {
+        var branchSpent = SYS.talentPointsSpent(s, branch.id);
+        var lane = el('section', { class: 'talent-branch', style: '--talent-color:' + branch.color, 'data-branch': branch.id });
+        lane.appendChild(el('header', { class: 'talent-branch-head' }, [
+          el('div', { class: 'talent-branch-icon', text: branch.icon }),
+          el('div', null, [el('h4', { text: branch.name }), el('p', { text: branch.desc })]),
+          el('span', { class: 'pill', text: branchSpent + ' P' })
+        ]));
+        GD.talents.filter(function (talent) { return talent.branch === branch.id; })
+          .sort(function (a, b) { return a.row - b.row; })
+          .forEach(function (talent) {
+            var rank = SYS.talentRank(s, talent.id), alloc = SYS.canAllocateTalent(s, talent.id), req = SYS.talentReqStatus(s, talent);
+            var refund = SYS.canRefundTalent(s, talent.id);
+            var maxed = rank >= talent.maxRank;
+            var status = maxed ? 'Gemeistert' : (alloc.ok ? 'Bereit' : (req.ok ? (available ? 'Gesperrt' : 'Keine freien Punkte') : req.missing.join(' · ')));
+            if (rank > 0 && !refund.ok) status += ' · Rückgabe: ' + refund.reason;
+            var node = el('article', {
+              class: 'talent-node ' + (rank ? 'allocated ' : '') + (maxed ? 'maxed ' : '') + (alloc.ok ? 'available ' : 'locked ') + (talent.maxRank === 1 ? 'capstone' : ''),
+              'data-talent': talent.id
+            }, [
+              el('div', { class: 'talent-node-top' }, [
+                el('div', { class: 'talent-node-icon', text: talent.icon }),
+                el('div', { class: 'talent-node-copy' }, [
+                  el('b', { text: talent.name }),
+                  el('small', { text: talent.desc })
+                ]),
+                el('span', { class: 'talent-rank', text: rank + '/' + talent.maxRank })
+              ]),
+              el('div', { class: 'talent-node-foot' }, [
+                el('span', { class: 'talent-status', text: status }),
+                rank > 0 ? btn('−', function () {
+                  var result = SYS.refundTalent(s, talent.id);
+                  if (!result.ok) { toast(result.reason, 'bad'); return; }
+                  toast('↩️ Punkt zurückerstattet · ' + costText(result.cost), '');
+                  self.commit(); self.openTalentModal();
+                }, { small: true, disabled: !refund.ok, cost: refund.cost ? costText(refund.cost) : '' }) : null,
+                btn('+', function () {
+                  var result = SYS.allocateTalent(s, talent.id);
+                  if (!result.ok) { toast(result.reason, 'bad'); return; }
+                  toast(talent.icon + ' ' + talent.name + ' ' + result.rank + '/' + talent.maxRank, result.rank === talent.maxRank ? 'gold' : 'good');
+                  self.commit(); self.openTalentModal();
+                }, { small: true, cls: alloc.ok ? 'btn-gold' : '', disabled: !alloc.ok })
+              ])
+            ]);
+            lane.appendChild(node);
+          });
+        tree.appendChild(lane);
+      });
+      viewport.appendChild(tree); content.appendChild(viewport);
+      openModal('Herrscher-Talentbaum', content, '🌟', 'talent-modal');
+    },
+
     openRulerModal: function () {
       var s = this.state, self = this;
       var stage = GD.rulerStages[s.herrscher.stage];
@@ -1942,6 +2024,20 @@
         ]));
       });
       content.appendChild(rulerSkills);
+
+      // Passiver Last-Epoch-artiger Talentbaum.
+      var talentAvailable = SYS.talentPointsAvailable(s), talentSpent = SYS.talentPointsSpent(s);
+      content.appendChild(el('div', { class: 'section-label', text: 'Herrscher-Talente' }));
+      content.appendChild(el('div', { class: 'card ruler-talent-card' }, [
+        el('div', { class: 'card-head' }, [
+          el('div', { class: 'card-emoji', text: '🌟' }),
+          el('div', { class: 'card-title' }, [
+            el('div', { class: 'name', text: talentAvailable + ' freie Talentpunkte' }),
+            el('div', { class: 'meta', text: talentSpent + ' investiert · Verschlinger, Herrschaft und Arkana' })
+          ])
+        ]),
+        btn('Talentbaum öffnen', function () { self.openTalentModal(); }, { cls: talentAvailable ? 'btn-gold' : '', small: true })
+      ]));
 
       // Stufen-Übersicht
       content.appendChild(el('div', { class: 'section-label', text: 'Evolutionsstufen' }));
@@ -2037,7 +2133,7 @@
         // Blockierende Wahl-Events im Vorlauf automatisch (sicher) auflösen
         if (s.activeEvent) { var aev = GD.event(s.activeEvent); if (aev && aev.choices) SYS.resolveEvent(s, aev.choices.length - 1); else s.activeEvent = null; }
       }
-      toast('⏩ ' + n + ' s vorgespult.', 'gold');
+      toast('⏩ ' + (n >= 60 ? (Math.round(n / 60) + ' min') : (n + ' s')) + ' vorgespult.', 'gold');
       this.commit();
     }
   };

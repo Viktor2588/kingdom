@@ -828,6 +828,50 @@
     { name: 'Katastrophe',         icon: '🌌', reqLevel: 50, reqSeelen: 6000, bonus: { produktionAll: 0.40, armee: 0.60, summonRang: 3 } }
   ];
 
+  // ---------- Passiver Herrscher-Talentbaum ----------
+  // Last-Epoch-artig: Knoten besitzen mehrere Ränge, Pfad-Voraussetzungen und
+  // Schwellen an bereits investierten Punkten im jeweiligen Zweig. `effect`
+  // gilt pro investiertem Rang und wird zentral über computeBonuses verrechnet.
+  var talentBranches = [
+    { id: 'verschlinger', name: 'Verschlinger', icon: '🌀', color: '#a976ff', desc: 'Seelen, Anpassung und persönliche Macht.' },
+    { id: 'herrschaft', name: 'Herrschaft', icon: '🚩', color: '#e7a64a', desc: 'Armeen, Logistik und Verteidigung Tempests.' },
+    { id: 'arkana', name: 'Arkana', icon: '🔮', color: '#55bde8', desc: 'Magicules, Forschung und aktive Feldmagie.' }
+  ];
+  var talents = [
+    { id: 't_magicule_koerper', branch: 'verschlinger', row: 0, name: 'Magicule-Körper', icon: '💧', maxRank: 5, requiredSpent: 0,
+      desc: '+4 % Herrscher-LP und +3 % Herrscher-VER pro Rang.', effect: { herrscherLp: 0.04, herrscherVer: 0.03 } },
+    { id: 't_seelensinn', branch: 'verschlinger', row: 1, name: 'Seelensinn', icon: '👁️', maxRank: 5, requiredSpent: 3,
+      requires: { id: 't_magicule_koerper', rank: 3 }, desc: '+5 % Seelenbeute pro Rang.', effect: { seelen: 0.05 } },
+    { id: 't_anpassung', branch: 'verschlinger', row: 2, name: 'Unendliche Anpassung', icon: '🧬', maxRank: 3, requiredSpent: 6,
+      requires: { id: 't_seelensinn', rank: 2 }, desc: '+4 % Herrscher-Kampfkraft und +5 % Heiltempo pro Rang.', effect: { herrscherKampf: 0.04, heiltempo: 0.05 } },
+    { id: 't_unersaettlich', branch: 'verschlinger', row: 3, name: 'Unersättlich', icon: '🌑', maxRank: 3, requiredSpent: 10,
+      requires: { id: 't_anpassung', rank: 2 }, desc: '+6 % Beutechance und −4 % Evolutionskosten pro Rang.', effect: { drop: 0.06, evoRabatt: 0.04 } },
+    { id: 't_beelzebub', branch: 'verschlinger', row: 4, name: 'Beelzebub', icon: '🌌', maxRank: 1, requiredSpent: 15,
+      requires: { id: 't_unersaettlich', rank: 3 }, desc: 'Schlussknoten: +1 Beuterang, +25 % Seelen und +20 % Herrscher-Kampfkraft.', effect: { beuteRang: 1, seelen: 0.25, herrscherKampf: 0.20 } },
+
+    { id: 't_tempest_banner', branch: 'herrschaft', row: 0, name: 'Banner von Tempest', icon: '🏳️', maxRank: 5, requiredSpent: 0,
+      desc: '+2,5 % Armee-Kampfkraft pro Rang.', effect: { armee: 0.025 } },
+    { id: 't_logistik', branch: 'herrschaft', row: 1, name: 'Kriegslogistik', icon: '🛞', maxRank: 5, requiredSpent: 3,
+      requires: { id: 't_tempest_banner', rank: 3 }, desc: '+10 Kommandolimit und +2,5 % Expeditionstempo pro Rang.', effect: { kommando: 10, expedTempo: 0.025 } },
+    { id: 't_bollwerk', branch: 'herrschaft', row: 2, name: 'Unbezwingbares Bollwerk', icon: '🏰', maxRank: 3, requiredSpent: 6,
+      requires: { id: 't_logistik', rank: 2 }, desc: '+6 % Reichsverteidigung pro Rang.', effect: { verteidigung: 0.06 } },
+    { id: 't_heerfuehrer', branch: 'herrschaft', row: 3, name: 'Heerführer', icon: '🎖️', maxRank: 3, requiredSpent: 10,
+      requires: { id: 't_bollwerk', rank: 2 }, desc: '+20 Kommandolimit und +3 % Armee-Kampfkraft pro Rang.', effect: { kommando: 20, armee: 0.03 } },
+    { id: 't_katastrophenmarsch', branch: 'herrschaft', row: 4, name: 'Katastrophenmarsch', icon: '⚔️', maxRank: 1, requiredSpent: 15,
+      requires: { id: 't_heerfuehrer', rank: 3 }, desc: 'Schlussknoten: +25 % Armee-Kampfkraft und +1 Bewegung für alle Armeen.', effect: { armee: 0.25, bewegung: 1 } },
+
+    { id: 't_magicule_kern', branch: 'arkana', row: 0, name: 'Magicule-Kern', icon: '💠', maxRank: 5, requiredSpent: 0,
+      desc: '+4 % Magieproduktion und +3 % Herrscher-MAG pro Rang.', effect: { produktionMagie: 0.04, herrscherMag: 0.03 } },
+    { id: 't_grosser_weiser', branch: 'arkana', row: 1, name: 'Großer Weiser', icon: '🧠', maxRank: 5, requiredSpent: 3,
+      requires: { id: 't_magicule_kern', rank: 3 }, desc: '+12 % Wissensproduktion pro Rang.', effect: { wissen: 0.12 } },
+    { id: 't_elementfokus', branch: 'arkana', row: 2, name: 'Elementfokus', icon: '✨', maxRank: 3, requiredSpent: 6,
+      requires: { id: 't_grosser_weiser', rank: 2 }, desc: '+8 % Schaden und Heilung aktiver Kampfzauber pro Rang.', effect: { feldmagie: 0.08 } },
+    { id: 't_raumherrschaft', branch: 'arkana', row: 3, name: 'Raumherrschaft', icon: '🌀', maxRank: 3, requiredSpent: 10,
+      requires: { id: 't_elementfokus', rank: 2 }, desc: '+5 % Expeditions- und +3 % Heiltempo pro Rang.', effect: { expedTempo: 0.05, heiltempo: 0.03 } },
+    { id: 't_azathoth', branch: 'arkana', row: 4, name: 'Azathoth', icon: '🌠', maxRank: 1, requiredSpent: 15,
+      requires: { id: 't_raumherrschaft', rank: 3 }, desc: 'Schlussknoten: +30 % aktive Feldmagie, +15 % Herrscher-MAG und +10 % Produktion.', effect: { feldmagie: 0.30, herrscherMag: 0.15, produktionAll: 0.10 } }
+  ];
+
   // ---------- Forschungsbaum ----------
   // unlocks: magicTier (max freigeschalteter Zauber-Tier), slots [Positions-IDs], effect {…Bonus}.
   var research = [
@@ -967,8 +1011,17 @@
         'Der Auto-Modus baut, beschwört, benennt, entwickelt, erforscht und schickt Expeditionen los.',
         'Mit „Sichtbar“ zeigt er jede Aktion in einem Dialog und pausiert kurz; die letzten Schritte bleiben im Aktivitätsprotokoll.',
         'Du kannst jederzeit eingreifen oder den Modus wieder ausschalten.',
-        'Mit ⏩ Vorspulen springst du mehrere Sekunden Spielzeit auf einmal.',
+        'Mit ⏩ Vorspulen springst du mehrere Minuten Spielzeit auf einmal.',
         'Ideal, um neue Systeme in Aktion zu sehen oder das Spiel laufen zu lassen.'
+      ] },
+    talente: { icon: '🌟', title: 'Herrscher-Talentbaum',
+      text: 'Ab Level 2 und mit jeder neuen Evolutionsstufe erhält der Herrscher Talentpunkte für drei dauerhafte Spezialisierungen.',
+      steps: [
+        'Knoten besitzen 1–5 Ränge. Jeder Rang verbraucht genau einen Talentpunkt.',
+        'Höhere Knoten verlangen genügend investierte Punkte im selben Zweig und einen bestimmten Vorgängerrang.',
+        'Verschlinger stärkt den Herrscher und Seelenbeute, Herrschaft Armeen und Logistik, Arkana Magie und Forschung.',
+        'Einzelne Punkte können gegen Gold zurückerstattet werden, solange dadurch kein abhängiger Knoten ungültig wird.',
+        'Der Zuschauer-Modus verteilt freie Talentpunkte automatisch.'
       ] }
   };
 
@@ -1001,6 +1054,7 @@
   var regionsById = {};   regions.forEach(function (r) { regionsById[r.id] = r; });
   var rarityById = {};    rarities.forEach(function (r) { rarityById[r.id] = r; });
   var researchById = {};  research.forEach(function (r) { researchById[r.id] = r; });
+  var talentsById = {};   talents.forEach(function (t) { talentsById[t.id] = t; });
   var setsById = {};      sets.forEach(function (x) { setsById[x.id] = x; });
   var aspectsById = {};   aspects.forEach(function (a) { aspectsById[a.id] = a; });
   var rivalsById = {};    rivals.forEach(function (r) { rivalsById[r.id] = r; });
@@ -1015,7 +1069,7 @@
     resources: resources, buildings: buildings, creatures: creatures, skills: skills, aspects: aspects,
     battleAbilities: battleAbilities, fieldMagic: fieldMagic,
     magic: magic, rarities: rarities, recipes: recipes, equipSlots: equipSlots,
-    regions: regions, rulerStages: rulerStages, research: research, sets: sets, slotResearch: slotResearch, rivals: rivals,
+    regions: regions, rulerStages: rulerStages, research: research, talentBranches: talentBranches, talents: talents, sets: sets, slotResearch: slotResearch, rivals: rivals,
     events: events, affinities: affinities, help: help,
     strategicNodes: strategicNodes, strategicSites: strategicSites,
     creature: function (id) { return byId[id]; },
@@ -1033,6 +1087,7 @@
     affinity: function (id) { return affinitiesById[id]; },
     strategicSite: function (id) { return strategicSitesById[id]; },
     researchNode: function (id) { return researchById[id]; },
+    talent: function (id) { return talentsById[id]; },
     set: function (id) { return setsById[id]; }
   };
 })();

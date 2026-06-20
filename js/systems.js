@@ -141,6 +141,12 @@
       var r = GD().researchNode(id);
       if (r && r.unlocks && r.unlocks.effect) addEffect(b, r.unlocks.effect, 1);
     });
+    // Passive Talente wirken pro investiertem Rang. Die Daten verwenden
+    // dieselben Effekt-Schlüssel wie Forschung, Gebäude und Reichsrituale.
+    GD().talents.forEach(function (talent) {
+      var rank = talentRank(state, talent.id);
+      if (rank > 0) addEffect(b, talent.effect, rank);
+    });
     // Gebäude mit prozentualem Bonus (z. B. Arena, Bibliothek), skaliert mit Stufe
     GD().buildings.forEach(function (bd) {
       if (bd.effect) {
@@ -162,6 +168,82 @@
       if (tb.untilTick > state.tick) addEffect(b, tb.effect, 1);
     });
     return b;
+  }
+
+  // ---------- Passiver Herrscher-Talentbaum ----------
+  function talentRank(state, id) {
+    var ranks = state.herrscher.talents || {};
+    return Math.max(0, Math.floor(Number(ranks[id]) || 0));
+  }
+  function talentPointsEarned(state) {
+    return Math.max(0, (state.herrscher.level || 1) - 1) + Math.max(0, state.herrscher.stage || 0) * 2;
+  }
+  function talentPointsSpent(state, branch) {
+    var total = 0;
+    GD().talents.forEach(function (talent) {
+      if (!branch || talent.branch === branch) total += talentRank(state, talent.id);
+    });
+    return total;
+  }
+  function talentPointsAvailable(state) { return Math.max(0, talentPointsEarned(state) - talentPointsSpent(state)); }
+  function talentReqStatus(state, node) {
+    var missing = [];
+    if (!node) return { ok: false, missing: ['Unbekanntes Talent'] };
+    if (talentPointsSpent(state, node.branch) < (node.requiredSpent || 0)) missing.push((node.requiredSpent || 0) + ' Punkte im Zweig');
+    if (node.requires && talentRank(state, node.requires.id) < (node.requires.rank || 1)) {
+      var parent = GD().talent(node.requires.id);
+      missing.push((parent ? parent.name : node.requires.id) + ' Rang ' + (node.requires.rank || 1));
+    }
+    return { ok: missing.length === 0, missing: missing };
+  }
+  function canAllocateTalent(state, id) {
+    var node = GD().talent(id); if (!node) return { ok: false, reason: 'Unbekanntes Talent' };
+    if (talentRank(state, id) >= node.maxRank) return { ok: false, reason: 'Maximaler Rang erreicht' };
+    if (talentPointsAvailable(state) <= 0) return { ok: false, reason: 'Keine freien Talentpunkte' };
+    var req = talentReqStatus(state, node);
+    if (!req.ok) return { ok: false, reason: req.missing.join(', ') };
+    return { ok: true };
+  }
+  function allocateTalent(state, id) {
+    var check = canAllocateTalent(state, id); if (!check.ok) return check;
+    var node = GD().talent(id), ranks = state.herrscher.talents || (state.herrscher.talents = {});
+    ranks[id] = talentRank(state, id) + 1;
+    log(state, node.icon + ' Talent: ' + node.name + ' ' + ranks[id] + '/' + node.maxRank + '.', ranks[id] === node.maxRank ? 'gold' : 'good');
+    return { ok: true, talent: node, rank: ranks[id], available: talentPointsAvailable(state) };
+  }
+  function talentRefundCost(state) { return { gold: 75 + talentPointsSpent(state) * 25 }; }
+  function talentAllocationsValid(allocations) {
+    function rank(id) { return Math.max(0, Math.floor(Number(allocations[id]) || 0)); }
+    function branchSpent(branch) {
+      return GD().talents.reduce(function (sum, t) { return sum + (t.branch === branch ? rank(t.id) : 0); }, 0);
+    }
+    for (var i = 0; i < GD().talents.length; i++) {
+      var node = GD().talents[i], nr = rank(node.id);
+      if (!nr) continue;
+      // Der Knoten selbst zählt nicht für seine Freischaltschwelle; dadurch
+      // lassen sich tragende Punkte nicht unter bereits aktive Knoten wegziehen.
+      if (branchSpent(node.branch) - nr < (node.requiredSpent || 0)) return false;
+      if (node.requires && rank(node.requires.id) < (node.requires.rank || 1)) return false;
+    }
+    return true;
+  }
+  function canRefundTalent(state, id) {
+    var node = GD().talent(id); if (!node || talentRank(state, id) <= 0) return { ok: false, reason: 'Kein Rang investiert' };
+    var simulated = {}, current = state.herrscher.talents || {};
+    for (var key in current) simulated[key] = current[key];
+    simulated[id] = talentRank(state, id) - 1;
+    if (!talentAllocationsValid(simulated)) return { ok: false, reason: 'Dieser Punkt trägt einen abhängigen Knoten' };
+    var cost = talentRefundCost(state);
+    if (!canAfford(state, cost)) return { ok: false, reason: missingCost(state, cost).join(', '), cost: cost };
+    return { ok: true, cost: cost };
+  }
+  function refundTalent(state, id) {
+    var check = canRefundTalent(state, id); if (!check.ok) return check;
+    var node = GD().talent(id); pay(state, check.cost);
+    state.herrscher.talents[id] = talentRank(state, id) - 1;
+    if (!state.herrscher.talents[id]) delete state.herrscher.talents[id];
+    log(state, '↩️ Talentpunkt aus ' + node.name + ' zurückerstattet.', '');
+    return { ok: true, talent: node, rank: talentRank(state, id), cost: check.cost, available: talentPointsAvailable(state) };
   }
 
   // ---------- Forschung ----------
@@ -931,6 +1013,12 @@
     }
     var sb = equippedSetBonus(state, h.equipment);
     for (var ss in sb.stats) stats[ss] = (stats[ss] || 0) + sb.stats[ss];
+    var tb = computeBonuses(state);
+    stats.lp = round(stats.lp * (1 + (tb.herrscherLp || 0)));
+    stats.ang = round(stats.ang * (1 + (tb.herrscherAng || 0)));
+    stats.ver = round(stats.ver * (1 + (tb.herrscherVer || 0)));
+    stats.mag = round(stats.mag * (1 + (tb.herrscherMag || 0)));
+    stats.tmp = round(stats.tmp * (1 + (tb.herrscherTmp || 0)));
     return stats;
   }
   function rulerPower(state) {
@@ -940,7 +1028,7 @@
       var sk = GD().skill(id), p = skillProgress(state.herrscher, id);
       if (sk && sk.kampf) sm += sk.kampf * (1 + 0.18 * (p.level - 1));
     });
-    return GD().combatPower(rulerStats(state), 1, 1 + sb.kampf + sm);
+    return GD().combatPower(rulerStats(state), 1, 1 + sb.kampf + sm + (computeBonuses(state).herrscherKampf || 0));
   }
   function rulerXpForLevel(level) { return round(40 * Math.pow(level, 1.6)); }
   var RULER_LEVELCAP = 60;
@@ -995,21 +1083,22 @@
   function maxArmyGroups(state) {
     // Die Herrscherarmee belegt den festen ersten Slot. Ein weiterer Slot steht
     // für die erste benannte Elite bereit; Fortschritt schafft zusätzliche Helden.
-    return 2 + (state.herrscher.stage || 0) + Math.floor((state.buildings.arena || 0) / 3);
+    return 2 + (state.herrscher.stage || 0) + Math.floor((state.buildings.arena || 0) / 3) + Math.floor(computeBonuses(state).armeeslots || 0);
   }
   function troopCommandCost(speciesId) {
     var sp = GD().creature(speciesId), idx = sp ? GD().rankIndex(sp.rank) : 0;
     return TROOP_COMMAND[idx] || 1;
   }
   function armyCommandCapacity(state, groupOrLeader) {
+    var talentCommand = Math.floor(computeBonuses(state).kommando || 0);
     if (groupOrLeader && groupOrLeader.rulerLed) {
-      return 100 + (state.herrscher.level || 1) * 5 + (state.herrscher.stage || 0) * 25 + (state.buildings.arena || 0) * 5;
+      return 100 + (state.herrscher.level || 1) * 5 + (state.herrscher.stage || 0) * 25 + (state.buildings.arena || 0) * 5 + talentCommand;
     }
     var leader = typeof groupOrLeader === 'object' && Object.prototype.hasOwnProperty.call(groupOrLeader, 'leaderUid')
       ? findCreature(state, groupOrLeader.leaderUid) : groupOrLeader;
     if (!leader) return 0;
     var sp = GD().creature(leader.speciesId), rank = sp ? GD().rankIndex(sp.rank) : 0;
-    return 50 + rank * 25 + (leader.level || 1) * 3 + (state.herrscher.stage || 0) * 10 + (state.buildings.arena || 0) * 5;
+    return 50 + rank * 25 + (leader.level || 1) * 3 + (state.herrscher.stage || 0) * 10 + (state.buildings.arena || 0) * 5 + talentCommand;
   }
   function armyCommandUsed(group) {
     var used = 0;
@@ -1019,7 +1108,7 @@
   function armyMovementMax(state, group) {
     var leader = group && group.rulerLed ? state.herrscher : findCreature(state, group.leaderUid);
     var stats = group && group.rulerLed ? rulerStats(state) : (leader ? creatureStats(state, leader) : { tmp: 0 });
-    return clamp(3 + Math.floor((stats.tmp || 0) / 80), 3, 6);
+    return clamp(3 + Math.floor((stats.tmp || 0) / 80) + Math.floor(computeBonuses(state).bewegung || 0), 3, 7);
   }
   function eligibleArmyLeaders(state) {
     return state.creatures.filter(function (c) {
@@ -1815,6 +1904,17 @@
         if (resolveEvent(state, idx).ok) return { text: 'Ereignis „' + ev.title + '" entschieden.' };
       } else { state.activeEvent = null; }
     }
+    // Freie Talentpunkte gleichmäßig auf die drei Spezialisierungen verteilen.
+    if (talentPointsAvailable(state) > 0) {
+      var talentChoices = GD().talents.filter(function (talent) { return canAllocateTalent(state, talent.id).ok; });
+      talentChoices.sort(function (a, b) {
+        return talentPointsSpent(state, a.branch) - talentPointsSpent(state, b.branch) || a.row - b.row;
+      });
+      if (talentChoices.length) {
+        var autoTalent = allocateTalent(state, talentChoices[0].id);
+        if (autoTalent.ok) return { text: autoTalent.talent.icon + ' Talent „' + autoTalent.talent.name + '“ auf Rang ' + autoTalent.rank + '.' };
+      }
+    }
     // 1) Hungersnot abwenden
     var prod = production(state);
     if ((prod.hunger || prod.rates.nahrung < 0) && canBuild(state, 'farm')) { build(state, 'farm'); return { text: '🌾 Farm ausgebaut.' }; }
@@ -2169,14 +2269,19 @@
     var cbt = state.activeCombat, region = GD().region(cbt.regionId), rk = RISK[cbt.risk] || RISK.normal;
     var gains = {}, drop = null, dead = [], wounded = [];
     if (won) {
-      for (var res in region.rewards) gains[res] = round(region.rewards[res] * rk.reward * (0.9 + rng() * 0.2));
+      var b = computeBonuses(state);
+      for (var res in region.rewards) {
+        var gain = region.rewards[res] * rk.reward * (0.9 + rng() * 0.2);
+        if (res === 'seelen') gain *= (1 + b.seelen);
+        gains[res] = round(gain);
+      }
       addResources(state, gains);
-      var b = computeBonuses(state), xp = round(region.xp * 1.2 * (1 + b.xp));
+      var xp = round(region.xp * 1.2 * (1 + b.xp));
       cbt.party.forEach(function (a) {
         if (a.key === 'herrscher') { addRulerXp(state, round(xp * 0.7)); addSkillXp(state, state.herrscher, round(xp * 0.4)); }
         else { var pc = findCreature(state, a.key); if (pc) { addCreatureXp(state, pc, xp); if (pc.named) addSkillXp(state, pc, round(xp * 0.45)); } }
       });
-      if (rng() < Math.min(0.95, region.dropChance * 1.25 * rk.drop)) drop = makeDropItem(state, region);
+      if (rng() < Math.min(0.95, region.dropChance * 1.25 * rk.drop * (1 + b.drop))) drop = makeDropItem(state, region);
       if (state.claimedRegions.indexOf(region.id) < 0) state.claimedRegions.push(region.id);
       state.metrics.expeditions = (state.metrics.expeditions || 0) + 1;
       state.metrics.expeditionsWon = (state.metrics.expeditionsWon || 0) + 1;
@@ -2305,22 +2410,31 @@
     if (!actor || actor.side !== 'party') return { ok: false, reason: 'Der Gegner ist am Zug' };
     if (!actor || actor.dead || !ability || actor.abilities.indexOf(abilityId) < 0) return { ok: false, reason: 'Aktion nicht verfügbar' };
     if (actor.mp < ability.cost) return { ok: false, reason: 'Nicht genug MP' };
+    var actionAbility = ability;
+    var learnedActiveSpell = actor.key === 'herrscher' && (state.learnedFieldMagic || []).some(function (spellId) {
+      var spell = GD().fieldSpell(spellId); return spell && spell.type === 'combat' && spell.ability === abilityId;
+    });
+    if (learnedActiveSpell && (computeBonuses(state).feldmagie || 0) > 0) {
+      actionAbility = {};
+      for (var ak in ability) actionAbility[ak] = ability[ak];
+      actionAbility.power = ability.power * (1 + computeBonuses(state).feldmagie);
+    }
     if (ability.kind === 'heal' && (!cbt.party[targetIndex] || cbt.party[targetIndex].dead)) return { ok: false, reason: 'Ungültiges Heilziel' };
     if (ability.kind !== 'guard' && ability.kind !== 'heal' && (!cbt.enemies[targetIndex] || cbt.enemies[targetIndex].dead)) return { ok: false, reason: 'Ungültiges Ziel' };
-    if (ability.kind === 'heal' && battleDistance(actor, cbt.party[targetIndex]) > battleAbilityRange(actor, ability)) return { ok: false, reason: 'Heilziel ist außer Reichweite' };
+    if (ability.kind === 'heal' && battleDistance(actor, cbt.party[targetIndex]) > battleAbilityRange(actor, actionAbility)) return { ok: false, reason: 'Heilziel ist außer Reichweite' };
     actor.mp -= ability.cost;
     if (ability.kind === 'guard') {
       actor.defending = true; combatLog(cbt, '🛡️ ' + actor.name + ' verteidigt sich.');
     } else if (ability.kind === 'heal') {
       var ally = cbt.party[targetIndex];
-      var heal = Math.max(4, round(actor.stats.mag * ability.power)); ally.hp = Math.min(ally.maxHp, ally.hp + heal);
+      var heal = Math.max(4, round(actor.stats.mag * actionAbility.power)); ally.hp = Math.min(ally.maxHp, ally.hp + heal);
       combatLog(cbt, '✨ ' + actor.name + ' heilt ' + ally.name + ' um ' + heal + ' LP.');
     } else {
       var target = cbt.enemies[targetIndex];
       if (ability.kind === 'analyze') {
         target.analyzed = true; combatLog(cbt, '🔍 ' + target.name + ': schwach gegen ' + target.weakness + ', resistent gegen ' + target.element + '.');
       } else {
-        var range = battleAbilityRange(actor, ability);
+        var range = battleAbilityRange(actor, actionAbility);
         if (battleDistance(actor, target) > range) {
           var approach = bestBattleApproach(cbt, actor, target);
           if (approach && (approach.x !== actor.pos.x || approach.y !== actor.pos.y)) {
@@ -2328,7 +2442,7 @@
           }
           if (battleDistance(actor, target) > range) { advanceCombatTurn(state); return { ok: true, moved: true, combat: cbt }; }
         }
-        performBattleHit(cbt, actor, target, ability, ability.icon);
+        performBattleHit(cbt, actor, target, actionAbility, actionAbility.icon);
       }
     }
     advanceCombatTurn(state);
@@ -2422,6 +2536,10 @@
     findCreature: findCreature, findItem: findItem, stackCount: stackCount, totalCreatureCount: totalCreatureCount,
     rulerArmyGroup: rulerArmyGroup, findTroopStack: findTroopStack,
     computeBonuses: computeBonuses,
+    talentRank: talentRank, talentPointsEarned: talentPointsEarned, talentPointsSpent: talentPointsSpent,
+    talentPointsAvailable: talentPointsAvailable, talentReqStatus: talentReqStatus,
+    canAllocateTalent: canAllocateTalent, allocateTalent: allocateTalent,
+    talentRefundCost: talentRefundCost, canRefundTalent: canRefundTalent, refundTalent: refundTalent,
     buildingCost: buildingCost, canBuild: canBuild, build: build,
     capacity: capacity, usedCapacity: usedCapacity,
     production: production, tick: tick, offlineProgress: offlineProgress,

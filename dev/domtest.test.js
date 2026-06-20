@@ -31,6 +31,13 @@ ok(document.getElementById('resources').children.length === 6, 'Topbar: 6 Ressou
 ok(document.getElementById('tabbar').children.length === 3, 'Tabbar: anfangs 3 Tabs (Magie/Schmiede/Karte noch gegated)');
 ok(document.getElementById('screen').children.length > 0, '#screen hat Inhalt (Übersicht)');
 ok(document.getElementById('ruler-mini').textContent.indexOf('Lv') >= 0, 'Herrscher-Mini zeigt Level');
+var wtBtn = document.getElementById('watch-toggle');
+ok(!!wtBtn, 'Top-Bar hat einen Zuschauer-Modus-Toggle');
+wtBtn.click();
+ok(window.__TEMPEST__.state.settings.watch === true, 'Top-Bar-Toggle schaltet den Zuschauer-Modus ein');
+ok(wtBtn.classList.contains('on'), 'Top-Bar-Toggle zeigt aktiven Zustand');
+wtBtn.click();
+ok(window.__TEMPEST__.state.settings.watch === false, 'Top-Bar-Toggle schaltet den Zuschauer-Modus wieder aus');
 
 console.log('--- Alle Views rendern ---');
 ['uebersicht', 'reich', 'kreaturen', 'magie', 'schmiede', 'karte'].forEach(function (tab) {
@@ -83,6 +90,17 @@ s.buildings.schmiede = 2; var rc = SYS.craft(s, 'magistahlklinge');
 tryRender('Ausrüst-Modal', function () { window.GameUI.openEquipModal(rc.item); if (!document.querySelector('.modal')) throw new Error('kein Modal'); });
 tryRender('Expeditions-Modal', function () { window.GameUI.openExpeditionModal(window.GameData.region('wald')); if (!document.querySelector('.modal')) throw new Error('kein Modal'); });
 tryRender('Herrscher-Modal', function () { window.GameUI.openRulerModal(); if (!document.querySelector('.modal')) throw new Error('kein Modal'); });
+tryRender('Last-Epoch-artiger Herrscher-Talentbaum', function () {
+  s.herrscher.level = Math.max(8, s.herrscher.level);
+  window.GameUI.openTalentModal();
+  if (document.querySelectorAll('#modal-root .talent-branch').length !== 3) throw new Error('nicht drei Talent-Zweige');
+  if (document.querySelectorAll('#modal-root .talent-node').length !== window.GameData.talents.length) throw new Error('Talentknoten fehlen');
+  var plus = Array.prototype.filter.call(document.querySelectorAll('#modal-root .talent-node .btn'), function (b) { return b.textContent.indexOf('+') >= 0 && !b.hasAttribute('disabled'); })[0];
+  if (!plus) throw new Error('kein investierbarer Talentknoten');
+  var before = window.GameSystems.talentPointsSpent(s); plus.click();
+  if (window.GameSystems.talentPointsSpent(s) !== before + 1) throw new Error('Talentpunkt nicht investiert');
+  document.querySelector('.modal-close').click();
+});
 // Aspekt-Wahl im Namens-Modal + Skill-Modal
 var c1 = s.creatures[2];
 tryRender('Namens-Modal Aspekt-Klick', function () {

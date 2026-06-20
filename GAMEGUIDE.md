@@ -282,6 +282,21 @@ Dein Herrscher (oben links) wächst über **Level** (Cap 60) und **Evolutionsstu
 - Jede Stufe gibt **reichsweite Boni** und schaltet Dinge frei: höheren Beschwörungsrang,
   **Affinität** (ab Stufe 2), **Fusion** (ab Stufe 3) und tiefere Forschung.
 
+### Passiver Talentbaum
+
+Im Herrscher-Dialog öffnet **„Talentbaum öffnen"** drei Spezialisierungen. Jeder Level nach
+Level 1 gibt einen Punkt, jede erreichte Evolutionsstufe zwei weitere. Ein Talent besitzt
+1–5 Ränge; höhere Knoten verlangen einen bestimmten Vorgängerrang und genügend bereits im
+selben Zweig investierte Punkte.
+
+- **🌀 Verschlinger:** persönliche LP/VER/Kampfkraft, Seelenbeute, Heilung und bessere Beute.
+- **🚩 Herrschaft:** Armee-Kampfkraft, Reichsverteidigung, Kommandolimit und Bewegung.
+- **🔮 Arkana:** Magie- und Wissensproduktion, Herrscher-MAG und aktive Kampfzauber.
+
+Einzelne Punkte lassen sich gegen Gold zurückerstatten. Ein tragender Punkt bleibt gesperrt,
+solange ein höherer Knoten davon abhängt. Der Zuschauer-Modus verteilt freie Punkte
+automatisch und hält die drei Zweige dabei möglichst ausgeglichen.
+
 ---
 
 ## Chimära-Fusion

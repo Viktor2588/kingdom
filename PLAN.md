@@ -156,14 +156,18 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Mobile bewusst erhalten:** Unterhalb 1100 px bleibt die bewährte daumenfreundliche Tab-/Kartenansicht vollständig funktionsfähig; kein Engine-Wechsel und keine Aufgabe von Offline-/`file://`-Betrieb oder Save-Kompatibilität.
 - **Visuelle Regression:** Screenshot-Suite auf 20 Aufnahmen erweitert (13 Mobile, 7 Desktop bei 1440×900), zusätzlicher Überbreiten-Check bei 1366×768.
 
-- Phase 19 Zuschauermodus in die top bar aufnehmen
+- Phase 19 **inprogress** Zuschauermodus in die top bar aufnehmen
 - Fehlende Kreaturen assets hinzufügen
 - Karte der reichsübsericht gefällt mir sehr gut, wir sollten diese Interaktiv gestalten das anstelle von icons, die gebäude in der Karte hervorgehoben werden.
 - Umgebungskarte sieht leider immer noch nicht so schön aus.
 - vorspulen funktion sollte 5min sein nicht 30s
 
-Phase 20
-- Richtiger Talentbaum siehe last epoch
+[x] **Phase 20 – Herrscher-Talentbaum im Stil von Last Epoch (2026-06-20)**
+- Drei klar getrennte Spezialisierungen **Verschlinger, Herrschaft und Arkana** mit 15 Knoten, 1–5 Rängen, sichtbaren Pfadverbindungen, Zweigschwellen, Vorgängervoraussetzungen und Schlussknoten.
+- Talentpunkte entstehen ab Herrscher-Level 2 sowie durch neue Evolutionsstufen; die responsive Baumansicht zeigt verdiente, investierte und freie Punkte sowie Sperrgründe direkt am Knoten.
+- Einzelne Punkte können gegen Gold zurückerstattet werden, solange kein abhängiger Knoten dadurch ungültig wird. Der Zuschauer-Modus verteilt freie Punkte automatisch und ausgeglichen.
+- Talente wirken unmittelbar auf Herrscherwerte, Seelen/Beute, Produktion, Heil-/Expeditionstempo, Armee/Verteidigung, Kommandolimit, Kartenbewegung und aktive Feldmagie.
+- Save-Schema v6 normalisiert alte Spielstände kompatibel; Hilfe, Handbuch, README sowie Logik-/DOM-Regressionstests ergänzt.
 
 Phase 21
 - Überarbeitung der Schmiede last epoch, Es sollte  vermieden werden das das spiel 100derte von ausrüstungsgegenstände hat. besser  ne  handvoll die man aufwärten kann. sie sollte Rezepte freischalten, vorhanden Ausrüstung aufwärten können wenn man bestimmte seltene materialien findet um so die qualtität eine ausrüstung zu verbessern.
@@ -172,13 +176,14 @@ Phase 21
  
 ### Dateien
 - Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
-- Dev-Tests (nicht Teil des Spiels): `dev/sim.js` (Logik, `node dev/sim.js`), `dev/domtest.js` (DOM via jsdom).
+- Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough}.test.js`, `dev/balance.js` und `dev/shots.js`.
 
-### Verifikation (Stand 2026-06-20, nach Phase 18)
-- `node dev/sim.js` → 201/201 Logiktests bestanden (inkl. Herrscherarmee, Abenteuerkarte, Rasterkampf, Assets/Inhalte, getrennte Feldmagie, Cooldowns und Save-Migration).
-- `node dev/domtest.js` → 57/57 DOM-Rendertests bestanden (alle Views/Modals inkl. 2D-Abenteuerkarte, Rasterkampf, Assets sowie getrennte Magie-UI/Abenteuerzauber).
-- `node dev/playthrough.js` → 57/57 Durchspiel-Checks bestanden (komplette Sitzung, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
+### Verifikation (Stand 2026-06-20, nach Phase 20)
+- `dev/sim.test.js` → 213/213 Logiktests bestanden (inkl. Talentdaten, Punktelogik, Voraussetzungen, Boni, Rückerstattung und Save-v6-Migration).
+- `dev/domtest.test.js` → 62/62 DOM-Rendertests bestanden (alle Views/Modals inkl. responsivem Drei-Zweig-Talentbaum und echter Punktvergabe per UI).
+- `dev/playthrough.test.js` → 57/57 Durchspiel-Checks bestanden (komplette Sitzung, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
 - `node dev/balance.js` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton.
-- `node dev/shots.js` → 20 frische Screenshots im echten Chromium (13× Handy 390×844, 7× Desktop 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
+- Phase-18-Screenshot-Suite: 20 Aufnahmen im echten Chromium (13× Handy 390×844, 7× Desktop 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
+- Talentbaum zusätzlich im echten Chromium bei 390×844 und 1440×900 geprüft; keine Browserfehler, mobile horizontale Zweig-Navigation und Desktop-Dreispaltenansicht funktionieren.
 - Offline-/HTTP-Smoke-Test: `index.html` lädt alle klassischen Scripts über `file://`; index.html, CSS und alle fünf JS-Dateien liefern lokal HTTP 200 mit korrektem Content-Type.
 - Hinweis: Headless-Screenshots (`dev/shots.js`) brauchen Playwright/Chromium unter `/tmp/tempest-shots` + Chromium-Systemlibs (`LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu`); jsdom-Tests brauchen `jsdom@22` unter `/tmp/tempest-domtest`.

@@ -5,7 +5,8 @@ Reincarnated as a Slime* (Tensura), mit strategischer Karte im Stil von *Heroes 
 and Magic*: Basistruppen automatisch in der Herrscherarmee stapeln, bis zu 20 Eliten
 benennen, entwickeln und fusionieren, benannte Anführer über die Weltkarte bewegen, Magie erforschen, Ausrüstung schmieden,
 Auto-Expeditionen oder taktische 7×5-Rasterkämpfe mit Bewegung, Initiative und Gegenwehr bestreiten und ein Reich gegen
-Rivalen-Dämonenlords verteidigen.
+Rivalen-Dämonenlords verteidigen. Der Herrscher spezialisiert sich zusätzlich über einen
+Last-Epoch-artigen passiven Talentbaum mit drei Zweigen und einzeln steigerbaren Knoten.
 
 Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberbare und
 ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
@@ -64,12 +65,12 @@ assets/             Lokale Kreaturen-Sprites und Desktop-Königreichspanorama
 js/
   data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
                     Evolutionsketten, Skills/Aspekte, Magie, Rezepte/Sets, Regionen,
-                    Rivalen, Events, Affinitäten, Forschung, Herrscher-Stufen, Hilfe-Texte
+                    Rivalen, Events, Affinitäten, Forschung, Herrscher-Stufen/-Talente, Hilfe-Texte
   state.js          Spielzustand, Standardwerte, Speichern/Laden (localStorage), normalize()
   systems.js        Spiellogik (DOM-frei, reine Funktionen): Tick/Produktion, Bauen,
                     Beschwören, Namensgebung, Evolution, Skills, Magie/Forschung, Schmieden,
                     Expeditionen, Armeegruppen/Kartenbewegung, taktischer Elementkampf, Rivalen/Bedrohung, Events,
-                    Affinität, Fusion, Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
+                    Affinität, Fusion, Herrscher-Talente, Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
   ui.js             Darstellung: Views je Tab + Modals, alles per DOM-API gerendert
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
 dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
@@ -99,7 +100,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v5 (alte v1–v4-Stände werden automatisch migriert und zu Truppenstapeln/Karten-/Magiefortschritt normalisiert).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v6 (alte v1–v5-Stände werden automatisch migriert und um Truppenstapel, Karten-/Magie- sowie Talentfortschritt ergänzt).
 - **Zurücksetzen:** im Spiel über das Herrscher-Modal (oben links) → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
   ```js
@@ -126,11 +127,12 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 Das Reich kann sich **selbst spielen** – ein Berater (`SYS.autoPlayStep`) führt pro Tick
 eine sinnvolle Aktion aus (bauen, beschwören, benennen, entwickeln, Jobs zuweisen,
 forschen, Magie lernen, schmieden, Expeditionen, Gegenangriffe, Affinität, Fusion,
-Seelen opfern).
+Seelen opfern und freie Talentpunkte verteilen).
 
-**Im Spiel:** Tab *Übersicht* → Karte **„Zuschauer-Modus"** → **▶ Starten**.
+**Im Spiel:** Zuschauer-Modus per **👁️-Schalter oben in der Top-Bar** ein/aus, oder Tab
+*Übersicht* → Karte **„Zuschauer-Modus"** → **▶ Starten**.
 Mit **🎬 Sichtbar** erscheint jede Berater-Aktion als kurzer Dialog mit Pause und Verlauf.
-Zusätzlich **⏩ Vorspulen 30 s** springt mehrere Sekunden Spielzeit auf einmal.
+Zusätzlich **⏩ Vorspulen 5 min** springt mehrere Minuten Spielzeit auf einmal.
 
 **Per Konsole:**
 ```js
@@ -177,8 +179,8 @@ Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test dev/sim.test.js`         | `1 pass` · `201 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `57 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/sim.test.js`         | `1 pass` · `213 bestanden, 0 fehlgeschlagen` |
+| `bun test dev/domtest.test.js`     | `1 pass` · `62 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `57 bestanden, 0 fehlgeschlagen`  |
 | `bun run balance`                  | Kraftkurven in den Bändern, Beute/Tick monoton |
 

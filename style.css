@@ -134,6 +134,28 @@ button { font-family: inherit; }
 .chip .chip-ico { font-size: 13px; }
 .chip .chip-val { font-weight: 700; }
 .chip .chip-rate { font-size: 10.5px; color: var(--text-mut); }
+
+#watch-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+#watch-toggle:active { background: var(--panel-2); }
+#watch-toggle.on {
+  background: rgba(255, 180, 84, .16);
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 1px rgba(255, 180, 84, .4), 0 0 9px rgba(255, 180, 84, .28);
+}
 .chip.is-magie   { color: var(--r-magie); }
 .chip.is-gold    { color: var(--r-gold); }
 .chip.is-nahrung { color: var(--r-nahrung); }
@@ -378,6 +400,122 @@ button { font-family: inherit; }
   background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; color: var(--text);
 }
 .opt-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---------------- Herrscher-Talentbaum ---------------- */
+.talent-modal { max-width: 1080px; }
+.talent-screen { min-width: 0; }
+.talent-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 7px;
+  align-items: stretch;
+  margin-bottom: 8px;
+}
+.talent-summary > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-2);
+}
+.talent-summary strong { color: var(--accent-2); font-size: 18px; }
+.talent-summary span { color: var(--text-mut); font-size: 10px; text-align: center; }
+.talent-intro { margin: 6px 2px 12px; font-size: 12px; }
+.talent-tree-viewport {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 2px 2px 10px;
+  scrollbar-color: var(--line-hi) var(--bg-2);
+}
+.talent-tree {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 10px;
+  min-width: 700px;
+}
+.talent-branch {
+  --talent-color: var(--accent);
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--talent-color) 38%, var(--line));
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--talent-color) 10%, var(--panel-2)), var(--bg-2));
+}
+.talent-branch-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 58px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid color-mix(in srgb, var(--talent-color) 35%, var(--line));
+}
+.talent-branch-icon { font-size: 25px; filter: drop-shadow(0 0 7px var(--talent-color)); }
+.talent-branch-head h4 { margin: 0; color: var(--talent-color); font-size: 14px; }
+.talent-branch-head p { margin: 2px 0 0; color: var(--text-mut); font-size: 9px; line-height: 1.25; }
+.talent-node {
+  position: relative;
+  margin-top: 25px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(12, 16, 27, .82);
+  opacity: .62;
+  transition: border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+.talent-node::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 2px;
+  height: 26px;
+  background: var(--line-hi);
+}
+.talent-node.allocated,
+.talent-node.available { opacity: 1; }
+.talent-node.available { border-color: color-mix(in srgb, var(--talent-color) 70%, white); }
+.talent-node.allocated {
+  border-color: var(--talent-color);
+  box-shadow: inset 0 0 18px color-mix(in srgb, var(--talent-color) 12%, transparent);
+}
+.talent-node.maxed { box-shadow: 0 0 12px color-mix(in srgb, var(--talent-color) 28%, transparent), inset 0 0 18px color-mix(in srgb, var(--talent-color) 16%, transparent); }
+.talent-node.allocated::before { background: var(--talent-color); box-shadow: 0 0 5px var(--talent-color); }
+.talent-node.capstone { border-width: 2px; }
+.talent-node-top { display: grid; grid-template-columns: auto 1fr auto; gap: 7px; align-items: start; }
+.talent-node-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-hi);
+  border-radius: 50%;
+  background: var(--panel-3);
+  font-size: 18px;
+}
+.talent-node.allocated .talent-node-icon { border-color: var(--talent-color); box-shadow: 0 0 8px color-mix(in srgb, var(--talent-color) 35%, transparent); }
+.talent-node-copy { min-width: 0; }
+.talent-node-copy b { display: block; color: var(--text); font-size: 12px; line-height: 1.2; }
+.talent-node-copy small { display: block; margin-top: 3px; color: var(--text-mut); font-size: 9px; line-height: 1.3; }
+.talent-rank {
+  min-width: 31px;
+  padding: 3px 5px;
+  border: 1px solid var(--line-hi);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+.talent-node.maxed .talent-rank { border-color: var(--talent-color); color: var(--talent-color); }
+.talent-node-foot { display: flex; align-items: center; gap: 5px; margin-top: 8px; }
+.talent-node-foot .btn { min-width: 34px; padding: 5px 7px; }
+.talent-status { flex: 1; min-width: 0; color: var(--text-mut); font-size: 9px; line-height: 1.2; }
+.ruler-talent-card { gap: 9px; }
 
 /* ---------------- Toast / Log ---------------- */
 #toast-container {
@@ -796,6 +934,15 @@ select.btn { text-align: left; min-height: 40px; }
   .chip .chip-val { font-size: 14px; }
   .chip .chip-rate { font-size: 10px; }
 
+  #watch-toggle {
+    height: 52px;
+    min-width: 52px;
+    font-size: 21px;
+    border-color: #476481;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #1c2d43, #111c2b);
+  }
+
   #tabbar {
     grid-column: 1;
     grid-row: 1 / 3;
@@ -1026,33 +1173,80 @@ select.btn { text-align: left; min-height: 40px; }
     position: absolute;
     z-index: 3;
     transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 52px;
-    min-height: 52px;
-    padding: 7px;
-    color: #f3f8fa;
-    border: 1px solid rgba(162,224,237,.65);
-    border-radius: 50%;
-    background: rgba(8,21,31,.78);
-    backdrop-filter: blur(5px);
-    box-shadow: 0 0 0 5px rgba(73,184,207,.11), 0 8px 18px rgba(0,0,0,.48);
+    width: var(--hs-w, 112px);
+    height: var(--hs-h, 92px);
+    padding: 0;
+    border: 0;
+    background: transparent;
     cursor: pointer;
-    transition: min-width .2s ease, border-radius .2s ease, transform .2s ease, background .2s ease;
+  }
+  /* Leuchtender Highlight, der das Bauwerk selbst hervorhebt (bei Hover/Fokus) */
+  .scene-hotspot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 48% 48% 46% 46% / 40% 40% 60% 60%;
+    background: radial-gradient(ellipse at 50% 45%, rgba(126,212,255,.34), rgba(88,168,232,.14) 55%, transparent 72%);
+    border: 1.5px solid transparent;
+    opacity: 0;
+    transition: opacity .25s ease, box-shadow .25s ease, border-color .25s ease, transform .25s ease;
+    pointer-events: none;
+  }
+  /* Dauerhafter, dezenter Leuchtpunkt markiert das interaktive Gebäude */
+  .scene-hotspot::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 58%;
+    width: 13px;
+    height: 13px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(196,240,255,.95), rgba(120,200,255,.4) 60%, transparent 72%);
+    box-shadow: 0 0 10px 3px rgba(120,205,255,.5);
+    animation: hotspot-beacon 2.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes hotspot-beacon {
+    0%, 100% { opacity: .5; transform: translate(-50%, -50%) scale(.8); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  }
+  .scene-hotspot:hover::before,
+  .scene-hotspot:focus-visible::before {
+    opacity: 1;
+    border-color: rgba(174,232,255,.85);
+    box-shadow: 0 0 30px 8px rgba(96,186,255,.4), inset 0 0 30px rgba(126,212,255,.4);
+    transform: scale(1.05);
+  }
+  .scene-hotspot:hover::after,
+  .scene-hotspot:focus-visible::after { opacity: 0; }
+  /* Namensschild über dem Gebäude bei Hover/Fokus */
+  .scene-hotspot-copy {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% - 8px);
+    transform: translateX(-50%) translateY(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     white-space: nowrap;
-  }
-  .scene-hotspot:hover {
-    min-width: 180px;
+    padding: 5px 12px;
     border-radius: 9px;
-    transform: translate(-50%, -50%) translateY(-3px);
-    background: rgba(14,42,55,.94);
+    background: rgba(10,28,40,.95);
+    border: 1px solid rgba(150,210,235,.5);
+    box-shadow: 0 8px 20px rgba(0,0,0,.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    text-align: center;
   }
-  .scene-hotspot-icon { width: 36px; flex: 0 0 36px; font-size: 24px; line-height: 1; }
-  .scene-hotspot-copy { display: none; text-align: left; padding-right: 8px; }
-  .scene-hotspot:hover .scene-hotspot-copy { display: flex; flex-direction: column; }
-  .scene-hotspot-copy b { font-size: 12px; }
-  .scene-hotspot-copy small { color: #91aebc; font-size: 9px; }
+  .scene-hotspot:hover .scene-hotspot-copy,
+  .scene-hotspot:focus-visible .scene-hotspot-copy {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .scene-hotspot-copy b { font-size: 12.5px; color: #eaf6ff; }
+  .scene-hotspot-copy small { color: #9fc4d6; font-size: 9.5px; }
   .scene-status {
     position: absolute;
     z-index: 2;
@@ -1156,6 +1350,11 @@ select.btn { text-align: left; min-height: 40px; }
     background: linear-gradient(150deg, #17263a, #0e1826);
     box-shadow: 0 28px 80px rgba(0,0,0,.62), inset 0 1px rgba(255,255,255,.05);
   }
+  .modal.talent-modal { width: min(94vw, 1120px); max-width: 1120px; }
+  .talent-tree { min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .talent-branch { padding: 13px; }
+  .talent-node-copy b { font-size: 13px; }
+  .talent-node-copy small { font-size: 10px; }
   .modal-head h3 { font-family: Georgia, "Times New Roman", serif; font-size: 21px; }
   .battle-modal {
     width: min(96vw, 1500px);

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0e0b1a">
+  <meta name="description" content="Tempest — ein Königreich-Builder im Universum von That Time I Got Reincarnated as a Slime.">
+  <title>Tempest — Königreich der Monster</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <button id="ruler-mini" type="button" aria-label="Herrscher"></button>
+      <div id="resources" aria-label="Ressourcen"></div>
+    </header>
+
+    <main id="screen" aria-live="polite"><!-- Inhalt wird per JavaScript gerendert --></main>
+
+    <nav id="tabbar" aria-label="Navigation"><!-- Tabs werden per JavaScript gerendert --></nav>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-container" aria-live="assertive"></div>
+
+  <!-- Logik (DOM-frei, auch unter Node testbar) -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/systems.js"></script>
+  <!-- Darstellung -->
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

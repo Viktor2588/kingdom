@@ -1,0 +1,220 @@
+# Tempest — Königreich der Monster
+
+Ein **Königreich-Builder fürs Handy & den Browser** im Universum von *That Time I Got
+Reincarnated as a Slime* (Tensura), mit strategischer Karte im Stil von *Heroes of Might
+and Magic*: Basistruppen automatisch in der Herrscherarmee stapeln, bis zu 20 Eliten
+benennen, entwickeln und fusionieren, benannte Anführer über die Weltkarte bewegen, Magie erforschen, Ausrüstung schmieden,
+Auto-Expeditionen oder taktische 7×5-Rasterkämpfe mit Bewegung, Initiative und Gegenwehr bestreiten und ein Reich gegen
+Rivalen-Dämonenlords verteidigen.
+
+Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberbare und
+ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
+Erkennbare lokale Monster-Portraits für die zentralen Völker ersetzen dort die reinen
+Emoji-Platzhalter; das Spiel bleibt vollständig offline.
+Die Magie ist in aktive Kampf-/Abenteuerzauber der Arkanen Akademie, dauerhafte
+Reichsrituale und den Königreichs-Forschungsbaum getrennt.
+
+> Spieler-Handbuch (deutsch): siehe **[GAMEGUIDE.md](GAMEGUIDE.md)**
+> Verbindliche Spezifikation & Roadmap: siehe **[PLAN.md](PLAN.md)**
+
+---
+
+## Eigenschaften / Technik
+
+- **Reines HTML + CSS + JavaScript** – kein Build-Schritt, keine Frameworks, keine
+  externen Bibliotheken/CDNs.
+- **Offline- & `file://`-tauglich:** Datei aufs Handy kopieren, im Browser öffnen → läuft.
+- **Mobile-first:** untere Tab-Leiste, große Tap-Ziele, responsiv bis Desktop.
+- **Spielstand** via `localStorage` (Auto-Save + manuell, versioniertes Schema, Reset).
+- **UI-Sprache Deutsch.** Spielgefühl: Aufbau & Management.
+- Die **datengetriebene UI wird per JavaScript aus Daten gerendert** (sichere DOM-Erzeugung,
+  kein zusammengesetztes HTML) → robust gegen Formatierungsfehler.
+
+---
+
+## Schnellstart
+
+Es gibt **keinen Build**. Drei Wege, das Spiel zu starten:
+
+**1. Direkt öffnen (offline)**
+`index.html` im Browser öffnen (Doppelklick bzw. `file://…/index.html`). Läuft komplett
+offline; der Spielstand liegt im `localStorage` des Browsers.
+
+**2. Lokaler Server (empfohlen, auch fürs Handy im selben WLAN)**
+```bash
+python3 -m http.server 8000
+# PC:    http://localhost:8000
+# Handy: http://<PC-IP>:8000   (z. B. http://192.168.0.42:8000)
+```
+
+**3. Aufs Handy kopieren**
+Den ganzen Ordner aufs Gerät kopieren und `index.html` im mobilen Browser öffnen.
+
+---
+
+## Projektstruktur
+
+```
+index.html          Minimales Grundgerüst: Topbar, Tab-Container, Navigation, Modal-/Toast-Wurzel
+style.css           Mobile-first Theme (dunkles Fantasy-Design)
+js/
+  data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
+                    Evolutionsketten, Skills/Aspekte, Magie, Rezepte/Sets, Regionen,
+                    Rivalen, Events, Affinitäten, Forschung, Herrscher-Stufen, Hilfe-Texte
+  state.js          Spielzustand, Standardwerte, Speichern/Laden (localStorage), normalize()
+  systems.js        Spiellogik (DOM-frei, reine Funktionen): Tick/Produktion, Bauen,
+                    Beschwören, Namensgebung, Evolution, Skills, Magie/Forschung, Schmieden,
+                    Expeditionen, Armeegruppen/Kartenbewegung, taktischer Elementkampf, Rivalen/Bedrohung, Events,
+                    Affinität, Fusion, Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
+  ui.js             Darstellung: Views je Tab + Modals, alles per DOM-API gerendert
+  main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
+dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
+  sim.js            Headless-Logiktest (Node, ohne Abhängigkeiten)
+  domtest.js        DOM-Rendertest (jsdom)
+  playthrough.js    Komplettes Headless-Durchspiel (jsdom)
+  balance.js        Balance-Analyse der Kraftkurven (Node)
+  shots.js          Handy-Screenshots via Playwright/Chromium
+  screenshots/      Erzeugte PNGs (390×844)
+```
+
+### Architektur-Prinzipien
+
+- **Logik DOM-frei halten.** `data.js`, `state.js` und `systems.js` dürfen *kein* `document`/
+  `window`-DOM benutzen → unter Node headless testbar. Sie exportieren als
+  `window.GameData` / `window.GameState` / `window.GameSystems` (im Browser) bzw.
+  `globalThis.*` (unter Node).
+- **UI nur in `ui.js`.** Oberfläche ausschließlich per `document.createElement`/`textContent`
+  bauen (Helfer `el(tag, attrs, children)`), **niemals** HTML-Strings zusammensetzen.
+- **`index.html` minimal halten.** Inhalte kommen aus den Daten, nicht aus handgeschriebenem
+  Markup.
+- **Spielstand-Kompatibilität:** Neue Zustandsfelder immer in `createDefault()` **und**
+  `normalize()` (in `state.js`) ergänzen, damit alte Stände weiterladen.
+- **`PLAN.md` ist die verbindliche Spezifikation** – Konzeptänderungen dort nachziehen.
+
+---
+
+## Spielstand & Debugging
+
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v5 (alte v1–v4-Stände werden automatisch migriert und zu Truppenstapeln/Karten-/Magiefortschritt normalisiert).
+- **Zurücksetzen:** im Spiel über das Herrscher-Modal (oben links) → „🗑 Spielstand
+  zurücksetzen", oder in der Browser-Konsole:
+  ```js
+  localStorage.removeItem('tempest_kingdom_save_v2'); location.reload();
+  ```
+- **Debug-Handle** in der Browser-Konsole:
+  ```js
+  const T = window.__TEMPEST__;
+  T.state          // der komplette Spielzustand (identisch mit T.UI.state)
+  T.SYS            // GameSystems (alle Logikfunktionen)
+  T.GST            // GameState (save/load/reset/createDefault)
+  T.UI             // GameUI (Render & Modals)
+  T.stopLoop()     // den 1-Sekunden-Tick anhalten
+  ```
+  Beispiel – Ressourcen geben und neu zeichnen:
+  ```js
+  T.state.resources.gold += 100000; T.UI.refresh();
+  ```
+
+---
+
+## Auto- / Simulations-Modus (Zuschauer-Modus)
+
+Das Reich kann sich **selbst spielen** – ein Berater (`SYS.autoPlayStep`) führt pro Tick
+eine sinnvolle Aktion aus (bauen, beschwören, benennen, entwickeln, Jobs zuweisen,
+forschen, Magie lernen, schmieden, Expeditionen, Gegenangriffe, Affinität, Fusion,
+Seelen opfern).
+
+**Im Spiel:** Tab *Übersicht* → Karte **„Zuschauer-Modus"** → **▶ Starten**.
+Mit **🎬 Sichtbar** erscheint jede Berater-Aktion als kurzer Dialog mit Pause und Verlauf.
+Zusätzlich **⏩ Vorspulen 30 s** springt mehrere Sekunden Spielzeit auf einmal.
+
+**Per Konsole:**
+```js
+const T = window.__TEMPEST__;
+T.state.settings.watch = true; T.UI.refresh();   // einschalten (entspricht „▶ Starten")
+T.UI.fastForward(120);                            // 120 Sekunden vorspulen
+T.state.settings.watch = false;                   // wieder ausschalten
+```
+
+**Headless (Node, ohne DOM)** – z. B. zum Tunen der Auto-Logik oder für Langzeit-Stabilität:
+```js
+require('./js/data.js'); require('./js/state.js'); require('./js/systems.js');
+const GST = globalThis.GameState, SYS = globalThis.GameSystems, GD = globalThis.GameData;
+
+const s = GST.createDefault();
+SYS.syncUnlocks(s);                               // bestehende Freischaltungen abgleichen
+for (let i = 0; i < 3000; i++) {                  // ~50 Minuten Spielzeit
+  SYS.autoPlayStep(s);                            // eine Auto-Aktion …
+  SYS.tick(s);                                    // … dann ein Welt-Tick
+}
+console.log('Stufe:', GD.rulerStages[s.herrscher.stage].name,
+            'Regionen:', s.claimedRegions.length,
+            'Kreaturen:', SYS.totalCreatureCount(s));
+```
+
+---
+
+## Tests
+
+Vier Test-/Analyse-Skripte plus Screenshots. **`sim.js` und `balance.js` laufen ohne
+jede Einrichtung.** Die jsdom- und Playwright-Tests brauchen einmal eine kleine Ablage
+unter `/tmp` (bewusst außerhalb des Repos, damit keine `node_modules` eingecheckt werden).
+
+```bash
+# 1) Reine Logik – keine Abhängigkeiten
+node dev/sim.js          # Logiktests (Daten-Integrität, alle Systeme, Auto-Modus-Marathon)
+node dev/balance.js      # Balance-Analyse (Kraftkurven je Rang, Regions-Monotonie)
+
+# 2) DOM-Tests – benötigen jsdom (einmalig einrichten)
+mkdir -p /tmp/tempest-domtest && ( cd /tmp/tempest-domtest && npm init -y >/dev/null && npm i jsdom@22 )
+node dev/domtest.js      # rendert alle Views & Modals, klickt echte Buttons
+node dev/playthrough.js  # komplettes Durchspiel + Invarianten-Checks
+```
+
+Erwartete Ausgabe (Soll-Stand):
+
+| Skript                 | Ergebnis                  |
+|------------------------|---------------------------|
+| `node dev/sim.js`         | `201 bestanden, 0 fehlgeschlagen` |
+| `node dev/domtest.js`     | `57 bestanden, 0 fehlgeschlagen`  |
+| `node dev/playthrough.js` | `57 bestanden, 0 fehlgeschlagen`  |
+| `node dev/balance.js`     | Kraftkurven in den Bändern, Beute/Tick monoton |
+
+### Screenshots (optional, Linux/WSL)
+
+`dev/shots.js` fotografiert alle Tabs + Modals im Handy-Viewport (390×844) und meldet
+Browser-Laufzeitfehler. Es braucht Playwright/Chromium plus ein paar System-Libs. Ohne
+root (z. B. in WSL):
+
+```bash
+# Playwright + Chromium
+mkdir -p /tmp/tempest-shots && ( cd /tmp/tempest-shots && npm init -y >/dev/null && npm i playwright && npx playwright install chromium )
+
+# Fehlende Chromium-System-Libs ohne root beschaffen
+mkdir -p /tmp/chromedeps /tmp/dldeps && ( cd /tmp/dldeps && apt-get download libnspr4 libnss3 libasound2t64 && for f in *.deb; do dpkg-deb -x "$f" /tmp/chromedeps; done )
+
+# (einmalig, gegen ▢-Emoji-Kästchen) Emoji-Font
+apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.deb /tmp/emoji \
+  && mkdir -p ~/.fonts && cp /tmp/emoji/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf ~/.fonts/ && fc-cache -f
+
+# Screenshots erzeugen
+LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu node dev/shots.js
+# → 12 PNGs in dev/screenshots/, darunter taktischer Kampf und sichtbarer Auto-Modus
+```
+
+---
+
+## Mitarbeiten / Konventionen
+
+- **Keine externen Abhängigkeiten** im Spiel, **kein Build**. Klassische `<script>`-Tags,
+  relative Pfade, muss über `file://` laufen.
+- Logik **DOM-frei** (data/state/systems), UI **nur** über die DOM-Helfer in `ui.js`.
+- Neue Zustandsfelder in `createDefault()` **und** `normalize()` ergänzen (Save-Kompatibilität).
+- Nach Änderungen **die Tests laufen lassen** (mindestens `sim.js` + `domtest.js`),
+  bei UI-Änderungen idealerweise auch Screenshots.
+- Konzept-/Feature-Änderungen in **`PLAN.md`** nachziehen.
+
+## Lizenz / Hinweis
+
+Fan-/Lernprojekt im Tensura-Universum; die strategische Armee- und Kartenstruktur orientiert
+sich spielmechanisch an klassischen rundenbasierten Fantasy-Strategiespielen.

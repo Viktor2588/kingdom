@@ -204,7 +204,9 @@ Phase 26 installiere UE 5.8 MCP
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
 
-Phase 27 – Code-Architektur: Monolithen modularisieren  ⏸ ZURÜCKGESTELLT (kollidiert mit der aktiven Parallelarbeit an systems.js/ui.js/data.js → unauflösbare Merge-Konflikte; erst umsetzen, wenn die Gameplay-Phasen ruhen)
+Phase 27 – Code-Architektur: Monolithen modularisieren  🔶 TEILWEISE (2026-06-20, Automode pausiert)
+- ✅ **data.js entkoppelt:** reine Daten wandern nach `js/data-tables.js` (`GameDataTables`, vor data.js geladen); data.js bleibt Schema/Logik/Lookups. creatures-Tabelle (~330 Z.) ausgelagert → data.js 1093→821 Z. Muster + alle Loader (index.html, ESM-Tests, eval-Listen) etabliert; restliche reine Tabellen (buildings/magic/recipes/regions/events/talents/research/help …) sind nach gleichem Muster verschiebbar (alle funktionsfrei).
+- ⏳ **systems.js / ui.js (Logik-Monolithen):** erfordern, die closure-privaten Helfer (el/btn/SYS-Helper bzw. interne System-Funktionen) auf einen gemeinsamen Namensraum zu heben — größerer, riskanterer Umbau, am besten mit visueller Browser-Verifikation. Noch offen.
 - Befund: `js/systems.js` (~2590 Zeilen), `js/ui.js` (~2170) und `js/data.js` (~1090) sind Einzeldateien. Beim parallelen Mehr-Phasen-Workflow (mehrere Worktrees gleichzeitig) erzeugen sie große, konfliktträchtige Diffs/Merges.
 - Ziel: thematische Aufteilung **ohne Build-Schritt** — weiterhin klassische `<script>`-Tags, Namensraum `Game*`. Z. B. `systems/` (produktion, kampf, armee, magie, echo, auto-modus), `data/` (kreaturen, gebäude, magie, regionen, talente, schmiede). `index.html` lädt die Teile in fester Reihenfolge.
 - Nutzen: deutlich weniger Merge-Konflikte, schnellere Orientierung, gezieltere Tests. Save-Kompatibilität & Offline-/`file://`-Betrieb bleiben unberührt.

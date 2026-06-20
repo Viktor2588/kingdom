@@ -3,6 +3,7 @@
    alter Stände und definierte Rückgaben ohne localStorage (Node).
    NICHT Teil des Spiels.   Aufruf: bun test dev/save.test.js          */
 import { test, expect } from "bun:test";
+import "../js/data-tables.js";
 import "../js/data.js";
 import "../js/state.js";
 import "../js/systems.js";

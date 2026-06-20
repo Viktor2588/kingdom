@@ -5,6 +5,7 @@
    sichert dieser sehr lockere Guard gegen massive künftige Regressionen ab.
    NICHT Teil des Spiels.   Aufruf: bun test dev/perf.test.js             */
 import { test, expect } from "bun:test";
+import "../js/data-tables.js";
 import "../js/data.js";
 import "../js/state.js";
 import "../js/systems.js";

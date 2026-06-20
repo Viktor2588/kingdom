@@ -3,6 +3,7 @@
    echten Tests, damit Balance-Regressionen in CI auffallen (Phase 29).
    NICHT Teil des Spiels.   Aufruf: bun test dev/balance.test.js        */
 import { test, expect } from "bun:test";
+import "../js/data-tables.js";
 import "../js/data.js";
 import "../js/state.js";
 import "../js/systems.js";

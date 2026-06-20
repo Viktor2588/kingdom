@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 

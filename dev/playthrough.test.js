@@ -17,7 +17,7 @@ function step(msg) { console.log('\n• ' + msg); }
 
 var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
 var window = dom.window, document = window.document;
-for (const f of ['js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 

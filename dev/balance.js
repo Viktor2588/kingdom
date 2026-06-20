@@ -2,6 +2,7 @@
    kurven, Regionskräfte, Kosten/Belohnungen durch und markiert Aus-
    reißer. Nur Analyse, ändert nichts. NICHT Teil des Spiels.
    Aufruf:  bun run dev/balance.js                                     */
+import "../js/data-tables.js";
 import "../js/data.js";
 import "../js/state.js";
 import "../js/systems.js";

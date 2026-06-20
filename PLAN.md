@@ -17,6 +17,9 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Gegen HTML-Formatierungsfehler (Auflage):** `index.html` bleibt **minimal**; die datengetriebene UI wird **per JS aus Daten gerendert** (Template-Funktionen, sichere DOM-Erzeugung, `textContent`) → keine großen handgeschriebenen HTML-Blöcke. Validierung + echter Browser-Test, falls möglich Screenshots in Handy-/Desktop-Größe.
 - **Speichern:** Auto-Save + manuell über `localStorage` (versioniertes Schema, Reset-Funktion).
 
+## Enwticklung
+- Jede Phase unter Status / Fortschritt  sollte  in einem git worktree abgearbeitet werden
+
 ## Architektur / Dateien (offline-fähig, klassische Scripts, Namensraum `Game`)
 - `index.html` – Grundgerüst, Ressourcenleiste oben, Tab-Container, untere Navigation.
 - `style.css` – Mobile-first Theme (dunkles Fantasy-Design).

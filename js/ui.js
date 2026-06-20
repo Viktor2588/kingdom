@@ -81,11 +81,17 @@
     }, inner);
   }
   function rankBadge(rank) { return el('span', { class: 'badge rank-' + rank, text: rank }); }
-  var CREATURE_SPRITES = { Schleim: 'slime', Goblin: 'goblin', Wolf: 'wolf', Oger: 'ogre', Echse: 'lizard', Ork: 'orc' };
+  var CREATURE_SPRITES = {
+    Schleim: 'slime', Goblin: 'goblin', Wolf: 'wolf', Oger: 'ogre', Echse: 'lizard', Ork: 'orc',
+    Geist: 'spirit', Greif: 'griffin', Baumhirte: 'treant', Phönix: 'phoenix',
+    Kobold: 'kobold', Hasenmensch: 'rabbitfolk', Tengu: 'tengu', Meervolk: 'merfolk',
+    Untot: 'undead', Dämon: 'demon', Vampir: 'vampire', Golem: 'golem', Insekt: 'insect', Drache: 'dragon'
+  };
+  var EXTENDED_SPRITES = { spirit: 1, griffin: 1, treant: 1, phoenix: 1, kobold: 1, rabbitfolk: 1, tengu: 1, merfolk: 1, undead: 1, demon: 1, vampire: 1, golem: 1, insect: 1, dragon: 1 };
   function creatureArt(sp, extraClass) {
     var sprite = sp && CREATURE_SPRITES[sp.line];
     if (!sprite) return el('div', { class: 'card-emoji ' + (extraClass || ''), text: sp ? sp.icon : '❔' });
-    return el('div', { class: 'creature-art sprite-' + sprite + ' ' + (extraClass || ''), role: 'img', 'aria-label': sp.name, title: sp.name });
+    return el('div', { class: 'creature-art' + (EXTENDED_SPRITES[sprite] ? ' sprite-extended' : '') + ' sprite-' + sprite + ' ' + (extraClass || ''), role: 'img', 'aria-label': sp.name, title: sp.name });
   }
   function bar(frac, cls) {
     frac = Math.max(0, Math.min(1, frac));

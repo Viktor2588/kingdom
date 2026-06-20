@@ -242,6 +242,21 @@ button { font-family: inherit; }
 .sprite-ogre { background-position: 0 100%; }
 .sprite-lizard { background-position: 50% 100%; }
 .sprite-orc { background-position: 100% 100%; }
+.creature-art.sprite-extended { background-image: url('assets/creature-sprites-extended.png'); background-size: 400% 400%; }
+.sprite-spirit { background-position: 0 0; }
+.sprite-griffin { background-position: 33.333% 0; }
+.sprite-treant { background-position: 66.667% 0; }
+.sprite-phoenix { background-position: 100% 0; }
+.sprite-kobold { background-position: 0 33.333%; }
+.sprite-rabbitfolk { background-position: 33.333% 33.333%; }
+.sprite-tengu { background-position: 66.667% 33.333%; }
+.sprite-merfolk { background-position: 100% 33.333%; }
+.sprite-undead { background-position: 0 66.667%; }
+.sprite-demon { background-position: 33.333% 66.667%; }
+.sprite-vampire { background-position: 66.667% 66.667%; }
+.sprite-golem { background-position: 100% 66.667%; }
+.sprite-insect { background-position: 0 100%; }
+.sprite-dragon { background-position: 33.333% 100%; }
 .card-title { flex: 1 1 auto; min-width: 0; }
 .card-title .name {
   font-weight: 700; font-size: 14.5px;
@@ -659,12 +674,8 @@ button { font-family: inherit; }
 .strategy-map {
   position: relative; min-width: 760px; height: 430px; isolation: isolate; overflow: hidden;
   background:
-    radial-gradient(circle at 50% 50%, rgba(130,160,170,.045) 1px, transparent 1.6px) 0 0 / 26px 26px,
-    radial-gradient(ellipse at 17% 46%, rgba(46,120,74,.5) 0 12%, transparent 30%),
-    radial-gradient(ellipse at 40% 78%, rgba(60,96,52,.4) 0 11%, transparent 28%),
-    radial-gradient(ellipse at 73% 18%, rgba(96,108,134,.34) 0 11%, transparent 27%),
-    radial-gradient(ellipse at 84% 60%, rgba(48,24,82,.66) 0 14%, transparent 34%),
-    radial-gradient(ellipse at 50% 48%, #1b2c2f 0%, #142126 46%, #0b0e1d 100%);
+    linear-gradient(rgba(8,13,21,.22), rgba(7,8,18,.42)),
+    url('assets/tempest-adventure-map.png') center / cover no-repeat;
 }
 .strategy-map::after {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -1451,11 +1462,8 @@ select.btn { text-align: left; min-height: 40px; }
     min-width: 0;
     height: clamp(520px, 63vh, 720px);
     background:
-      radial-gradient(ellipse at 18% 48%, rgba(42,126,75,.72) 0 13%, transparent 29%),
-      radial-gradient(ellipse at 44% 77%, rgba(67,105,57,.62) 0 12%, transparent 27%),
-      radial-gradient(ellipse at 76% 15%, rgba(116,126,146,.52) 0 12%, transparent 26%),
-      radial-gradient(ellipse at 84% 60%, rgba(60,33,91,.82) 0 14%, transparent 31%),
-      linear-gradient(150deg, #173f3d 0%, #1d3936 34%, #392b43 67%, #121629 100%);
+      linear-gradient(rgba(8,16,24,.12), rgba(5,7,15,.34)),
+      url('assets/tempest-adventure-map.png') center / cover no-repeat;
   }
   .game-view-karte .strategy-map::after {
     content: "";

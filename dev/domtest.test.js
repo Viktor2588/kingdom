@@ -60,6 +60,22 @@ var s = T.state, SYS = window.GameSystems;
 s.resources.gold += 5000; s.resources.material += 5000; s.resources.magie += 5000; s.resources.wissen += 500; s.resources.seelen += 500;
 s.buildings.beschwoerungskreis = 3; s.buildings.wohnbezirk = 6;
 
+tryRender('Alle 20 Kreaturenlinien besitzen lokale Portraits ohne Emoji-Fallback', function () {
+  var artState = window.GameState.createDefault(), seenLines = {};
+  artState.creatures = [];
+  window.GameData.creatures.forEach(function (species) {
+    if (seenLines[species.line]) return;
+    seenLines[species.line] = true;
+    artState.creatures.push(window.GameState.newCreature(artState, species.id));
+  });
+  artState.buildings.beschwoerungskreis = 10; artState.herrscher.stage = 6;
+  window.GameUI.state = artState; window.GameUI.activeTab = 'kreaturen'; window.GameUI.render();
+  var expectedSprites = ['slime','goblin','wolf','ogre','lizard','orc','spirit','griffin','treant','phoenix','kobold','rabbitfolk','tengu','merfolk','undead','demon','vampire','golem','insect','dragon'];
+  if (!expectedSprites.every(function (id) { return !!document.querySelector('#screen .sprite-' + id); })) throw new Error('mindestens eine Linie nutzt weiter Emoji-Fallback');
+  if (document.querySelectorAll('#screen .sprite-extended').length < 14) throw new Error('erweitertes Atlas ist nicht für alle 14 neuen Linien verdrahtet');
+  window.GameUI.state = s;
+});
+
 tryRender('Reich rendern & "Bauen"-Button klicken', function () {
   window.GameUI.activeTab = 'reich'; window.GameUI.render();
   var btns = document.querySelectorAll('#screen .btn');

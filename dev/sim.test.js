@@ -18,6 +18,10 @@ ok(['kobold', 'hasenmensch', 'tengu', 'meerling'].every(function (id) { return !
 ok(['dryadenrat', 'zwergenkarawane', 'geisterfest', 'bestiengesandte'].every(function (id) { return !!GD.event(id); }), 'vier neue Welt-/Völkerereignisse vorhanden');
 var spritePath = import.meta.dir + '/../assets/creature-sprites.png';
 ok(Bun.file(spritePath).size > 100000, 'generiertes Kreaturen-Sprite-Sheet ist als lokales Spielasset vorhanden');
+var extendedSpritePath = import.meta.dir + '/../assets/creature-sprites-extended.png';
+var adventureMapPath = import.meta.dir + '/../assets/tempest-adventure-map.png';
+ok(Bun.file(extendedSpritePath).size > 1000000, 'erweitertes transparentes Portrait-Atlas ist als lokales Spielasset vorhanden');
+ok(Bun.file(adventureMapPath).size > 1000000, 'illustrierte Abenteuerkarte ist als lokales Spielasset vorhanden');
 // jede evolvesTo-Zielspezies existiert
 var badEvo = [];
 GD.creatures.forEach(function (sp) {

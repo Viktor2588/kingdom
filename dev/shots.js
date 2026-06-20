@@ -149,6 +149,22 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(out, '12b-echo-modal-mobile.png') });
   console.log('  📸 12b-echo-modal-mobile.png');
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close'); if (close) close.click();
+    var T = window.__TEMPEST__, S = T.state, GD = window.GameData, GST = T.GST;
+    window.__PHASE23_CREATURES__ = S.creatures;
+    var lines = ['Geist','Greif','Baumhirte','Phönix','Kobold','Hasenmensch','Tengu','Meervolk','Untot','Dämon','Vampir','Golem','Insekt','Drache'];
+    S.creatures = lines.map(function (line) { return GST.newCreature(S, GD.creatures.filter(function (sp) { return sp.line === line; })[0].id); });
+    window.GameUI.activeTab = 'kreaturen'; window.GameUI.render();
+    var portrait = document.querySelector('.sprite-extended'); if (portrait) portrait.scrollIntoView({ block: 'start' });
+  });
+  await page.waitForTimeout(160);
+  await page.screenshot({ path: path.join(out, '12c-phase23-portraits-mobile.png') });
+  console.log('  📸 12c-phase23-portraits-mobile.png');
+  await page.evaluate(function () {
+    var S = window.__TEMPEST__.state;
+    S.creatures = window.__PHASE23_CREATURES__; delete window.__PHASE23_CREATURES__;
+  });
 
   // Desktop-Abnahme: dieselbe Sitzung bei 1440×900 in der neuen Spiel-Shell.
   await page.evaluate(function () {
@@ -158,6 +174,10 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.setViewportSize({ width: 1440, height: 900 });
   await shot('uebersicht', '13-desktop-uebersicht');
   await shot('karte', '14-desktop-karte');
+  await page.evaluate(function () { var map = document.querySelector('.strategy-map-viewport'); if (map) map.scrollIntoView({ block: 'start' }); });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, '14b-desktop-illustrated-map.png') });
+  console.log('  📸 14b-desktop-illustrated-map.png');
   await page.evaluate(function () { var echo = document.querySelector('.echo-header'); if (echo) echo.scrollIntoView({ block: 'start' }); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(out, '14a-desktop-echo-map.png') });
@@ -204,5 +224,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 23 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 25 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

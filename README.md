@@ -76,10 +76,10 @@ js/
   ui.js             Darstellung: Views je Tab + Modals, alles per DOM-API gerendert
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
 dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
-  sim.js            Headless-Logiktest (Node, ohne Abhängigkeiten)
-  domtest.js        DOM-Rendertest (jsdom)
-  playthrough.js    Komplettes Headless-Durchspiel (jsdom)
-  balance.js        Balance-Analyse der Kraftkurven (Node)
+  sim.test.js       Headless-Logiktest (Bun, ohne DOM)
+  domtest.test.js   DOM-Rendertest (jsdom)
+  playthrough.test.js Komplettes Headless-Durchspiel (jsdom)
+  balance.js        Balance-Analyse der Kraftkurven (Bun)
   shots.js          Mobile-/Desktop-Screenshots via Playwright/Chromium
   screenshots/      Erzeugte PNGs (390×844 und 1440×900)
 ```

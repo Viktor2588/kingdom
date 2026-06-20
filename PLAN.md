@@ -195,7 +195,7 @@ Phase 23 – Fehlende Grafik-Assets (Bildgenerierung erforderlich)
 - `dev/sim.test.js` → 227/227 Logiktests bestanden (inkl. Bauplanfreischaltung, Einmalfertigung, vier Qualitätsaufwertungen, Zerlegung, Komponentenbeute und Save-v7-Migration).
 - `dev/domtest.test.js` → 65/65 DOM-Rendertests bestanden (inkl. Komponenten-HUD, vollständigem Bauplanarchiv, Arsenal und funktionaler Aufwertungsvorschau).
 - `dev/playthrough.test.js` → 57/57 Durchspiel-Checks bestanden (komplette Sitzung, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
-- `node dev/balance.js` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton.
+- `bun run balance` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton.
 - Phase-18-Screenshot-Suite: 20 Aufnahmen im echten Chromium (13× Handy 390×844, 7× Desktop 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
 - Talentbaum zusätzlich im echten Chromium bei 390×844 und 1440×900 geprüft; keine Browserfehler, mobile horizontale Zweig-Navigation und Desktop-Dreispaltenansicht funktionieren.
 - Runenschmiede zusätzlich im echten Chromium bei 390×844 und 1440×900 sowie das mobile Aufwertungsmodal geprüft; keine Browserfehler oder Seitenüberbreite.

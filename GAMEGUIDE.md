@@ -164,20 +164,28 @@ Im Tab *Magie* (frei nach Bau der **Forschungsgilde**) sind drei getrennte Ebene
 
 ---
 
-## Schmiede & Ausrüstung
+## Runenschmiede & Ausrüstung
 
 Im Tab *Schmiede* (frei nach Bau der **Schmiede**).
 
-- **Schmieden:** Rezepte brauchen eine bestimmte Schmiede-Stufe (manche zusätzlich Forschung).
-  Beim Schmieden wird die **Seltenheit** ausgewürfelt: **Gewöhnlich → Selten → Episch →
-  Legendär → Göttlich**. Höhere Schmiede-Stufen (und der Zauber-Effekt „bessere Beute")
-  verschieben die Chance nach oben. Unikate haben eine feste, hohe Seltenheit.
+- **Baupläne:** Drei Starterrezepte sind sofort bekannt. Weitere Baupläne werden mit Wissen
+  und Schmiedekomponenten entschlüsselt oder in gewonnenen Kämpfen entdeckt. Schmiedestufe
+  und Forschung bleiben Voraussetzung für fortgeschrittene und einzigartige Rezepte.
+- **Begrenztes Arsenal:** Jeder Bauplan erzeugt höchstens **ein Exemplar**. Kämpfe werfen
+  deshalb keine endlosen Zufallsduplikate mehr ab, sondern Baupläne oder Komponenten.
+- **Gezielte Qualität:** Ein bestehendes Stück wird stufenweise verbessert:
+  **Gewöhnlich → Selten → Episch → Legendär → Göttlich**. Jede Stufe erhöht seine Werte;
+  das Stück und seine Ausrüstungsslot-Zuordnung bleiben erhalten.
+- **Komponenten:** ✨ Runenstaub, 💠 Magistahlkern, 🔮 Seelenkristall und 🐉 Drachenessenz
+  stammen aus zunehmend gefährlichen Gebieten. Riskante Siege können größere Funde liefern;
+  Magistahlmine, Seelenbrunnen, Drachennest und Schatzhort besitzen garantierte Funde.
+- **Zerlegen:** Nicht angelegte, nicht einzigartige Stücke lassen sich in Komponenten
+  zurückverwandeln. Der Bauplan bleibt bekannt und kann danach erneut hergestellt werden.
 - **Anlegen:** Nur **benannte Kreaturen und der Herrscher** tragen Ausrüstung. Das
   Diablo-artige Loadout besitzt Waffe, Kopf, Körper, Hände, Füße, 2× Accessoire und
   Kern/Geist; die meisten Positionen werden über Forschung freigeschaltet.
 - **Sets:** Teile derselben Garnitur (Magistahl, Drachenhort, Geistergewand, Glutregalia)
   geben **ab 2/3/(5) Teilen** zusätzliche Boni.
-- **Beute:** Gewonnene Expeditionen können fertige Ausrüstung fallen lassen.
 
 ---
 

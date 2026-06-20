@@ -603,13 +603,26 @@
     { id: 'goettlich',   name: 'Göttlich',   cls: 'rar-goettlich',   mult: 3.2,  weight: 0.5 }
   ];
 
+  // Seltene Komponenten ersetzen die endlose Zufallsbeute. Sie werden in
+  // Kämpfen gefunden und erhöhen gezielt die Qualität bestehender Ausrüstung.
+  var forgeMaterials = [
+    { id: 'runenstaub', name: 'Runenstaub', icon: '✨', cls: 'forge-common', tier: 0,
+      desc: 'Verdichtete Runensplitter für seltene Qualität.', source: 'Wald, Höhlen und zerlegte Ausrüstung' },
+    { id: 'magistahlkern', name: 'Magistahlkern', icon: '💠', cls: 'forge-uncommon', tier: 1,
+      desc: 'Ein reiner Magistahlkern für epische Qualität.', source: 'Sumpf, Ruinen und Magistahlmine' },
+    { id: 'seelenkristall', name: 'Seelenkristall', icon: '🔮', cls: 'forge-rare', tier: 2,
+      desc: 'Kristallisierte Essenz für legendäre Qualität.', source: 'Dämonengrenze, Drachengebirge und Seelenorte' },
+    { id: 'drachenessenz', name: 'Drachenessenz', icon: '🐉', cls: 'forge-mythic', tier: 3,
+      desc: 'Katastrophenenergie für göttliche Qualität.', source: 'Endgame-Gebiete, Drachennest und Schatzhort' }
+  ];
+
   // slot = Gegenstandsart (passt in gleichnamige Slot-Position bzw. denselben Typ).
   // set = Set-Zugehörigkeit. req.research = forschungsgebunden. unique/fixedRarity = Unikat.
   var recipes = [
     // Magistahl-Garnitur (früh)
-    { id: 'magistahlklinge', name: 'Magistahl-Klinge', icon: '🗡️', slot: 'waffe', schmiede: 1, set: 'set_magistahl',
+    { id: 'magistahlklinge', name: 'Magistahl-Klinge', icon: '🗡️', slot: 'waffe', schmiede: 1, set: 'set_magistahl', starter: true,
       cost: { material: 40, magie: 20 }, stats: { ang: 12 }, desc: 'Solide Klinge aus Magistahl.' },
-    { id: 'magistahlpanzer', name: 'Magistahl-Panzer', icon: '🛡️', slot: 'ruestung', schmiede: 1, set: 'set_magistahl',
+    { id: 'magistahlpanzer', name: 'Magistahl-Panzer', icon: '🛡️', slot: 'ruestung', schmiede: 1, set: 'set_magistahl', starter: true,
       cost: { material: 50, magie: 15 }, stats: { ver: 12, lp: 30 }, desc: 'Zuverlässige Rüstung.' },
     { id: 'magistahlhelm', name: 'Magistahl-Helm', icon: '⛑️', slot: 'kopf', schmiede: 1, set: 'set_magistahl', req: { research: 'r_ruestkammer' },
       cost: { material: 35, magie: 15 }, stats: { ver: 8, lp: 20 }, desc: 'Schützt Kopf und Verstand.' },
@@ -618,7 +631,7 @@
     { id: 'magistahlstiefel', name: 'Magistahl-Stiefel', icon: '🥾', slot: 'fuesse', schmiede: 1, set: 'set_magistahl', req: { research: 'r_handwerk' },
       cost: { material: 30, magie: 10 }, stats: { ver: 6, tmp: 6 }, desc: 'Standfest und flink.' },
     // Accessoires & Kern
-    { id: 'magieamulett', name: 'Magie-Amulett', icon: '📿', slot: 'accessoire', schmiede: 1,
+    { id: 'magieamulett', name: 'Magie-Amulett', icon: '📿', slot: 'accessoire', schmiede: 1, starter: true,
       cost: { material: 20, magie: 40 }, stats: { mag: 14 }, desc: 'Verstärkt magische Kräfte.' },
     { id: 'magiering', name: 'Magie-Ring', icon: '💍', slot: 'accessoire', schmiede: 2, req: { research: 'r_juwelier' },
       cost: { material: 40, magie: 60 }, stats: { mag: 18, tmp: 6 }, desc: 'Fein gearbeiteter Ring.' },
@@ -736,17 +749,17 @@
     { id: 'jagdlager', name: 'Jura-Jagdlager', short: 'Jagdlager', icon: '🏕️', kind: 'resource', guard: 80,
       produce: { nahrung: 3 }, upgradeCost: { gold: 100, material: 50 }, desc: 'Jäger und Sammler versorgen Tempests Marschkolonnen.' },
     { id: 'magistahlmine', name: 'Verlassene Magistahlmine', short: 'Magistahlmine', icon: '⛏️', kind: 'resource', guard: 150,
-      produce: { material: 2 }, upgradeCost: { gold: 180, material: 80 }, desc: 'Alte Stollen führen zu ergiebigen Magistahladern.' },
+      produce: { material: 2 }, forgeReward: { magistahlkern: 1 }, upgradeCost: { gold: 180, material: 80 }, desc: 'Alte Stollen führen zu ergiebigen Magistahladern.' },
     { id: 'handelsposten', name: 'Freier Handelsposten', short: 'Handelsposten', icon: '🏪', kind: 'resource', guard: 330,
       produce: { gold: 3 }, upgradeCost: { gold: 240, material: 100 }, desc: 'Eine Karawanenstation an den Wegen zwischen Sumpf und Ruinen.' },
     { id: 'altes_archiv', name: 'Archiv der Vergessenen', short: 'Altes Archiv', icon: '📜', kind: 'resource', guard: 760,
       produce: { wissen: 1.5 }, upgradeCost: { gold: 320, material: 160 }, desc: 'Versiegelte Tafeln bergen das Wissen eines untergegangenen Reiches.' },
     { id: 'seelenbrunnen', name: 'Brunnen der Echos', short: 'Seelenbrunnen', icon: '🕳️', kind: 'resource', guard: 9000,
-      produce: { seelen: 0.5 }, upgradeCost: { gold: 900, material: 500, magie: 700 }, desc: 'Seelenfragmente sammeln sich in einer bodenlosen schwarzen Quelle.' },
+      produce: { seelen: 0.5 }, forgeReward: { seelenkristall: 2 }, upgradeCost: { gold: 900, material: 500, magie: 700 }, desc: 'Seelenfragmente sammeln sich in einer bodenlosen schwarzen Quelle.' },
     { id: 'drachennest', name: 'Verlassenes Drachennest', short: 'Drachennest', icon: '🥚', kind: 'discovery', guard: 4200,
-      rewards: { seelen: 450, material: 600, magie: 300 }, desc: 'Zwischen riesigen Schalenresten liegt ein unberührter Drachenhort.' },
+      rewards: { seelen: 450, material: 600, magie: 300 }, forgeReward: { seelenkristall: 2, drachenessenz: 1 }, desc: 'Zwischen riesigen Schalenresten liegt ein unberührter Drachenhort.' },
     { id: 'schatzhort', name: 'Hort des Schattenkönigs', short: 'Schatzhort', icon: '💎', kind: 'discovery', guard: 11000,
-      rewards: { gold: 1400, magie: 900, seelen: 700 }, desc: 'Ein verborgener Hort hinter den Mauern des Schattenreichs.' }
+      rewards: { gold: 1400, magie: 900, seelen: 700 }, forgeReward: { drachenessenz: 2 }, desc: 'Ein verborgener Hort hinter den Mauern des Schattenreichs.' }
   ];
 
   // ---------- Rivalen-Dämonenlords (Bedrohungssystem) ----------
@@ -969,13 +982,14 @@
         'Der Forschungsbaum schaltet Ritual-Tiers, Ausrüstungsplätze und Reichsausbau frei.',
         'Eine Affinität (ab Herrscher-Stufe 2) verstärkt Zauber ihrer Schule um 25 %.'
       ] },
-    schmiede: { icon: '⚒️', title: 'Schmiede & Ausrüstung',
-      text: 'In der Schmiede fertigst du Ausrüstung. Seltenheit (Gewöhnlich→Göttlich) bestimmt die Stärke.',
+    schmiede: { icon: '⚒️', title: 'Runenschmiede & langlebige Ausrüstung',
+      text: 'Die Runenschmiede baut ein begrenztes Arsenal und verbessert dieselben Gegenstände dauerhaft von Gewöhnlich bis Göttlich.',
       steps: [
-        'Höhere Schmiede-Stufen erlauben bessere Rezepte und seltenere Ergebnisse.',
+        'Starter-Baupläne sind sofort bekannt; weitere Rezepte werden mit Wissen und Schmiedekomponenten entschlüsselt oder als Beute entdeckt.',
+        'Jedes Rezept kann nur einmal hergestellt werden. Statt Duplikaten findest du Komponenten für gezielte Qualitätsstufen.',
+        'Runenstaub → Selten, Magistahlkern → Episch, Seelenkristall → Legendär, Drachenessenz → Göttlich.',
         'Nur der Herrscher und benannte Elite tragen Ausrüstung; feste Positionen bilden einen Diablo-artigen Loadout.',
-        'Set-Teile derselben Garnitur geben zusätzliche Boni.',
-        'Forschung im Ausrüstungs-Zweig schaltet weitere Slots (Kopf, Hände, Kern …) frei.'
+        'Alte Duplikate können zerlegt werden; angelegte und einzigartige Gegenstände sind dabei geschützt.'
       ] },
     karte: { icon: '🗺️', title: 'Karte, Expeditionen & Rivalen',
       text: 'Schicke deine Armee auf Expeditionen: Auto-Kämpfe bringen Seelen, Material, Erfahrung und Beute – und sichern Territorium.',
@@ -1053,6 +1067,7 @@
   var recipesById = {};   recipes.forEach(function (r) { recipesById[r.id] = r; });
   var regionsById = {};   regions.forEach(function (r) { regionsById[r.id] = r; });
   var rarityById = {};    rarities.forEach(function (r) { rarityById[r.id] = r; });
+  var forgeMaterialsById = {}; forgeMaterials.forEach(function (m) { forgeMaterialsById[m.id] = m; });
   var researchById = {};  research.forEach(function (r) { researchById[r.id] = r; });
   var talentsById = {};   talents.forEach(function (t) { talentsById[t.id] = t; });
   var setsById = {};      sets.forEach(function (x) { setsById[x.id] = x; });
@@ -1068,7 +1083,7 @@
     rankIndex: rankIndex, baseStatsFor: baseStatsFor, combatPower: combatPower,
     resources: resources, buildings: buildings, creatures: creatures, skills: skills, aspects: aspects,
     battleAbilities: battleAbilities, fieldMagic: fieldMagic,
-    magic: magic, rarities: rarities, recipes: recipes, equipSlots: equipSlots,
+    magic: magic, rarities: rarities, forgeMaterials: forgeMaterials, recipes: recipes, equipSlots: equipSlots,
     regions: regions, rulerStages: rulerStages, research: research, talentBranches: talentBranches, talents: talents, sets: sets, slotResearch: slotResearch, rivals: rivals,
     events: events, affinities: affinities, help: help,
     strategicNodes: strategicNodes, strategicSites: strategicSites,
@@ -1079,6 +1094,7 @@
     recipe: function (id) { return recipesById[id]; },
     region: function (id) { return regionsById[id]; },
     rarity: function (id) { return rarityById[id]; },
+    forgeMaterial: function (id) { return forgeMaterialsById[id]; },
     skill: function (id) { return skills[id]; },
     battleAbility: function (id) { return battleAbilities[id]; },
     aspect: function (id) { return aspectsById[id]; },

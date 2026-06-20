@@ -170,8 +170,14 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - Talente wirken unmittelbar auf Herrscherwerte, Seelen/Beute, Produktion, Heil-/Expeditionstempo, Armee/Verteidigung, Kommandolimit, Kartenbewegung und aktive Feldmagie.
 - Save-Schema v6 normalisiert alte Spielstände kompatibel; Hilfe, Handbuch, README sowie Logik-/DOM-Regressionstests ergänzt.
 
-Phase 21
-- Überarbeitung der Schmiede last epoch, Es sollte  vermieden werden das das spiel 100derte von ausrüstungsgegenstände hat. besser  ne  handvoll die man aufwärten kann. sie sollte Rezepte freischalten, vorhanden Ausrüstung aufwärten können wenn man bestimmte seltene materialien findet um so die qualtität eine ausrüstung zu verbessern.
+[x] **Phase 21 – Runenschmiede & langlebige Ausrüstung (2026-06-20)**
+- **Begrenztes Arsenal statt Itemflut:** Jeder der bestehenden Baupläne erzeugt höchstens ein Exemplar. Kampfbeute erzeugt keine weiteren Zufallsgegenstände, sondern entdeckt Baupläne oder liefert Schmiedekomponenten; alte Duplikate bleiben erhalten und können kontrolliert zerlegt werden.
+- **Echte Bauplanfreischaltung:** Drei Starterrezepte sind sofort bekannt. Weitere Rezepte werden in der Schmiede mit Wissen + Komponenten entschlüsselt oder als Kampfbeute entdeckt; Schmiedestufen und Forschungsanforderungen bleiben wirksam.
+- **Gezielte Qualitätsentwicklung:** Vorhandene Ausrüstung wächst deterministisch **Gewöhnlich → Selten → Episch → Legendär → Göttlich**. Werte werden aus dem Grundrezept neu berechnet, das Item bleibt ausgerüstet und protokolliert seine Schmiedehistorie.
+- **Vier seltene Materialien:** Runenstaub, Magistahlkern, Seelenkristall und Drachenessenz stammen aus gestaffelten Regionen, riskanten Siegen sowie garantierten Außenanlagen-/Fundortbelohnungen. Jede Qualitätsstufe benötigt die passende Komponente und normale Ressourcen.
+- **Zerlegung & Schutz:** Freie normale Stücke können Komponenten zurückgeben; angelegte und einzigartige Gegenstände sind vor Zerlegung geschützt. Der Zuschauer-Modus verbessert vorhandene Ausrüstung vor neuen Bauplänen/Fertigungen.
+- **Neue responsive Schmiede-UI:** Komponenten-HUD, Bauplanarchiv, langlebiges Arsenal, fünfstufige Qualitätsleiste sowie Aufwertungsmodal mit Wertevergleich und exakten Kosten; mobile und Desktop-Layouts separat geprüft.
+- Save-Schema v7 migriert alte Seltenheiten zu Qualitätsstufen, erhält vorhandene Items und schaltet alle im alten System bereits zugänglichen Baupläne frei.
 
 -Phase 22 Umgebungen  /  territorien  sollten wie  echos  von last epoch sein  prozuderal  generierte  maps mit unterschiedlichen belohnungs & stärke  der gegener affixen.
 
@@ -185,12 +191,13 @@ Phase 23 – Fehlende Grafik-Assets (Bildgenerierung erforderlich)
 - Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
 - Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough}.test.js`, `dev/balance.js` und `dev/shots.js`.
 
-### Verifikation (Stand 2026-06-20, nach Phase 20)
-- `dev/sim.test.js` → 213/213 Logiktests bestanden (inkl. Talentdaten, Punktelogik, Voraussetzungen, Boni, Rückerstattung und Save-v6-Migration).
-- `dev/domtest.test.js` → 62/62 DOM-Rendertests bestanden (alle Views/Modals inkl. responsivem Drei-Zweig-Talentbaum und echter Punktvergabe per UI).
+### Verifikation (Stand 2026-06-20, nach Phase 21)
+- `dev/sim.test.js` → 227/227 Logiktests bestanden (inkl. Bauplanfreischaltung, Einmalfertigung, vier Qualitätsaufwertungen, Zerlegung, Komponentenbeute und Save-v7-Migration).
+- `dev/domtest.test.js` → 65/65 DOM-Rendertests bestanden (inkl. Komponenten-HUD, vollständigem Bauplanarchiv, Arsenal und funktionaler Aufwertungsvorschau).
 - `dev/playthrough.test.js` → 57/57 Durchspiel-Checks bestanden (komplette Sitzung, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
 - `node dev/balance.js` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton.
 - Phase-18-Screenshot-Suite: 20 Aufnahmen im echten Chromium (13× Handy 390×844, 7× Desktop 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
 - Talentbaum zusätzlich im echten Chromium bei 390×844 und 1440×900 geprüft; keine Browserfehler, mobile horizontale Zweig-Navigation und Desktop-Dreispaltenansicht funktionieren.
+- Runenschmiede zusätzlich im echten Chromium bei 390×844 und 1440×900 sowie das mobile Aufwertungsmodal geprüft; keine Browserfehler oder Seitenüberbreite.
 - Offline-/HTTP-Smoke-Test: `index.html` lädt alle klassischen Scripts über `file://`; index.html, CSS und alle fünf JS-Dateien liefern lokal HTTP 200 mit korrektem Content-Type.
 - Hinweis: Headless-Screenshots (`dev/shots.js`) brauchen Playwright/Chromium unter `/tmp/tempest-shots` + Chromium-Systemlibs (`LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu`); jsdom-Tests brauchen `jsdom@22` unter `/tmp/tempest-domtest`.

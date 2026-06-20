@@ -7,6 +7,8 @@ benennen, entwickeln und fusionieren, benannte Anführer über die Weltkarte bew
 Auto-Expeditionen oder taktische 7×5-Rasterkämpfe mit Bewegung, Initiative und Gegenwehr bestreiten und ein Reich gegen
 Rivalen-Dämonenlords verteidigen. Der Herrscher spezialisiert sich zusätzlich über einen
 Last-Epoch-artigen passiven Talentbaum mit drei Zweigen und einzeln steigerbaren Knoten.
+Die Runenschmiede folgt demselben Prinzip: ein begrenztes Arsenal ohne Zufallsduplikate,
+freischaltbare Baupläne und gezielte Qualitätsstufen über seltene Kampfkomponenten.
 
 Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberbare und
 ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
@@ -64,13 +66,13 @@ style.css           Responsives Theme (mobile Fallback + Desktop-Spiel-Shell)
 assets/             Lokale Kreaturen-Sprites und Desktop-Königreichspanorama
 js/
   data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
-                    Evolutionsketten, Skills/Aspekte, Magie, Rezepte/Sets, Regionen,
+                    Evolutionsketten, Skills/Aspekte, Magie, Baupläne/Schmiedekomponenten/Sets, Regionen,
                     Rivalen, Events, Affinitäten, Forschung, Herrscher-Stufen/-Talente, Hilfe-Texte
   state.js          Spielzustand, Standardwerte, Speichern/Laden (localStorage), normalize()
   systems.js        Spiellogik (DOM-frei, reine Funktionen): Tick/Produktion, Bauen,
                     Beschwören, Namensgebung, Evolution, Skills, Magie/Forschung, Schmieden,
                     Expeditionen, Armeegruppen/Kartenbewegung, taktischer Elementkampf, Rivalen/Bedrohung, Events,
-                    Affinität, Fusion, Herrscher-Talente, Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
+                    Affinität, Fusion, Runenschmiede, Herrscher-Talente, Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
   ui.js             Darstellung: Views je Tab + Modals, alles per DOM-API gerendert
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
 dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
@@ -100,7 +102,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v6 (alte v1–v5-Stände werden automatisch migriert und um Truppenstapel, Karten-/Magie- sowie Talentfortschritt ergänzt).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v7 (alte v1–v6-Stände werden automatisch migriert; bestehende Ausrüstung behält ihre Qualität und bisher zugängliche Rezepte bleiben bekannt).
 - **Zurücksetzen:** im Spiel über das Herrscher-Modal (oben links) → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
   ```js
@@ -179,8 +181,8 @@ Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test dev/sim.test.js`         | `1 pass` · `213 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `62 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/sim.test.js`         | `1 pass` · `227 bestanden, 0 fehlgeschlagen` |
+| `bun test dev/domtest.test.js`     | `1 pass` · `65 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `57 bestanden, 0 fehlgeschlagen`  |
 | `bun run balance`                  | Kraftkurven in den Bändern, Beute/Tick monoton |
 

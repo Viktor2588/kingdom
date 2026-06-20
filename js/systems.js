@@ -868,9 +868,75 @@
   }
 
   // ---------- Schmieden / Ausrüstung ----------
+  function forgeMaterialAmount(state, id) { return Math.max(0, Math.floor((state.forgeMaterials && state.forgeMaterials[id]) || 0)); }
+  function addForgeMaterials(state, gains) {
+    state.forgeMaterials = state.forgeMaterials || {};
+    for (var id in (gains || {})) {
+      if (!GD().forgeMaterial(id)) continue;
+      state.forgeMaterials[id] = forgeMaterialAmount(state, id) + Math.max(0, Math.floor(gains[id] || 0));
+    }
+  }
+  function missingForgeCost(state, cost) {
+    var missing = missingCost(state, cost && cost.resources), materials = (cost && cost.materials) || {};
+    for (var id in materials) {
+      var have = forgeMaterialAmount(state, id), material = GD().forgeMaterial(id);
+      if (have < materials[id]) missing.push((materials[id] - have) + ' ' + (material ? material.name : id) + ' fehlt');
+    }
+    return missing;
+  }
+  function canAffordForgeCost(state, cost) { return missingForgeCost(state, cost).length === 0; }
+  function payForgeCost(state, cost) {
+    pay(state, cost && cost.resources);
+    var materials = (cost && cost.materials) || {};
+    for (var id in materials) state.forgeMaterials[id] = forgeMaterialAmount(state, id) - materials[id];
+  }
+  function isRecipeUnlocked(state, recipeId) { return (state.unlockedRecipes || []).indexOf(recipeId) >= 0; }
+  function recipeRequirementStatus(state, recipe) {
+    var missing = [];
+    if ((state.buildings.schmiede || 0) < recipe.schmiede) missing.push('Schmiede Stufe ' + recipe.schmiede);
+    if (recipe.req && recipe.req.research && !isResearched(state, recipe.req.research)) {
+      var research = GD().researchNode(recipe.req.research);
+      missing.push('Forschung „' + (research ? research.name : recipe.req.research) + '“');
+    }
+    return { ok: missing.length === 0, missing: missing };
+  }
+  function recipeBlueprintCost(state, recipeId) {
+    var recipe = GD().recipe(recipeId); if (!recipe || recipe.starter) return { resources: {}, materials: {} };
+    var tier = Math.max(1, recipe.schmiede || 1), matId = ['runenstaub', 'magistahlkern', 'seelenkristall'][tier - 1];
+    var resources = { wissen: round(45 * Math.pow(3.1, tier - 1)) };
+    if (tier >= 2) resources.magie = round(60 * Math.pow(2.2, tier - 2));
+    if (recipe.unique) resources.seelen = 80 * tier;
+    var materials = {}; materials[matId] = recipe.unique ? 2 : 1;
+    return { resources: resources, materials: materials };
+  }
+  function canUnlockRecipe(state, recipeId) {
+    var recipe = GD().recipe(recipeId); if (!recipe) return { ok: false, reason: 'Unbekannter Bauplan' };
+    if (isRecipeUnlocked(state, recipeId)) return { ok: false, reason: 'Bauplan bereits bekannt' };
+    var req = recipeRequirementStatus(state, recipe); if (!req.ok) return { ok: false, reason: req.missing.join(', ') };
+    var cost = recipeBlueprintCost(state, recipeId), missing = missingForgeCost(state, cost);
+    if (missing.length) return { ok: false, reason: missing.join(', '), cost: cost };
+    return { ok: true, cost: cost };
+  }
+  function unlockRecipe(state, recipeId, discovered) {
+    var recipe = GD().recipe(recipeId); if (!recipe) return { ok: false, reason: 'Unbekannter Bauplan' };
+    if (isRecipeUnlocked(state, recipeId)) return { ok: false, reason: 'Bauplan bereits bekannt' };
+    if (!discovered) {
+      var check = canUnlockRecipe(state, recipeId); if (!check.ok) return check;
+      payForgeCost(state, check.cost);
+    }
+    state.unlockedRecipes = state.unlockedRecipes || []; state.unlockedRecipes.push(recipeId);
+    state.metrics.recipesUnlocked = (state.metrics.recipesUnlocked || 0) + 1;
+    log(state, '📜 Bauplan entschlüsselt: ' + recipe.name + '.', 'gold');
+    return { ok: true, recipe: recipe, discovered: !!discovered };
+  }
+  function itemForRecipe(state, recipeId) {
+    for (var i = 0; i < (state.inventory || []).length; i++) if (state.inventory[i].recipeId === recipeId) return state.inventory[i];
+    return null;
+  }
   function craftableRecipes(state) {
     var lvl = state.buildings.schmiede || 0;
     return GD().recipes.filter(function (r) {
+      if (!isRecipeUnlocked(state, r.id)) return false;
       if (lvl < r.schmiede) return false;
       if (r.req && r.req.research && !isResearched(state, r.req.research)) return false;
       return true;
@@ -887,6 +953,9 @@
     return rs[0];
   }
   function makeItem(state, recipe, rarity) {
+    rarity = rarity || GD().rarities[0];
+    var quality = 0;
+    GD().rarities.forEach(function (candidate, idx) { if (candidate.id === rarity.id) quality = idx; });
     var stats = {};
     for (var k in recipe.stats) stats[k] = round(recipe.stats[k] * rarity.mult);
     var item = {
@@ -896,19 +965,19 @@
       icon: recipe.icon,
       slot: recipe.slot,
       rarity: rarity.id,
+      quality: quality,
       stats: stats,
+      forgeHistory: [],
       equippedBy: null
     };
     state.inventory.push(item);
     return item;
   }
   function canCraft(state, recipeId) {
-    var r = GD().recipe(recipeId); if (!r) return { ok: false };
-    if ((state.buildings.schmiede || 0) < r.schmiede) return { ok: false, reason: 'Schmiede Stufe ' + r.schmiede + ' nötig' };
-    if (r.req && r.req.research && !isResearched(state, r.req.research)) {
-      var rn = GD().researchNode(r.req.research);
-      return { ok: false, reason: 'Forschung „' + (rn ? rn.name : r.req.research) + '" nötig' };
-    }
+    var r = GD().recipe(recipeId); if (!r) return { ok: false, reason: 'Unbekanntes Rezept' };
+    if (!isRecipeUnlocked(state, recipeId)) return { ok: false, reason: 'Bauplan noch nicht entschlüsselt' };
+    var req = recipeRequirementStatus(state, r); if (!req.ok) return { ok: false, reason: req.missing.join(', ') };
+    if (itemForRecipe(state, recipeId)) return { ok: false, reason: 'Bereits hergestellt – verbessere das vorhandene Stück' };
     if (!canAfford(state, r.cost)) return { ok: false, reason: missingCost(state, r.cost).join(', ') };
     return { ok: true };
   }
@@ -917,11 +986,80 @@
     if (!check.ok) return { ok: false, reason: check.reason };
     var r = GD().recipe(recipeId);
     pay(state, r.cost);
-    var rarity = r.fixedRarity ? GD().rarity(r.fixedRarity) : rollRarity(state);
+    // Normale Gegenstände starten bewusst gewöhnlich und wachsen mit dem
+    // Spieler. Nur benannte Unikate behalten ihre fest definierte Startqualität.
+    var rarity = r.fixedRarity ? GD().rarity(r.fixedRarity) : GD().rarities[0];
     var item = makeItem(state, r, rarity);
     state.metrics.crafted = (state.metrics.crafted || 0) + 1;
     log(state, '⚒️ ' + GD().rarity(rarity.id).name + 'e ' + item.name + ' geschmiedet.', rarity.id === 'gewoehnlich' ? 'good' : 'gold');
     return { ok: true, item: item, rarity: rarity };
+  }
+  function itemQuality(item) {
+    if (item && typeof item.quality === 'number') return clamp(Math.floor(item.quality), 0, GD().rarities.length - 1);
+    var quality = 0;
+    GD().rarities.forEach(function (rarity, idx) { if (item && item.rarity === rarity.id) quality = idx; });
+    return quality;
+  }
+  function rebuildItemStats(item) {
+    var recipe = item && GD().recipe(item.recipeId); if (!recipe) return item;
+    var quality = itemQuality(item), rarity = GD().rarities[quality];
+    item.quality = quality; item.rarity = rarity.id; item.stats = {};
+    for (var stat in recipe.stats) item.stats[stat] = round(recipe.stats[stat] * rarity.mult);
+    return item;
+  }
+  function temperCost(state, itemUid) {
+    var item = findItem(state, itemUid); if (!item) return null;
+    var target = itemQuality(item) + 1; if (target >= GD().rarities.length) return null;
+    var recipe = GD().recipe(item.recipeId), forgeTier = recipe ? recipe.schmiede : 1;
+    var matId = ['runenstaub', 'magistahlkern', 'seelenkristall', 'drachenessenz'][target - 1];
+    var resources = {
+      material: round((18 + 14 * target * target) * forgeTier),
+      magie: round((12 + 10 * target * target) * forgeTier)
+    };
+    if (target >= 3) resources.seelen = round(18 * Math.pow(2.4, target - 3) * forgeTier);
+    var materials = {}; materials[matId] = target === 4 ? 1 : 2;
+    return { resources: resources, materials: materials, targetQuality: target };
+  }
+  function canTemperItem(state, itemUid) {
+    var item = findItem(state, itemUid); if (!item) return { ok: false, reason: 'Ausrüstung nicht gefunden' };
+    var cost = temperCost(state, itemUid); if (!cost) return { ok: false, reason: 'Göttliche Maximalqualität erreicht' };
+    var forgeNeeded = Math.min(3, cost.targetQuality);
+    if ((state.buildings.schmiede || 0) < forgeNeeded) return { ok: false, reason: 'Schmiede Stufe ' + forgeNeeded + ' nötig', cost: cost };
+    var missing = missingForgeCost(state, cost);
+    if (missing.length) return { ok: false, reason: missing.join(', '), cost: cost };
+    return { ok: true, cost: cost };
+  }
+  function temperItem(state, itemUid) {
+    var check = canTemperItem(state, itemUid); if (!check.ok) return check;
+    var item = findItem(state, itemUid), before = itemQuality(item);
+    payForgeCost(state, check.cost); item.quality = check.cost.targetQuality; rebuildItemStats(item);
+    item.forgeHistory = item.forgeHistory || [];
+    item.forgeHistory.push({ tick: state.tick, from: before, to: item.quality });
+    state.metrics.tempered = (state.metrics.tempered || 0) + 1;
+    log(state, '🔥 ' + item.name + ' auf ' + GD().rarities[item.quality].name + ' aufgewertet.', 'gold');
+    return { ok: true, item: item, quality: item.quality, rarity: GD().rarities[item.quality], cost: check.cost };
+  }
+  function salvageYield(item) {
+    var quality = itemQuality(item), gains = { runenstaub: 1 + quality };
+    if (quality >= 2) gains.magistahlkern = Math.max(1, quality - 1);
+    if (quality >= 3) gains.seelenkristall = quality - 2;
+    if (quality >= 4) gains.drachenessenz = 1;
+    return gains;
+  }
+  function canSalvageItem(state, itemUid) {
+    var item = findItem(state, itemUid), recipe = item && GD().recipe(item.recipeId);
+    if (!item) return { ok: false, reason: 'Ausrüstung nicht gefunden' };
+    if (item.equippedBy != null) return { ok: false, reason: 'Angelegte Ausrüstung zuerst ablegen' };
+    if (recipe && recipe.unique) return { ok: false, reason: 'Einzigartige Ausrüstung ist geschützt' };
+    return { ok: true, gains: salvageYield(item) };
+  }
+  function salvageItem(state, itemUid) {
+    var check = canSalvageItem(state, itemUid); if (!check.ok) return check;
+    var item = findItem(state, itemUid); addForgeMaterials(state, check.gains);
+    state.inventory = state.inventory.filter(function (candidate) { return candidate.uid !== itemUid; });
+    state.metrics.salvaged = (state.metrics.salvaged || 0) + 1;
+    log(state, '♻️ ' + item.name + ' zerlegt – Schmiedekomponenten geborgen.', '');
+    return { ok: true, item: item, gains: check.gains };
   }
   function equipmentObjFor(state, holderKey) {
     if (holderKey === 'herrscher') return state.herrscher.equipment;
@@ -1322,13 +1460,17 @@
       state.claimedMapSites = state.claimedMapSites || [];
       state.mapSiteLevels = state.mapSiteLevels || {};
       state.claimedMapSites.push(siteId); state.mapSiteLevels[siteId] = 1;
+      if (site.forgeReward) addForgeMaterials(state, site.forgeReward);
       log(state, site.icon + ' ' + site.name + ' gesichert – die Anlage produziert nun für Tempest.', 'gold');
-      return { ok: true, kind: 'resource', site: site, level: 1 };
+      if (site.forgeReward) log(state, '⚒️ Schmiedefund: ' + forgeMaterialsText(site.forgeReward) + '.', 'gold');
+      return { ok: true, kind: 'resource', site: site, level: 1, forgeReward: site.forgeReward || null };
     }
     state.exploredMapSites = state.exploredMapSites || [];
     state.exploredMapSites.push(siteId); addResources(state, site.rewards || {});
+    if (site.forgeReward) addForgeMaterials(state, site.forgeReward);
     log(state, site.icon + ' ' + site.name + ' erkundet – der Fund wurde geborgen.', 'gold');
-    return { ok: true, kind: 'discovery', site: site, rewards: site.rewards || {} };
+    if (site.forgeReward) log(state, '⚒️ Schmiedefund: ' + forgeMaterialsText(site.forgeReward) + '.', 'gold');
+    return { ok: true, kind: 'discovery', site: site, rewards: site.rewards || {}, forgeReward: site.forgeReward || null };
   }
   function canUpgradeMapSite(state, siteId) {
     var site = GD().strategicSite(siteId), level = (state.mapSiteLevels && state.mapSiteLevels[siteId]) || 0;
@@ -1376,12 +1518,13 @@
       for (var res in region.rewards) gains[res] = round(region.rewards[res] * mult * rk.reward);
       addResources(state, gains);
     }
-    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false;
+    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false, drop = null;
     if (won) {
       if (state.claimedRegions.indexOf(region.id) < 0) state.claimedRegions.push(region.id);
       group.battlesWon = (group.battlesWon || 0) + 1;
       state.metrics.armyVictories = (state.metrics.armyVictories || 0) + 1;
       if (leader) { addCreatureXp(state, leader, round(region.xp * 1.15)); addSkillXp(state, leader, round(region.xp * 0.5)); }
+      if (rng() < Math.min(0.9, region.dropChance * rk.drop)) drop = makeDropItem(state, region, risk);
     } else if (risk === 'riskant' && leader) {
       releaseCreatureEquipment(state, leader); leaderDead = true;
       Object.keys(group.troops || {}).forEach(function (speciesId) { removeTroopStack(state, group.id, speciesId, group.troops[speciesId]); });
@@ -1397,7 +1540,8 @@
     if (totalLosses) log(state, '⚰️ Truppenverluste: ' + totalLosses + '.', won ? '' : 'bad');
     if (warded) log(state, '🛡️ Die Feldbarriere fängt einen Teil der Verluste ab.', 'good');
     if (leaderDead) log(state, '☠️ Anführer ' + leader.name + ' ist im riskanten Feldzug gefallen.', 'bad');
-    return { ok: true, won: won, partial: partial, power: power, regionPower: region.power, losses: losses, totalLosses: totalLosses, gains: gains, leaderDead: leaderDead, warded: warded };
+    if (drop) log(state, '🎁 Schmiedefund: ' + drop.name + '.', 'gold');
+    return { ok: true, won: won, partial: partial, power: power, regionPower: region.power, losses: losses, totalLosses: totalLosses, gains: gains, drop: drop, leaderDead: leaderDead, warded: warded };
   }
 
   // ---------- Expeditionen ----------
@@ -1478,11 +1622,32 @@
     log(state, '🚩 Expedition nach ' + r.icon + ' ' + r.name + ' gestartet (Kraft ' + power + ' vs ' + r.power + ').', '');
     return { ok: true, expedition: exp };
   }
-  function makeDropItem(state, region) {
-    var pool = GD().recipes.filter(function (r) { return !r.unique; });
-    var recipe = pool[Math.floor(rng() * pool.length)];
-    var rarity = rollRarity(state);
-    return makeItem(state, recipe, rarity);
+  function forgeMaterialsText(materials) {
+    var parts = [];
+    for (var id in (materials || {})) {
+      var material = GD().forgeMaterial(id);
+      parts.push(materials[id] + '× ' + (material ? (material.icon + ' ' + material.name) : id));
+    }
+    return parts.join(', ');
+  }
+  function makeDropItem(state, region, risk) {
+    var regionIndex = Math.max(0, GD().regions.indexOf(region));
+    var lootRank = Math.max(0, Math.floor(computeBonuses(state).beuteRang || 0));
+    var maxRecipeTier = Math.min(3, 1 + Math.floor(regionIndex / 3) + lootRank);
+    var plans = GD().recipes.filter(function (recipe) {
+      return !recipe.unique && recipe.schmiede <= maxRecipeTier && !isRecipeUnlocked(state, recipe.id);
+    });
+    if (plans.length && rng() < Math.min(0.7, 0.34 + lootRank * 0.08)) {
+      var recipe = plans[Math.floor(rng() * plans.length)];
+      unlockRecipe(state, recipe.id, true);
+      return { kind: 'recipe', recipeId: recipe.id, icon: '📜', name: 'Bauplan: ' + recipe.name };
+    }
+    var maxMaterialTier = Math.min(3, Math.floor(regionIndex / 2) + lootRank);
+    var materialTier = maxMaterialTier > 0 ? Math.floor(rng() * (maxMaterialTier + 1)) : 0;
+    var material = GD().forgeMaterials[materialTier] || GD().forgeMaterials[0];
+    var amount = risk === 'riskant' ? 2 : 1, gains = {}; gains[material.id] = amount;
+    addForgeMaterials(state, gains);
+    return { kind: 'material', materialId: material.id, amount: amount, icon: material.icon, name: amount + '× ' + material.name };
   }
   function resolveExpedition(state, exp) {
     var r = GD().region(exp.regionId);
@@ -1509,7 +1674,7 @@
     if (exp.rulerJoined) addSkillXp(state, state.herrscher, Math.max(1, round(xpEach * 0.3)));
     // Beute (mit Drop-Bonus + Risiko)
     var dchance = Math.min(0.95, r.dropChance * (1 + b.drop) * rk.drop);
-    var drop = (won && rng() < dchance) ? makeDropItem(state, r) : null;
+    var drop = (won && rng() < dchance) ? makeDropItem(state, r, exp.risk) : null;
     // Niederlagen: Sicher/Normal verwunden; Riskant bedeutet endgültigen Tod.
     var wounded = [], dead = [];
     if (!won && exp.risk === 'riskant') {
@@ -1542,7 +1707,7 @@
     var msg = won ? ('🏆 ' + r.name + ' erobert!' + (claimed ? ' (Territorium gesichert)' : ''))
                   : (partial ? ('⚔️ Teilerfolg in ' + r.name + '.') : ('💀 Niederlage in ' + r.name + '.'));
     log(state, msg, kind);
-    if (drop) log(state, '🎁 Beute: ' + GD().rarity(drop.rarity).name + 'e ' + drop.name + '.', 'gold');
+    if (drop) log(state, '🎁 Schmiedefund: ' + drop.name + '.', 'gold');
     if (wounded.length) log(state, '🩹 ' + wounded.length + ' Einheit(en) kehren verwundet zurück.', 'bad');
     if (dead.length) log(state, '☠️ ' + dead.length + ' Einheit(en) sind im riskanten Einsatz gefallen. Ihre Ausrüstung wurde geborgen.', 'bad');
     return { regionId: r.id, won: won, partial: partial, gains: gains, xpEach: xpEach, drop: drop, claimed: claimed, power: power, regionPower: r.power, risk: exp.risk, wounded: wounded.length, dead: dead.length };
@@ -2046,10 +2211,32 @@
     // 15) Gebäude ausbauen (Lückenfüller mit Reserve)
     var bup = bestBuildingUpgrade(state);
     if (bup) { var r14 = build(state, bup); if (r14.ok) return { text: GD().building(bup).icon + ' ' + GD().building(bup).name + ' Stufe ' + r14.level + '.' }; }
-    // 16) Ausrüstung schmieden – sparsam (Inventar klein halten), dann anlegen
-    if ((state.buildings.schmiede || 0) >= 1 && (state.inventory || []).length < 12) {
+    // 16) Runenschmiede: vorhandenes Arsenal zuerst verbessern, dann neue
+    // Baupläne lernen und jedes Rezept höchstens einmal herstellen.
+    if ((state.buildings.schmiede || 0) >= 1) {
+      var improvable = (state.inventory || []).slice().sort(function (a, b) { return itemQuality(a) - itemQuality(b); });
+      for (var iti = 0; iti < improvable.length; iti++) {
+        var temperCheck = canTemperItem(state, improvable[iti].uid);
+        if (temperCheck.ok && affordReserve(state, temperCheck.cost.resources, 1.6)) {
+          var tempered = temperItem(state, improvable[iti].uid);
+          if (tempered.ok) return { text: '🔥 ' + tempered.item.name + ' auf ' + tempered.rarity.name + ' aufgewertet.' };
+        }
+      }
+      var lockedPlans = GD().recipes.filter(function (recipe) { return !isRecipeUnlocked(state, recipe.id); });
+      for (var lpi = 0; lpi < lockedPlans.length; lpi++) {
+        var unlockCheck = canUnlockRecipe(state, lockedPlans[lpi].id);
+        if (unlockCheck.ok && affordReserve(state, unlockCheck.cost.resources, 1.8)) {
+          var unlocked = unlockRecipe(state, lockedPlans[lpi].id, false);
+          if (unlocked.ok) return { text: '📜 Bauplan „' + unlocked.recipe.name + '“ entschlüsselt.' };
+        }
+      }
       var recs = craftableRecipes(state).filter(function (rc) { return !rc.unique; });
-      for (var rci = 0; rci < recs.length; rci++) { if (canCraft(state, recs[rci].id).ok && affordReserve(state, recs[rci].cost, 2.0)) { var rcc = craft(state, recs[rci].id); if (rcc.ok) { autoEquip(state, rcc.item); return { text: '⚒️ ' + recs[rci].name + ' geschmiedet.' }; } } }
+      for (var rci = 0; rci < recs.length; rci++) {
+        if (canCraft(state, recs[rci].id).ok && affordReserve(state, recs[rci].cost, 2.0)) {
+          var rcc = craft(state, recs[rci].id);
+          if (rcc.ok) { autoEquip(state, rcc.item); return { text: '⚒️ ' + recs[rci].name + ' geschmiedet.' }; }
+        }
+      }
     }
     return null;
   }
@@ -2281,7 +2468,7 @@
         if (a.key === 'herrscher') { addRulerXp(state, round(xp * 0.7)); addSkillXp(state, state.herrscher, round(xp * 0.4)); }
         else { var pc = findCreature(state, a.key); if (pc) { addCreatureXp(state, pc, xp); if (pc.named) addSkillXp(state, pc, round(xp * 0.45)); } }
       });
-      if (rng() < Math.min(0.95, region.dropChance * 1.25 * rk.drop * (1 + b.drop))) drop = makeDropItem(state, region);
+      if (rng() < Math.min(0.95, region.dropChance * 1.25 * rk.drop * (1 + b.drop))) drop = makeDropItem(state, region, cbt.risk);
       if (state.claimedRegions.indexOf(region.id) < 0) state.claimedRegions.push(region.id);
       state.metrics.expeditions = (state.metrics.expeditions || 0) + 1;
       state.metrics.expeditionsWon = (state.metrics.expeditionsWon || 0) + 1;
@@ -2304,6 +2491,7 @@
     cbt.result = { won: won, fled: !!fled, gains: gains, drop: drop, dead: dead.length, wounded: wounded.length };
     combatLog(cbt, won ? '🏆 Sieg! Das Gebiet ist bezwungen.' : (fled ? '🏳️ Die Gruppe zieht sich zurück.' : '☠️ Die Gruppe wurde besiegt.'));
     log(state, won ? ('🏆 Taktischer Sieg in ' + region.name + '!') : ('☠️ Taktische Niederlage in ' + region.name + '.'), won ? 'good' : 'bad');
+    if (drop) log(state, '🎁 Schmiedefund: ' + drop.name + '.', 'gold');
     return cbt.result;
   }
   function battleAbilityRange(actor, ability) {
@@ -2557,7 +2745,14 @@
     isFieldMagicLearned: isFieldMagicLearned, fieldMagicReqStatus: fieldMagicReqStatus,
     canLearnFieldMagic: canLearnFieldMagic, learnFieldMagic: learnFieldMagic,
     adventureMagicCooldown: adventureMagicCooldown, canCastAdventureMagic: canCastAdventureMagic, castAdventureMagic: castAdventureMagic,
-    craftableRecipes: craftableRecipes, rollRarity: rollRarity, canCraft: canCraft, craft: craft,
+    forgeMaterialAmount: forgeMaterialAmount, addForgeMaterials: addForgeMaterials,
+    missingForgeCost: missingForgeCost, canAffordForgeCost: canAffordForgeCost,
+    isRecipeUnlocked: isRecipeUnlocked, recipeRequirementStatus: recipeRequirementStatus,
+    recipeBlueprintCost: recipeBlueprintCost, canUnlockRecipe: canUnlockRecipe, unlockRecipe: unlockRecipe,
+    itemForRecipe: itemForRecipe, craftableRecipes: craftableRecipes, rollRarity: rollRarity, canCraft: canCraft, craft: craft,
+    itemQuality: itemQuality, rebuildItemStats: rebuildItemStats, temperCost: temperCost,
+    canTemperItem: canTemperItem, temperItem: temperItem,
+    salvageYield: salvageYield, canSalvageItem: canSalvageItem, salvageItem: salvageItem,
     equipItem: equipItem, unequipItem: unequipItem, equipmentObjFor: equipmentObjFor,
     slotUnlocked: slotUnlocked, positionsForType: positionsForType, equippedSetBonus: equippedSetBonus, slotPos: slotPos,
     unlockedMagicTier: unlockedMagicTier, isResearched: isResearched, canResearch: canResearch, doResearch: doResearch, researchReqStatus: researchReqStatus,

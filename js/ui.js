@@ -56,6 +56,17 @@
     for (var k in cost) parts.push(fmt(cost[k]) + ' ' + resIcon(k));
     return parts.join('  ');
   }
+  function forgeCostText(cost) {
+    cost = cost || {}; var parts = [];
+    var resources = cost.resources || {};
+    for (var r in resources) parts.push(fmt(resources[r]) + ' ' + resIcon(r));
+    var materials = cost.materials || {};
+    for (var id in materials) {
+      var material = GD && GD.forgeMaterial ? GD.forgeMaterial(id) : null;
+      parts.push(materials[id] + ' ' + (material ? material.icon : id));
+    }
+    return parts.join('  ');
+  }
 
   // ---------- Komponenten ----------
   function btn(label, onClick, opts) {
@@ -837,39 +848,72 @@
       schmiede: function () {
         var s = this.state, self = this;
         var box = el('div');
-        box.appendChild(this.title('Schmiede', 'Ausrüstung herstellen & anlegen', 'schmiede'));
+        box.appendChild(this.title('Runenschmiede', 'Baupläne entschlüsseln · Ausrüstung dauerhaft veredeln', 'schmiede'));
         if ((s.buildings.schmiede || 0) < 1) {
           box.appendChild(el('div', { class: 'empty-hint', text: '⚒️ Baue zuerst die Schmiede im Reich-Tab.' }));
         } else {
-          box.appendChild(this.secLabel('Rezepte (Schmiede Stufe ' + s.buildings.schmiede + ')', 'schmiede'));
-          var grid = el('div', { class: 'grid' });
-          SYS.craftableRecipes(s).forEach(function (rc) {
-            var check = SYS.canCraft(s, rc.id);
-            grid.appendChild(el('div', { class: 'card' }, [
+          var materialShelf = el('div', { class: 'forge-materials', 'aria-label': 'Schmiedekomponenten' });
+          GD.forgeMaterials.forEach(function (material) {
+            materialShelf.appendChild(el('div', { class: 'forge-material ' + material.cls, title: material.desc + ' Fundort: ' + material.source }, [
+              el('span', { class: 'forge-material-icon', text: material.icon }),
+              el('span', null, [el('b', { text: fmt(SYS.forgeMaterialAmount(s, material.id)) }), el('small', { text: material.name })])
+            ]));
+          });
+          box.appendChild(materialShelf);
+          box.appendChild(el('p', { class: 'forge-lead', text: 'Jeder Bauplan erzeugt höchstens ein Stück. Schlachtfunde liefern Baupläne oder seltene Komponenten, mit denen dieses Stück bis Göttlich wächst.' }));
+
+          var forgeLayout = el('div', { class: 'forge-layout' });
+          var blueprints = el('section', { class: 'forge-panel blueprint-panel' });
+          blueprints.appendChild(el('div', { class: 'forge-panel-head' }, [
+            el('div', null, [el('b', { text: '📜 Bauplanarchiv' }), el('small', { text: (s.unlockedRecipes || []).length + '/' + GD.recipes.length + ' entschlüsselt' })]),
+            el('span', { class: 'pill', text: 'Schmiede ' + s.buildings.schmiede })
+          ]));
+          var recipeList = el('div', { class: 'blueprint-list' });
+          GD.recipes.forEach(function (rc) {
+            var known = SYS.isRecipeUnlocked(s, rc.id), owned = SYS.itemForRecipe(s, rc.id);
+            var craftCheck = SYS.canCraft(s, rc.id), unlockCheck = SYS.canUnlockRecipe(s, rc.id);
+            var blueprintCost = SYS.recipeBlueprintCost(s, rc.id);
+            var stateText = known ? (owned ? ('Im Arsenal · ' + GD.rarity(owned.rarity).name) : 'Bauplan bereit')
+              : (unlockCheck.ok ? 'Entschlüsselbar' : (unlockCheck.reason || 'Gesperrt'));
+            recipeList.appendChild(el('article', { class: 'blueprint-card ' + (known ? 'known' : 'locked') + (owned ? ' owned' : '') }, [
               el('div', { class: 'card-head' }, [
                 el('div', { class: 'card-emoji', text: rc.icon }),
                 el('div', { class: 'card-title' }, [
                   el('div', { class: 'name' }, [rc.name, el('span', { class: 'pill', text: slotName(rc.slot) })]),
-                  el('div', { class: 'meta', text: rc.desc })
+                  el('div', { class: 'meta', text: rc.desc }),
+                  el('div', { class: 'blueprint-state', text: stateText })
                 ])
               ]),
               statsLine(rc.stats),
-              btn('Schmieden', function () {
-                var r = SYS.craft(s, rc.id);
-                if (!r.ok) toast(r.reason, 'bad'); else toast('⚒️ ' + GD.rarity(r.rarity.id).name + 'e ' + r.item.name + '!', r.rarity.id === 'gewoehnlich' ? '' : 'gold');
-                self.commit();
-              }, { cls: 'btn-primary', small: true, disabled: !check.ok, cost: costText(rc.cost) })
+              known
+                ? (owned
+                  ? el('div', { class: 'blueprint-owned', text: '✓ Einmaliges Schmiedestück vorhanden' })
+                  : btn('Einmalig schmieden', function () {
+                      var result = SYS.craft(s, rc.id);
+                      if (!result.ok) toast(result.reason, 'bad'); else toast('⚒️ ' + result.item.name + ' geschmiedet.', 'good');
+                      self.commit();
+                    }, { cls: 'btn-primary', small: true, disabled: !craftCheck.ok, cost: costText(rc.cost) }))
+                : btn('Bauplan entschlüsseln', function () {
+                    var result = SYS.unlockRecipe(s, rc.id, false);
+                    if (!result.ok) toast(result.reason, 'bad'); else toast('📜 ' + rc.name + ' freigeschaltet!', 'gold');
+                    self.commit();
+                  }, { cls: 'btn-gold', small: true, disabled: !unlockCheck.ok, cost: forgeCostText(blueprintCost) })
             ]));
           });
-          box.appendChild(grid);
-        }
+          blueprints.appendChild(recipeList); forgeLayout.appendChild(blueprints);
 
-        // Inventar
-        box.appendChild(el('div', { class: 'section-label', text: 'Inventar (' + s.inventory.length + ')' }));
-        if (!s.inventory.length) box.appendChild(el('div', { class: 'empty-hint', text: 'Noch keine Ausrüstung. Schmiede oder erbeute welche.' }));
-        var inv = el('div', { class: 'grid' });
-        s.inventory.forEach(function (it) { inv.appendChild(self.itemCard(it)); });
-        box.appendChild(inv);
+          var arsenal = el('section', { class: 'forge-panel arsenal-panel' });
+          arsenal.appendChild(el('div', { class: 'forge-panel-head' }, [
+            el('div', null, [el('b', { text: '🔥 Langlebiges Arsenal' }), el('small', { text: s.inventory.length + ' begrenzte Schmiedestücke' })]),
+            el('span', { class: 'pill', text: 'keine Zufallsduplikate' })
+          ]));
+          if (!s.inventory.length) arsenal.appendChild(el('div', { class: 'empty-hint', text: 'Noch kein Schmiedestück. Stelle einen bekannten Bauplan einmalig her.' }));
+          var inv = el('div', { class: 'arsenal-list' });
+          s.inventory.slice().sort(function (a, b) { return SYS.itemQuality(b) - SYS.itemQuality(a) || a.name.localeCompare(b.name); })
+            .forEach(function (it) { inv.appendChild(self.itemCard(it)); });
+          arsenal.appendChild(inv); forgeLayout.appendChild(arsenal);
+          box.appendChild(forgeLayout);
+        }
 
         // Diablo-artige Ausrüstungsübersicht: feste Körperpositionen und zwei Accessoires.
         box.appendChild(this.secLabel('Ausrüstungsplätze', 'schmiede'));
@@ -1232,8 +1276,12 @@
       var holder = '';
       if (it.equippedBy === 'herrscher') holder = 'Herrscher';
       else if (it.equippedBy != null) { var c = SYS.findCreature(s, it.equippedBy); holder = c ? (c.named ? c.name : GD.creature(c.speciesId).name) : ''; }
-      var rar = GD.rarity(it.rarity);
-      return el('div', { class: 'card' }, [
+      var quality = SYS.itemQuality(it), rar = GD.rarities[quality], temper = SYS.canTemperItem(s, it.uid), salvage = SYS.canSalvageItem(s, it.uid);
+      var qualityTrack = el('div', { class: 'quality-track', 'aria-label': 'Qualität ' + rar.name });
+      GD.rarities.forEach(function (rarity, idx) {
+        qualityTrack.appendChild(el('span', { class: 'quality-step ' + rarity.cls + (idx <= quality ? ' reached' : ''), title: rarity.name, text: idx <= quality ? '◆' : '◇' }));
+      });
+      return el('div', { class: 'card forge-item forge-quality-' + quality }, [
         el('div', { class: 'card-head' }, [
           el('div', { class: 'card-emoji', text: it.icon }),
           el('div', { class: 'card-title' }, [
@@ -1241,10 +1289,21 @@
             el('div', { class: 'meta', text: slotName(it.slot) + (holder ? ' · angelegt: ' + holder : ' · frei') })
           ])
         ]),
+        qualityTrack,
         statsLine(it.stats),
+        el('div', { class: 'forge-item-history', text: (it.forgeHistory || []).length ? ((it.forgeHistory || []).length + '× in Tempest veredelt') : 'Noch nicht in Tempest veredelt' }),
         el('div', { class: 'card-actions' }, [
           btn('Ausrüsten', function () { self.openEquipModal(it); }, { small: true, cls: 'btn-primary' }),
-          it.equippedBy != null ? btn('Ablegen', function () { SYS.unequipItem(s, it.uid); self.commit(); }, { small: true }) : null
+          it.equippedBy != null ? btn('Ablegen', function () { SYS.unequipItem(s, it.uid); self.commit(); }, { small: true }) : null,
+          quality < GD.rarities.length - 1 ? btn('🔥 Aufwerten', function () { self.openTemperModal(it.uid); }, {
+            small: true, cls: temper.ok ? 'btn-gold' : '', cost: forgeCostText(temper.cost || SYS.temperCost(s, it.uid))
+          }) : el('span', { class: 'pill forge-maxed', text: '✦ Göttlich vollendet' }),
+          !it.equippedBy && salvage.ok ? btn('♻️ Zerlegen', function () {
+            if (!window.confirm('„' + it.name + '“ wirklich zerlegen? Der Bauplan bleibt erhalten.')) return;
+            var result = SYS.salvageItem(s, it.uid);
+            if (!result.ok) toast(result.reason, 'bad'); else toast('♻️ Komponenten geborgen.', 'good');
+            self.commit();
+          }, { small: true }) : null
         ])
       ]);
     },
@@ -1252,6 +1311,41 @@
     // ============================================================
     //  Modals
     // ============================================================
+    openTemperModal: function (itemUid) {
+      var s = this.state, self = this, item = SYS.findItem(s, itemUid);
+      if (!item) return;
+      var quality = SYS.itemQuality(item), target = GD.rarities[quality + 1], check = SYS.canTemperItem(s, itemUid), cost = check.cost || SYS.temperCost(s, itemUid);
+      if (!target || !cost) { toast('Göttliche Maximalqualität erreicht.', 'gold'); return; }
+      var recipe = GD.recipe(item.recipeId), preview = {};
+      if (recipe) for (var stat in recipe.stats) preview[stat] = Math.round(recipe.stats[stat] * target.mult);
+      var content = el('div', { class: 'temper-modal-content' }, [
+        el('div', { class: 'temper-hero' }, [
+          el('div', { class: 'temper-item-icon', text: item.icon }),
+          el('div', null, [
+            el('h4', { text: item.name }),
+            el('p', { text: GD.rarities[quality].name + '  →  ' + target.name })
+          ])
+        ]),
+        el('div', { class: 'quality-comparison' }, [
+          el('div', null, [el('small', { text: 'AKTUELL' }), statsLine(item.stats)]),
+          el('div', { class: 'quality-arrow', text: '➜' }),
+          el('div', null, [el('small', { text: 'NACH DEM AUFWERTEN' }), statsLine(preview)])
+        ]),
+        el('div', { class: 'temper-cost-box' }, [
+          el('b', { text: 'Benötigte Schmiedehitze' }),
+          el('span', { text: forgeCostText(cost) }),
+          !check.ok ? el('small', { class: 'bad-text', text: check.reason }) : null
+        ]),
+        btn('🔥 Qualität auf ' + target.name + ' erhöhen', function () {
+          var result = SYS.temperItem(s, itemUid);
+          if (!result.ok) { toast(result.reason, 'bad'); return; }
+          toast('🔥 ' + item.name + ' ist jetzt ' + result.rarity.name + '!', 'gold');
+          closeModal(); self.commit();
+        }, { cls: 'btn-gold', disabled: !check.ok, cost: forgeCostText(cost) })
+      ]);
+      openModal('Ausrüstung veredeln', content, '🔥', 'temper-modal');
+    },
+
     openMapSiteModal: function (node) {
       var s = this.state, self = this;
       node = SYS.strategicNode(node && node.id ? node.id : node);
@@ -1264,11 +1358,17 @@
         for (var k in (map || {})) parts.push(((map[k] * mult) % 1 ? (map[k] * mult).toFixed(1) : (map[k] * mult)) + ' ' + resIcon(k));
         return parts.join('  ');
       }
+      function forgeAmounts(map) {
+        var parts = [];
+        for (var id in (map || {})) { var material = GD.forgeMaterial(id); parts.push(map[id] + '× ' + (material ? material.icon : id)); }
+        return parts.join('  ');
+      }
       var content = el('div');
       content.appendChild(el('p', { class: 'muted', text: site.desc }));
       content.appendChild(el('div', { class: 'site-summary' }, [
         el('span', { class: 'pill', text: unlocked ? (secured ? '✓ Gesichert' : '⚔️ Erreichbar') : '🌫️ Im Nebel' }),
         el('span', { class: 'pill', text: 'Wache ' + fmt(site.guard) }),
+        site.forgeReward ? el('span', { class: 'pill', text: '⚒️ ' + forgeAmounts(site.forgeReward) }) : null,
         site.kind === 'resource' ? el('span', { class: 'pill', text: '🏗️ Anlage' + (level ? ' Stufe ' + level + '/3' : '') }) : el('span', { class: 'pill', text: '💎 Einmaliger Fund' })
       ]));
       if (!unlocked) {

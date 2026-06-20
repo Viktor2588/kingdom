@@ -205,6 +205,37 @@ ok(SYS.creaturePower(s, gob) > powBefore, 'Ausrüstung erhöht Kampfkraft (' + p
 SYS.equipItem(s, rc.item.uid, 'herrscher'); // Umrüsten auf Herrscher
 ok(gob.equipment.waffe === null && s.herrscher.equipment.waffe === rc.item.uid, 'Item korrekt umgerüstet');
 
+console.log('--- Runenschmiede & langlebige Ausrüstung (Phase 21) ---');
+var sF = GST.createDefault(); sF.buildings.schmiede = 3;
+sF.resources.material = 999999; sF.resources.magie = 999999; sF.resources.wissen = 999999; sF.resources.seelen = 999999;
+ok(GD.forgeMaterials.length === 4 && SYS.forgeMaterialAmount(sF, 'runenstaub') === 0, 'vier abgestufte Schmiedekomponenten initialisiert');
+ok(SYS.isRecipeUnlocked(sF, 'magistahlklinge') && !SYS.isRecipeUnlocked(sF, 'windklinge'), 'nur Starter-Baupläne sind anfangs bekannt');
+SYS.addForgeMaterials(sF, { runenstaub: 20, magistahlkern: 20, seelenkristall: 20, drachenessenz: 20 });
+var unlockF = SYS.unlockRecipe(sF, 'windklinge', false);
+ok(unlockF.ok && SYS.isRecipeUnlocked(sF, 'windklinge'), 'Bauplan wird mit Wissen und seltener Komponente entschlüsselt');
+var craftF = SYS.craft(sF, 'windklinge');
+ok(craftF.ok && SYS.itemQuality(craftF.item) === 0, 'ein langlebiges Schmiedestück startet Gewöhnlich');
+ok(!SYS.craft(sF, 'windklinge').ok && sF.inventory.length === 1, 'jedes Rezept erzeugt höchstens ein Exemplar');
+var forgeStatsBefore = craftF.item.stats.ang;
+for (var fq = 1; fq < GD.rarities.length; fq++) ok(SYS.temperItem(sF, craftF.item.uid).ok, 'Qualitätsstufe ' + GD.rarities[fq].name + ' gezielt aufgewertet');
+ok(SYS.itemQuality(craftF.item) === 4 && craftF.item.stats.ang > forgeStatsBefore && !SYS.canTemperItem(sF, craftF.item.uid).ok, 'Göttliche Maximalqualität erhöht Werte und beendet Aufwertung');
+SYS.equipItem(sF, craftF.item.uid, 'herrscher');
+ok(!SYS.canSalvageItem(sF, craftF.item.uid).ok, 'angelegte Ausrüstung ist vor Zerlegung geschützt');
+SYS.unequipItem(sF, craftF.item.uid);
+var dustBefore = SYS.forgeMaterialAmount(sF, 'runenstaub'), salvagedF = SYS.salvageItem(sF, craftF.item.uid);
+ok(salvagedF.ok && !SYS.findItem(sF, craftF.item.uid) && SYS.forgeMaterialAmount(sF, 'runenstaub') > dustBefore, 'freie Ausrüstung kann in Komponenten zurückverwandelt werden');
+var oldForgeSave = GST.createDefault(); oldForgeSave.version = 6; oldForgeSave.buildings.schmiede = 3;
+oldForgeSave.resources.material = 500; oldForgeSave.resources.magie = 500;
+var oldItem = SYS.craft(oldForgeSave, 'magistahlklinge').item; oldItem.rarity = 'episch'; delete oldItem.quality;
+delete oldForgeSave.unlockedRecipes; delete oldForgeSave.forgeMaterials;
+var migratedForge = GST.normalize(JSON.parse(JSON.stringify(oldForgeSave)));
+ok(migratedForge.version === 7 && SYS.itemQuality(migratedForge.inventory[0]) === 2 && SYS.isRecipeUnlocked(migratedForge, 'windklinge'), 'Save-v7-Migration erhält alte Qualität und frühere Rezeptfreischaltungen');
+var inventoryBeforeDrop = sF.inventory.length, plansBeforeDrop = sF.unlockedRecipes.length, randomBeforeForge = Math.random;
+Math.random = function () { return 0.1; };
+SYS.resolveExpedition(sF, { regionId: 'goetterthron', creatureUids: [], rulerJoined: true, risk: 'normal', power: 999999, startTick: 0, returnsAtTick: 0 });
+Math.random = randomBeforeForge;
+ok(sF.inventory.length === inventoryBeforeDrop && sF.unlockedRecipes.length > plansBeforeDrop, 'Kampfbeute liefert Baupläne statt neuer Zufallsgegenstände');
+
 console.log('--- Herrscher-Progression ---');
 var lvlBefore = s.herrscher.level;
 SYS.addRulerXp(s, 5000);
@@ -229,7 +260,7 @@ ok(SYS.rulerPower(sT) > talentPowerBefore && SYS.armyCommandCapacity(sT, SYS.rul
 ok(!SYS.canRefundTalent(sT, 't_magicule_koerper').ok, 'tragender Talentpunkt kann nicht unter abhängigen Knoten entfernt werden');
 ok(SYS.refundTalent(sT, 't_seelensinn').ok, 'nicht mehr tragender Folgeknoten kann gegen Gold zurückerstattet werden');
 var talentSave = GST.normalize(JSON.parse(JSON.stringify(sT)));
-ok(talentSave.version === 6 && SYS.talentRank(talentSave, 't_magicule_koerper') === 3, 'Talentbelegung übersteht Save-v6-Roundtrip');
+ok(talentSave.version === 7 && SYS.talentRank(talentSave, 't_magicule_koerper') === 3, 'Talentbelegung übersteht Save-v7-Roundtrip');
 
 console.log('--- Expedition (Auto-Kampf) ---');
 gob.job = 'armee';

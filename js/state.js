@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 6;
+  var VERSION = 7;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -97,6 +97,8 @@
       exploredMapSites: [],
       mapSiteLevels: {},
       inventory: [],
+      unlockedRecipes: ['magistahlklinge', 'magistahlpanzer', 'magieamulett'],
+      forgeMaterials: { runenstaub: 0, magistahlkern: 0, seelenkristall: 0, drachenessenz: 0 },
       threat: 0,
       raid: null,
       rivalProgress: {},
@@ -110,7 +112,7 @@
       questProgress: 0,
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [] },
       log: [],
-      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, raidsRepelled: 0, fused: 0, armyVictories: 0 }
+      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0 }
     };
     var slime = newCreature(s, 'schleim');
     var goblins = newCreature(s, 'goblin');
@@ -124,6 +126,7 @@
   // Fehlende Felder ergänzen (Vorwärtskompatibilität alter Spielstände).
   function normalize(s) {
     if (!s || typeof s !== 'object') return createDefault();
+    var sourceVersion = Math.max(1, Math.floor(Number(s.version) || 1));
     var def = createDefault();
     function fill(target, defaults) {
       for (var k in defaults) {
@@ -137,6 +140,40 @@
     fill(s.resources, def.resources);
     fill(s.herrscher, def.herrscher);
     fill(s.metrics, def.metrics);
+    if (!s.forgeMaterials || typeof s.forgeMaterials !== 'object' || Array.isArray(s.forgeMaterials)) s.forgeMaterials = {};
+    fill(s.forgeMaterials, def.forgeMaterials);
+    GD().forgeMaterials.forEach(function (material) {
+      s.forgeMaterials[material.id] = Math.max(0, Math.floor(Number(s.forgeMaterials[material.id]) || 0));
+    });
+    if (!Array.isArray(s.unlockedRecipes)) s.unlockedRecipes = [];
+    // v1–v6 konnten alle durch Gebäude/Forschung sichtbaren Rezepte direkt
+    // schmieden. Diese Baupläne bleiben bei der Migration selbstverständlich bekannt.
+    if (sourceVersion < 7) {
+      GD().recipes.forEach(function (recipe) {
+        var researchOk = !recipe.req || !recipe.req.research || (s.research || []).indexOf(recipe.req.research) >= 0;
+        if ((recipe.starter || ((s.buildings && s.buildings.schmiede) || 0) >= recipe.schmiede) && researchOk) s.unlockedRecipes.push(recipe.id);
+      });
+    }
+    GD().recipes.forEach(function (recipe) { if (recipe.starter) s.unlockedRecipes.push(recipe.id); });
+    s.unlockedRecipes = s.unlockedRecipes.filter(function (id, i, all) { return !!GD().recipe(id) && all.indexOf(id) === i; });
+    if (!Array.isArray(s.inventory)) s.inventory = [];
+    s.inventory.forEach(function (item) {
+      var recipe = GD().recipe(item.recipeId), quality = Number(item.quality);
+      if (!isFinite(quality)) {
+        quality = 0;
+        GD().rarities.forEach(function (rarity, idx) { if (rarity.id === item.rarity) quality = idx; });
+      }
+      quality = Math.max(0, Math.min(GD().rarities.length - 1, Math.floor(quality)));
+      item.quality = quality;
+      item.rarity = GD().rarities[quality].id;
+      if (!Array.isArray(item.forgeHistory)) item.forgeHistory = [];
+      if (recipe) {
+        item.name = recipe.name; item.icon = recipe.icon; item.slot = recipe.slot;
+        item.stats = {};
+        for (var stat in recipe.stats) item.stats[stat] = Math.round(recipe.stats[stat] * GD().rarities[quality].mult);
+        if (s.unlockedRecipes.indexOf(recipe.id) < 0) s.unlockedRecipes.push(recipe.id);
+      }
+    });
     // Gebäude: alle bekannten IDs sicherstellen
     GD().buildings.forEach(function (b) {
       if (typeof s.buildings[b.id] !== 'number') s.buildings[b.id] = 0;

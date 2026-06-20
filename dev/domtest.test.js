@@ -207,6 +207,31 @@ tryRender('Diablo-artige Ausrüstungsplätze rendern', function () {
   window.GameUI.activeTab = 'schmiede'; window.GameUI.render();
   if (document.querySelectorAll('#screen .loadout-slot').length < window.GameData.equipSlots.length) throw new Error('Loadout unvollständig');
 });
+tryRender('Runenschmiede zeigt Komponenten, Baupläne und begrenztes Arsenal', function () {
+  s.buildings.schmiede = 3; s.resources.wissen += 10000; s.resources.material += 10000; s.resources.magie += 10000; s.resources.seelen += 10000;
+  SYS.addForgeMaterials(s, { runenstaub: 20, magistahlkern: 20, seelenkristall: 20, drachenessenz: 20 });
+  window.GameUI.activeTab = 'schmiede'; window.GameUI.render();
+  if (document.querySelectorAll('#screen .forge-material').length !== window.GameData.forgeMaterials.length) throw new Error('Komponentenleiste unvollständig');
+  if (document.querySelectorAll('#screen .blueprint-card').length !== window.GameData.recipes.length) throw new Error('Bauplanarchiv unvollständig');
+  if (!document.querySelector('#screen .arsenal-panel')) throw new Error('kein langlebiges Arsenal');
+});
+tryRender('Bauplan lässt sich über die Schmiede-UI entschlüsseln', function () {
+  window.GameUI.activeTab = 'schmiede'; window.GameUI.render();
+  var before = s.unlockedRecipes.length;
+  var unlock = Array.prototype.filter.call(document.querySelectorAll('#screen .blueprint-card.locked .btn'), function (b) { return b.textContent.indexOf('Bauplan entschlüsseln') >= 0 && !b.hasAttribute('disabled'); })[0];
+  if (!unlock) throw new Error('kein entschlüsselbarer Bauplan');
+  unlock.click();
+  if (s.unlockedRecipes.length !== before + 1) throw new Error('Bauplan nicht freigeschaltet');
+});
+tryRender('Qualitätsaufwertung besitzt Vorschau und verändert dasselbe Item', function () {
+  var before = SYS.itemQuality(rc.item);
+  window.GameUI.openTemperModal(rc.item.uid);
+  if (!document.querySelector('.temper-modal') || document.getElementById('modal-root').textContent.indexOf('NACH DEM AUFWERTEN') < 0) throw new Error('keine Aufwertungsvorschau');
+  var upgrade = Array.prototype.filter.call(document.querySelectorAll('#modal-root .btn'), function (b) { return b.textContent.indexOf('Qualität auf') >= 0 && !b.hasAttribute('disabled'); })[0];
+  if (!upgrade) throw new Error('Aufwertung trotz Komponenten nicht möglich');
+  upgrade.click();
+  if (SYS.itemQuality(rc.item) !== before + 1) throw new Error('Itemqualität nicht erhöht');
+});
 tryRender('Taktische Gruppenauswahl rendert', function () {
   window.GameUI.openBattleSetupModal(window.GameData.region('wald'));
   if (document.getElementById('modal-root').textContent.indexOf('Kampf beginnen') < 0) throw new Error('keine Kampfauswahl');

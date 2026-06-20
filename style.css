@@ -576,6 +576,75 @@ button { font-family: inherit; }
 .magic-lane.research { border-color: #8b7040; background: #302719; }
 .magic-academy { border-color: #536ea0; }
 
+/* ---------------- Runenschmiede (Phase 21) ---------------- */
+.forge-materials {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px;
+  margin: 4px 0 9px;
+}
+.forge-material {
+  min-width: 0; display: flex; align-items: center; gap: 8px; padding: 8px;
+  border: 1px solid var(--line); border-radius: 11px; background: var(--bg-2);
+}
+.forge-material-icon { font-size: 22px; filter: drop-shadow(0 0 5px currentColor); }
+.forge-material span:last-child { min-width: 0; display: flex; flex-direction: column; }
+.forge-material b { color: var(--text); font-size: 15px; }
+.forge-material small { overflow: hidden; color: var(--text-mut); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.forge-common { border-color: #706b7c; color: #b9b3c9; }
+.forge-uncommon { border-color: #477db2; color: #5aa9ff; }
+.forge-rare { border-color: #7652ad; color: #b07bff; }
+.forge-mythic { border-color: #b57828; color: #ffd34d; }
+.forge-lead { margin: 0 2px 11px; color: var(--text-dim); font-size: 11px; line-height: 1.45; }
+.forge-layout { display: grid; gap: 10px; align-items: start; }
+.forge-panel {
+  min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(36,27,57,.72), rgba(14,12,27,.74));
+}
+.forge-panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 11px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.025);
+}
+.forge-panel-head > div { display: flex; min-width: 0; flex-direction: column; }
+.forge-panel-head b { color: var(--text); font-size: 13px; }
+.forge-panel-head small { color: var(--text-mut); font-size: 9px; }
+.blueprint-list, .arsenal-list { display: flex; flex-direction: column; gap: 7px; padding: 9px; }
+.blueprint-card {
+  display: flex; flex-direction: column; gap: 7px; padding: 9px;
+  border: 1px solid var(--line); border-radius: 11px; background: var(--bg-2);
+}
+.blueprint-card.locked { opacity: .64; filter: saturate(.55); }
+.blueprint-card.known { border-color: #4b687b; }
+.blueprint-card.owned { border-color: #4d7c62; }
+.blueprint-state { margin-top: 3px; color: var(--accent-2); font-size: 9px; line-height: 1.25; }
+.blueprint-card.locked .blueprint-state { color: var(--text-mut); }
+.blueprint-owned { padding: 7px; border-radius: 8px; background: rgba(76,145,96,.13); color: var(--good); font-size: 10px; text-align: center; }
+.forge-item { position: relative; overflow: hidden; }
+.forge-item::before { content: ''; position: absolute; inset: 0 0 auto; height: 2px; background: #80798d; }
+.forge-item.forge-quality-1::before { background: #5aa9ff; }
+.forge-item.forge-quality-2::before { background: #b07bff; }
+.forge-item.forge-quality-3::before { background: #ff9a4d; }
+.forge-item.forge-quality-4::before { height: 3px; background: linear-gradient(90deg, #ff9a4d, #ffd34d, #fff0a6); box-shadow: 0 0 9px #ffd34d; }
+.quality-track { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 9px; background: rgba(0,0,0,.16); }
+.quality-step { flex: 1; opacity: .22; font-size: 12px; text-align: center; }
+.quality-step.reached { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
+.forge-item-history { color: var(--text-mut); font-size: 9px; }
+.forge-maxed { align-self: center; color: #ffd34d; }
+.temper-hero { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #80622d; border-radius: 12px; background: rgba(105,72,26,.18); }
+.temper-item-icon { width: 58px; height: 58px; display: grid; place-items: center; border: 1px solid #9d7836; border-radius: 14px; background: #241a15; font-size: 34px; }
+.temper-hero h4 { margin: 0; font-size: 17px; }
+.temper-hero p { margin: 3px 0 0; color: var(--accent-2); }
+.quality-comparison { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin: 12px 0; }
+.quality-comparison > div:not(.quality-arrow) { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); }
+.quality-comparison small { color: var(--text-mut); font-size: 8px; }
+.quality-arrow { color: var(--accent-2); font-size: 20px; }
+.temper-cost-box { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.temper-cost-box span { color: var(--accent-2); }
+.temper-cost-box small, .bad-text { color: var(--bad); }
+@media (min-width: 760px) {
+  .forge-materials { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .forge-layout { grid-template-columns: minmax(300px, .9fr) minmax(360px, 1.1fr); }
+  .blueprint-list, .arsenal-list { max-height: 650px; overflow-y: auto; scrollbar-color: var(--line-hi) var(--bg-2); }
+}
+
 /* ---------------- Heroes-artige Weltkarte & Armeegruppen ---------------- */
 .map-day {
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;

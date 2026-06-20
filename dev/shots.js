@@ -136,6 +136,20 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.screenshot({ path: path.join(out, '12-armeegruppe.png') });
   console.log('  📸 12-armeegruppe.png');
 
+  // Phase 22: prozedurales Echo-Netz und Detailmodal auf Handygröße.
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close'); if (close) close.click();
+    window.GameUI.activeTab = 'karte'; window.GameUI.render();
+    var echo = document.querySelector('.echo-header'); if (echo) echo.scrollIntoView({ block: 'start' });
+  });
+  await page.waitForTimeout(180);
+  await page.screenshot({ path: path.join(out, '12a-echo-map-mobile.png') });
+  console.log('  📸 12a-echo-map-mobile.png');
+  await page.evaluate(function () { window.GameUI.openEchoModal(window.GameSystems.availableEchoNodes(window.__TEMPEST__.state)[0]); });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, '12b-echo-modal-mobile.png') });
+  console.log('  📸 12b-echo-modal-mobile.png');
+
   // Desktop-Abnahme: dieselbe Sitzung bei 1440×900 in der neuen Spiel-Shell.
   await page.evaluate(function () {
     var close = document.querySelector('.modal-close');
@@ -144,6 +158,10 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.setViewportSize({ width: 1440, height: 900 });
   await shot('uebersicht', '13-desktop-uebersicht');
   await shot('karte', '14-desktop-karte');
+  await page.evaluate(function () { var echo = document.querySelector('.echo-header'); if (echo) echo.scrollIntoView({ block: 'start' }); });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, '14a-desktop-echo-map.png') });
+  console.log('  📸 14a-desktop-echo-map.png');
   await shot('reich', '16-desktop-reich');
   await shot('kreaturen', '17-desktop-kreaturen');
   await shot('magie', '18-desktop-magie');
@@ -186,5 +204,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 20 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 23 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

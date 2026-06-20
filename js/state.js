@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 7;
+  var VERSION = 8;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -96,6 +96,15 @@
       claimedMapSites: [],
       exploredMapSites: [],
       mapSiteLevels: {},
+      echoes: {
+        cycle: 1,
+        seed: Math.max(1, Math.floor(Date.now() % 2147483646)),
+        nodes: [],
+        completed: [],
+        stability: 0,
+        mapsCompleted: 0,
+        lastAutoTick: -999
+      },
       inventory: [],
       unlockedRecipes: ['magistahlklinge', 'magistahlpanzer', 'magieamulett'],
       forgeMaterials: { runenstaub: 0, magistahlkern: 0, seelenkristall: 0, drachenessenz: 0 },
@@ -112,7 +121,7 @@
       questProgress: 0,
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [] },
       log: [],
-      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0 }
+      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0 }
     };
     var slime = newCreature(s, 'schleim');
     var goblins = newCreature(s, 'goblin');
@@ -245,6 +254,20 @@
     if (!Array.isArray(s.claimedMapSites)) s.claimedMapSites = [];
     if (!Array.isArray(s.exploredMapSites)) s.exploredMapSites = [];
     if (!s.mapSiteLevels || typeof s.mapSiteLevels !== 'object') s.mapSiteLevels = {};
+    if (!s.echoes || typeof s.echoes !== 'object' || Array.isArray(s.echoes)) s.echoes = JSON.parse(JSON.stringify(def.echoes));
+    fill(s.echoes, def.echoes);
+    s.echoes.cycle = Math.max(1, Math.floor(Number(s.echoes.cycle) || 1));
+    s.echoes.seed = Math.max(1, Math.floor(Number(s.echoes.seed) || def.echoes.seed));
+    s.echoes.stability = Math.max(0, Math.floor(Number(s.echoes.stability) || 0));
+    s.echoes.mapsCompleted = Math.max(0, Math.floor(Number(s.echoes.mapsCompleted) || 0));
+    s.echoes.lastAutoTick = Math.floor(Number(s.echoes.lastAutoTick) || -999);
+    if (!Array.isArray(s.echoes.nodes)) s.echoes.nodes = [];
+    s.echoes.nodes = s.echoes.nodes.filter(function (node) {
+      return node && typeof node.id === 'string' && typeof node.power === 'number' && Array.isArray(node.parents) && Array.isArray(node.affixIds);
+    });
+    if (!Array.isArray(s.echoes.completed)) s.echoes.completed = [];
+    var echoIds = {}; s.echoes.nodes.forEach(function (node) { echoIds[node.id] = true; });
+    s.echoes.completed = s.echoes.completed.filter(function (id, i, all) { return echoIds[id] && all.indexOf(id) === i; });
     s.claimedMapSites = s.claimedMapSites.filter(function (id, i, a) { var site = GD().strategicSite(id); return site && site.kind === 'resource' && a.indexOf(id) === i; });
     s.exploredMapSites = s.exploredMapSites.filter(function (id, i, a) { var site = GD().strategicSite(id); return site && site.kind === 'discovery' && a.indexOf(id) === i; });
     s.claimedMapSites.forEach(function (id) { s.mapSiteLevels[id] = Math.max(1, Math.min(3, Math.floor(Number(s.mapSiteLevels[id]) || 1))); });

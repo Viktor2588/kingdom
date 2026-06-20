@@ -1031,6 +1031,62 @@
           box.appendChild(armyList);
         }
 
+        // --- Prozedurale Echo-Territorien (ab zwei eroberten Regionen) ---
+        box.appendChild(this.secLabel('Echo-Territorien', 'karte'));
+        if (!SYS.echoUnlocked(s)) {
+          box.appendChild(el('div', { class: 'empty-hint echo-locked-hint', text: '🌀 Erobere zwei Territorien, damit der Große Weise instabile Nachhall-Welten lokalisieren kann. Fortschritt: ' + s.claimedRegions.length + '/' + SYS.ECHO_UNLOCK_REGIONS + '.' }));
+        } else {
+          var echoes = SYS.ensureEchoMap(s), echoDone = (echoes.completed || []).length;
+          var echoHead = el('div', { class: 'echo-header' }, [
+            el('div', null, [
+              el('b', { text: '🌀 Zyklus ' + echoes.cycle }),
+              el('span', { class: 'muted', text: ' · Stabilität ' + echoes.stability + ' · ' + echoDone + '/' + echoes.nodes.length + ' abgeschlossen' })
+            ]),
+            el('div', { class: 'card-actions' }, [
+              SYS.echoBossCompleted(s) ? btn('Nächsten Zyklus öffnen', function () {
+                var result = SYS.advanceEchoCycle(s); if (!result.ok) { toast(result.reason, 'bad'); return; }
+                toast('🌀 Echo-Zyklus ' + result.cycle + ' geöffnet.', 'gold'); self.commit();
+              }, { small: true, cls: 'btn-gold' }) : null,
+              btn('Netz neu verweben', function () {
+                var result = SYS.rerollEchoMap(s); if (!result.ok) { toast(result.reason, 'bad'); return; }
+                toast('🌀 Ein neues Echo-Netz wurde erzeugt.', 'good'); self.commit();
+              }, { small: true, disabled: !SYS.canRerollEchoMap(s).ok, cost: costText(SYS.echoRerollCost(s)) })
+            ])
+          ]);
+          box.appendChild(echoHead);
+          var echoMap = el('div', { class: 'echo-map', role: 'region', 'aria-label': 'Prozedurales Echo-Netz' });
+          var echoRoutes = svgEl('svg', { class: 'echo-routes', viewBox: '0 0 100 100', preserveAspectRatio: 'none', 'aria-hidden': 'true' });
+          echoes.nodes.forEach(function (node) {
+            node.parents.forEach(function (parentId) {
+              var parent = SYS.echoNode(s, parentId); if (!parent) return;
+              var secured = SYS.echoNodeCompleted(s, parent.id) && SYS.echoNodeCompleted(s, node.id);
+              var open = SYS.echoNodeCompleted(s, parent.id) && !SYS.echoNodeCompleted(s, node.id);
+              echoRoutes.appendChild(svgEl('line', { x1: parent.x, y1: parent.y, x2: node.x, y2: node.y, class: 'echo-route' + (secured ? ' secured' : (open ? ' open' : '')) }));
+            });
+          });
+          echoMap.appendChild(echoRoutes);
+          echoes.nodes.forEach(function (node) {
+            var completed = SYS.echoNodeCompleted(s, node.id), available = SYS.echoNodeAvailable(s, node);
+            var reward = GD.echoReward(node.rewardId), environment = GD.echoEnvironment(node.environmentId);
+            echoMap.appendChild(el('button', {
+              type: 'button',
+              class: 'echo-node echo-tone-' + (environment ? environment.tone : 'violett') + (completed ? ' completed' : '') + (available ? ' available' : '') + (node.boss ? ' boss' : '') + (!completed && !available ? ' locked' : ''),
+              style: 'left:' + node.x + '%;top:' + node.y + '%',
+              title: node.name + ' · Gegnerkraft ' + fmt(node.power),
+              onclick: function () { self.openEchoModal(node); }
+            }, [
+              el('span', { class: 'echo-node-icon', text: node.icon }),
+              el('span', { class: 'echo-node-reward', text: reward ? reward.icon : '🎁' }),
+              el('span', { class: 'echo-node-power', text: completed ? '✓' : fmt(node.power) })
+            ]));
+          });
+          box.appendChild(el('div', { class: 'echo-map-viewport' }, echoMap));
+          box.appendChild(el('div', { class: 'map-legend echo-legend' }, [
+            el('span', { text: '✨ erreichbar' }), el('span', { text: '✓ bezwungen' }), el('span', { text: '👁️ Echo-Kern' }),
+            el('span', { class: 'muted', text: 'Wähle deinen Pfad nach Beute und Affixen. Siege öffnen verbundene Echos.' })
+          ]));
+        }
+
         // --- Rivalen & Bedrohung (erst nach Expansion sichtbar) ---
         if (s.claimedRegions.length > 0 || s.raid) {
         box.appendChild(this.secLabel('Rivalen & Bedrohung', 'karte'));
@@ -1528,6 +1584,80 @@
       });
       content.appendChild(el('p', { class: 'muted', style: 'font-size:12px', text: 'Riskant erhöht Beute und Verluste. Bei Niederlage stirbt auch der benannte Anführer; Ausrüstung wird geborgen.' }));
       openModal('Angriff: ' + region.name, content, region.icon);
+    },
+
+    openEchoModal: function (node) {
+      var s = this.state, self = this;
+      node = SYS.echoNode(s, node && node.id ? node.id : node); if (!node) return;
+      var environment = GD.echoEnvironment(node.environmentId), reward = GD.echoReward(node.rewardId);
+      var completed = SYS.echoNodeCompleted(s, node.id), available = SYS.echoNodeAvailable(s, node);
+      var rewardParts = [];
+      if (node.reward && node.reward.resources && Object.keys(node.reward.resources).length) rewardParts.push(costText(node.reward.resources));
+      if (node.reward && node.reward.forgeMaterials && Object.keys(node.reward.forgeMaterials).length) rewardParts.push(forgeCostText({ materials: node.reward.forgeMaterials }));
+      var content = el('div', { class: 'echo-modal-content' }, [
+        el('div', { class: 'echo-modal-hero echo-tone-' + (environment ? environment.tone : 'violett') }, [
+          el('div', { class: 'echo-modal-icon', text: node.icon }),
+          el('div', null, [
+            el('h4', { text: environment ? environment.name : node.name }),
+            el('p', { text: environment ? environment.desc : 'Ein instabiler Nachhall der Welt.' })
+          ])
+        ]),
+        el('div', { class: 'site-summary' }, [
+          el('span', { class: 'pill', text: completed ? '✓ Abgeschlossen' : (available ? '✨ Erreichbar' : '🔒 Pfad gesperrt') }),
+          el('span', { class: 'pill', text: '⚔️ Gegnerkraft ' + fmt(node.power) }),
+          el('span', { class: 'pill', text: (reward ? reward.icon + ' ' + reward.name : '🎁 Beute') }),
+          node.boss ? el('span', { class: 'pill tag-busy', text: '👁️ Zyklus-Kern' }) : null
+        ]),
+        el('div', { class: 'echo-reward-preview' }, [
+          el('b', { text: 'Angekündigte Beute' }),
+          el('span', { text: rewardParts.join('  ·  ') || 'Keine Beute' }),
+          reward ? el('small', { class: 'muted', text: reward.desc }) : null
+        ]),
+        el('div', { class: 'section-label', text: 'Aktive Gegneraffixe' }),
+        el('div', { class: 'echo-affix-list' }, (node.affixIds || []).map(function (id) {
+          var affix = GD.echoAffix(id);
+          return el('div', { class: 'echo-affix' }, [
+            el('span', { class: 'echo-affix-icon', text: affix ? affix.icon : '⚠️' }),
+            el('span', null, [el('b', { text: affix ? affix.name : id }), el('small', { text: affix ? affix.desc : '' })])
+          ]);
+        }))
+      ]);
+      if (completed) {
+        content.appendChild(el('div', { class: 'empty-hint', text: node.boss ? 'Der Kern ist gebrochen. Öffne auf der Karte den nächsten Zyklus.' : 'Dieses Echo wurde bereits bezwungen; wähle einen verbundenen Nachhall.' }));
+      } else if (!available) {
+        content.appendChild(el('div', { class: 'empty-hint', text: 'Bezwinge zuerst mindestens eines der verbundenen Echos auf der linken Seite.' }));
+      } else {
+        content.appendChild(el('div', { class: 'section-label', text: 'Armee und Risiko wählen' }));
+        (s.armyGroups || []).forEach(function (group) {
+          var check = SYS.canChallengeEcho(s, group.id, node.id), groupPower = SYS.armyGroupPower(s, group);
+          content.appendChild(el('div', { class: 'card echo-army-choice' }, [
+            el('div', { class: 'card-head' }, [
+              el('div', { class: 'card-emoji', text: group.rulerLed ? GD.rulerStages[s.herrscher.stage].icon : '🚩' }),
+              el('div', { class: 'card-title' }, [
+                el('div', { class: 'name', text: group.name }),
+                el('div', { class: 'meta', text: 'Kraft ' + fmt(groupPower) + '/' + fmt(node.power) + ' · ' + SYS.armyCommandUsed(group) + ' Kommando' })
+              ])
+            ]),
+            el('div', { class: 'card-actions' }, ['sicher', 'normal', 'riskant'].map(function (riskId) {
+              var risk = SYS.RISK[riskId];
+              return btn(risk.icon + ' ' + risk.name, function () {
+                var result = SYS.challengeEcho(s, group.id, node.id, riskId);
+                if (!result.ok) { toast(result.reason, 'bad'); return; }
+                closeModal(); self.commit();
+                var gains = costText(result.gains || {}), forge = forgeCostText({ materials: result.forgeGains || {} });
+                openModal('Echo-Ergebnis', el('div', { class: 'battle-result ' + (result.won ? 'win' : 'loss') }, [
+                  el('div', { class: 'battle-result-icon', text: result.won ? (node.boss ? '👁️' : '🏆') : '💥' }),
+                  el('h3', { text: result.won ? 'Echo bezwungen' : (result.partial ? 'Knapp gescheitert' : 'Niederlage') }),
+                  el('p', { text: 'Kraft ' + fmt(result.power) + '/' + fmt(result.nodePower) + ' · ' + result.totalLosses + ' Truppen verloren.' }),
+                  result.won ? el('p', { text: 'Beute: ' + ([gains, forge].filter(Boolean).join('  ·  ') || '—') }) : null,
+                  result.leaderDead ? el('p', { style: 'color:var(--bad)', text: 'Der benannte Anführer ist gefallen; seine Ausrüstung wurde geborgen.' }) : null
+                ]), result.won ? '🏆' : '⚰️');
+              }, { small: true, cls: riskId === 'riskant' ? 'btn-danger' : (riskId === 'normal' ? 'btn-primary' : ''), disabled: !check.ok, cost: check.ok ? ('×' + risk.reward + ' Beute') : check.reason });
+            }))
+          ]));
+        });
+      }
+      openModal(node.name, content, node.icon, 'echo-modal');
     },
 
     openNameModal: function (c) {

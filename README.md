@@ -9,6 +9,9 @@ Rivalen-Dämonenlords verteidigen. Der Herrscher spezialisiert sich zusätzlich 
 Last-Epoch-artigen passiven Talentbaum mit drei Zweigen und einzeln steigerbaren Knoten.
 Die Runenschmiede folgt demselben Prinzip: ein begrenztes Arsenal ohne Zufallsduplikate,
 freischaltbare Baupläne und gezielte Qualitätsstufen über seltene Kampfkomponenten.
+Nach zwei eroberten Territorien öffnen sich zusätzlich prozedurale **Echo-Netze**: verzweigte
+Karten mit sichtbaren Belohnungen, stapelbaren Gegneraffixen, Boss-Kernen und endlos
+skalierenden Zyklen. Ein gespeicherter Seed hält jeden laufenden Pfad reproduzierbar.
 
 Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberbare und
 ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
@@ -67,12 +70,14 @@ assets/             Lokale Kreaturen-Sprites und Desktop-Königreichspanorama
 js/
   data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
                     Evolutionsketten, Skills/Aspekte, Magie, Baupläne/Schmiedekomponenten/Sets, Regionen,
-                    Rivalen, Events, Affinitäten, Forschung, Herrscher-Stufen/-Talente, Hilfe-Texte
+                    Rivalen, Events, Affinitäten, Echo-Umgebungen/-Affixe/-Belohnungen,
+                    Forschung, Herrscher-Stufen/-Talente, Hilfe-Texte
   state.js          Spielzustand, Standardwerte, Speichern/Laden (localStorage), normalize()
   systems.js        Spiellogik (DOM-frei, reine Funktionen): Tick/Produktion, Bauen,
                     Beschwören, Namensgebung, Evolution, Skills, Magie/Forschung, Schmieden,
                     Expeditionen, Armeegruppen/Kartenbewegung, taktischer Elementkampf, Rivalen/Bedrohung, Events,
-                    Affinität, Fusion, Runenschmiede, Herrscher-Talente, Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
+                    Affinität, Fusion, Runenschmiede, Echo-Generator/-Kämpfe, Herrscher-Talente,
+                    Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
   ui.js             Darstellung: Views je Tab + Modals, alles per DOM-API gerendert
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
 dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
@@ -102,7 +107,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v7 (alte v1–v6-Stände werden automatisch migriert; bestehende Ausrüstung behält ihre Qualität und bisher zugängliche Rezepte bleiben bekannt).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v8 (alte v1–v7-Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt und Freischaltungen bleiben erhalten).
 - **Zurücksetzen:** im Spiel über das Herrscher-Modal (oben links) → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
   ```js
@@ -181,10 +186,10 @@ Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test dev/sim.test.js`         | `1 pass` · `227 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `65 bestanden, 0 fehlgeschlagen`  |
-| `bun test dev/playthrough.test.js` | `1 pass` · `57 bestanden, 0 fehlgeschlagen`  |
-| `bun run balance`                  | Kraftkurven in den Bändern, Beute/Tick monoton |
+| `bun test dev/sim.test.js`         | `1 pass` · `236 bestanden, 0 fehlgeschlagen` |
+| `bun test dev/domtest.test.js`     | `1 pass` · `67 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
+| `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
 
 ### Screenshots (optional, Linux/WSL)
 
@@ -206,7 +211,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
-# → 20 PNGs in dev/screenshots/, darunter Mobile-/Desktop-Karte und Rasterkampf
+# → 23 PNGs in dev/screenshots/, darunter Mobile-/Desktop-Echo-Netz und Rasterkampf
 ```
 
 ---
@@ -217,7 +222,7 @@ LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
   relative Pfade, muss über `file://` laufen.
 - Logik **DOM-frei** (data/state/systems), UI **nur** über die DOM-Helfer in `ui.js`.
 - Neue Zustandsfelder in `createDefault()` **und** `normalize()` ergänzen (Save-Kompatibilität).
-- Nach Änderungen **die Tests laufen lassen** (mindestens `sim.js` + `domtest.js`),
+- Nach Änderungen **die Tests laufen lassen** (mindestens `sim.test.js` + `domtest.test.js`),
   bei UI-Änderungen idealerweise auch Screenshots.
 - Konzept-/Feature-Änderungen in **`PLAN.md`** nachziehen.
 

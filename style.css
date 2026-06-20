@@ -716,9 +716,75 @@ button { font-family: inherit; }
 .troop-card .card-actions .btn { min-width: 0; flex-direction: column; gap: 1px; padding: 6px; }
 .troop-card .card-actions .btn:nth-child(3) { grid-column: 1 / -1; }
 .troop-card .btn-cost { font-size: 9px; white-space: nowrap; }
+
+/* Prozedurale Echo-Netze: kompakter, dunkler und stärker auf Pfadwahl fokussiert. */
+.echo-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 8px; padding: 9px 11px; border: 1px solid #66518c; border-radius: 11px;
+  background: linear-gradient(90deg, rgba(63,37,93,.42), rgba(20,20,40,.92)); font-size: 12px;
+}
+.echo-header .card-actions { margin: 0; }
+.echo-map-viewport {
+  overflow-x: auto; overflow-y: hidden; margin-bottom: 8px; border: 2px solid #5f477e; border-radius: var(--radius);
+  background: #0d0a18; scrollbar-width: thin; scrollbar-color: #73569a #171126;
+  box-shadow: inset 0 0 0 1px rgba(184,136,255,.13), 0 8px 22px rgba(0,0,0,.38);
+}
+.echo-map {
+  position: relative; min-width: 720px; height: 350px; isolation: isolate; overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 30%, rgba(105,68,155,.22), transparent 22%),
+    radial-gradient(circle at 52% 72%, rgba(44,88,131,.18), transparent 24%),
+    radial-gradient(circle at 85% 45%, rgba(150,66,105,.2), transparent 22%),
+    radial-gradient(circle at 50% 50%, rgba(170,130,220,.07) 1px, transparent 1.6px) 0 0 / 24px 24px,
+    linear-gradient(145deg, #151025, #0b1020 58%, #171020);
+}
+.echo-map::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 0 65px rgba(0,0,0,.72); }
+.echo-routes { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.echo-route { stroke: #38304d; stroke-width: 1.2; stroke-dasharray: 2 1.5; vector-effect: non-scaling-stroke; }
+.echo-route.open { stroke: #d3a65a; stroke-width: 1.8; stroke-dasharray: none; filter: drop-shadow(0 0 2px rgba(211,166,90,.45)); }
+.echo-route.secured { stroke: #6bd4ae; stroke-width: 2; stroke-dasharray: none; }
+.echo-node {
+  position: absolute; z-index: 2; width: 62px; height: 62px; padding: 0; transform: translate(-50%, -50%);
+  border: 2px solid #66517f; border-radius: 50%; background: radial-gradient(circle at 40% 28%, #43335d, #171225 72%);
+  color: var(--text); cursor: pointer; display: grid; place-items: center; box-shadow: 0 6px 14px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.08);
+  transition: transform .16s, opacity .16s, filter .16s, box-shadow .16s;
+}
+.echo-node:hover { z-index: 5; transform: translate(-50%, -50%) scale(1.09); }
+.echo-node.available { border-color: #e7b55f; animation: echo-ready 1.8s ease-in-out infinite; }
+.echo-node.completed { border-color: #66d2a2; background: radial-gradient(circle at 40% 30%, #285b50, #111f20 75%); }
+.echo-node.locked { opacity: .25; filter: grayscale(1); }
+.echo-node.boss { width: 78px; height: 78px; border-color: #e16f93; background: radial-gradient(circle, #713149, #251020 67%); }
+@keyframes echo-ready { 0%,100% { box-shadow: 0 0 0 2px rgba(231,181,95,.18), 0 6px 14px rgba(0,0,0,.5); } 50% { box-shadow: 0 0 0 7px rgba(231,181,95,.13), 0 0 20px rgba(231,181,95,.35); } }
+.echo-node-icon { font-size: 25px; line-height: 1; }
+.echo-node-reward { position: absolute; right: -6px; top: -6px; width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid #8d72b3; border-radius: 50%; background: #21172f; font-size: 13px; }
+.echo-node-power { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%); padding: 1px 5px; border: 1px solid #4f4166; border-radius: 999px; background: #110d1c; color: #eadcfb; font-size: 8px; white-space: nowrap; }
+.echo-tone-gruen { --echo-tone: #63c990; }
+.echo-tone-violett { --echo-tone: #a47ce5; }
+.echo-tone-gift { --echo-tone: #91c54c; }
+.echo-tone-bronze { --echo-tone: #cf9755; }
+.echo-tone-rot { --echo-tone: #e06b64; }
+.echo-tone-blau { --echo-tone: #61aee2; }
+.echo-tone-schwarz { --echo-tone: #a184bd; }
+.echo-node[class*="echo-tone-"] { border-color: color-mix(in srgb, var(--echo-tone) 70%, #382a50); }
+.echo-node.available[class*="echo-tone-"] { border-color: #e7b55f; }
+.echo-modal-hero { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--echo-tone, #76549e); border-radius: 12px; background: color-mix(in srgb, var(--echo-tone, #76549e) 13%, #141021); }
+.echo-modal-icon { width: 58px; height: 58px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--echo-tone, #76549e); border-radius: 50%; background: #151020; font-size: 32px; }
+.echo-modal-hero h4 { margin: 0; font-size: 17px; }
+.echo-modal-hero p { margin: 4px 0 0; color: var(--text-mut); font-size: 11px; }
+.echo-reward-preview { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; padding: 10px; border: 1px solid #6d5734; border-radius: 10px; background: rgba(110,79,33,.17); }
+.echo-reward-preview > span { color: var(--accent-2); }
+.echo-affix-list { display: grid; gap: 6px; margin-bottom: 10px; }
+.echo-affix { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #583c5d; border-radius: 9px; background: rgba(74,34,65,.2); }
+.echo-affix-icon { font-size: 20px; }
+.echo-affix span:last-child { display: flex; flex-direction: column; }
+.echo-affix small { color: var(--text-mut); font-size: 9px; }
+.echo-army-choice .card-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.echo-army-choice .btn { min-width: 0; flex-direction: column; padding: 6px 3px; }
+.echo-army-choice .btn-cost { font-size: 8px; }
 @media (max-width: 380px) {
   .strategy-map { min-width: 720px; height: 405px; }
   .map-node-name { font-size: 8px; }
+  .echo-map { min-width: 680px; }
 }
 
 /* ---------------- Rundenbasierter taktischer Kampf ---------------- */
@@ -1414,6 +1480,12 @@ select.btn { text-align: left; min-height: 40px; }
   .game-view-karte .map-route { stroke-width: 1.15; }
   .game-view-karte .map-route.unlocked { stroke-width: 1.7; }
   .game-view-karte .map-route.secured { stroke-width: 2.15; filter: drop-shadow(0 0 2px rgba(94,214,137,.5)); }
+  .game-view-karte .echo-map { width: 100%; min-width: 0; height: 470px; }
+  .game-view-karte .echo-node { width: 72px; height: 72px; }
+  .game-view-karte .echo-node.boss { width: 90px; height: 90px; }
+  .game-view-karte .echo-node-icon { font-size: 30px; }
+  .game-view-karte .echo-route { stroke-width: 1.4; }
+  .game-view-karte .echo-route.open, .game-view-karte .echo-route.secured { stroke-width: 2; }
   .army-list { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 13px; }
 
   /* Taktischer Kampf als eigenständige, fast bildschirmfüllende Bühne. */

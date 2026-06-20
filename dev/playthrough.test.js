@@ -191,6 +191,19 @@ if (leaders.length) {
   note('Keine freie benannte Kreatur für Armeegruppen-Test verfügbar');
 }
 
+step('Prozedurales Echo-Netz → Pfadwahl, Affixe und Beute');
+if (S.claimedRegions.indexOf('wald') < 0) S.claimedRegions.push('wald');
+if (S.claimedRegions.indexOf('hoehlen') < 0) S.claimedRegions.push('hoehlen');
+var echoRun = SYS.ensureEchoMap(S);
+ok(echoRun && echoRun.nodes.length === 12 && SYS.availableEchoNodes(S).length >= 2, 'Echo-Netz mit mehreren Startpfaden erzeugt');
+var echoArmy = (typeof formed !== 'undefined' && formed && formed.ok) ? formed.group : SYS.rulerArmyGroup(S);
+if (SYS.armyCommandUsed(echoArmy) <= 0) SYS.recruitTroops(S, echoArmy.id, 'schleim', 10);
+var echoTarget = SYS.availableEchoNodes(S)[0];
+var echoFight = SYS.challengeEcho(S, echoArmy.id, echoTarget.id, 'sicher');
+ok(echoFight.ok && echoFight.won && SYS.echoNodeCompleted(S, echoTarget.id), 'erstes Echo mit einer Armee abgeschlossen');
+ok(SYS.availableEchoNodes(S).some(function (node) { return node.parents.indexOf(echoTarget.id) >= 0; }), 'Sieg öffnet einen verbundenen Folgepfad');
+renderAll('Echo-Territorien');
+
 step('Herrscher-Progression');
 var hl = S.herrscher.level;
 SYS.addRulerXp(S, 5000);

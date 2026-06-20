@@ -385,6 +385,7 @@
   function tick(state) {
     state.tick++;
     var mapRefresh = stepArmyMap(state);
+    if (echoUnlocked(state)) ensureEchoMap(state);
     var p = production(state);
     for (var res in p.rates) {
       state.resources[res] = Math.max(0, (state.resources[res] || 0) + p.rates[res]);
@@ -419,6 +420,7 @@
     var still = [];
     state.tick += ticks;
     stepArmyMap(state);
+    if (echoUnlocked(state)) ensureEchoMap(state);
     state.expeditions.forEach(function (exp) {
       if (state.tick >= exp.returnsAtTick) results.push(resolveExpedition(state, exp));
       else still.push(exp);
@@ -1544,6 +1546,227 @@
     return { ok: true, won: won, partial: partial, power: power, regionPower: region.power, losses: losses, totalLosses: totalLosses, gains: gains, drop: drop, leaderDead: leaderDead, warded: warded };
   }
 
+  // ============================================================
+  //  Prozedurale Echo-Territorien (Phase 22)
+  // ============================================================
+  var ECHO_UNLOCK_REGIONS = 2;
+  var ECHO_COLUMN_SIZES = [2, 3, 3, 3, 1];
+
+  function echoUnlocked(state) {
+    return (state.claimedRegions || []).length >= ECHO_UNLOCK_REGIONS || (state.herrscher.stage || 0) >= 2;
+  }
+  function echoSeededRandom(seed) {
+    var value = Math.max(1, Math.floor(Number(seed) || 1)) % 2147483647;
+    return function () {
+      value = value * 16807 % 2147483647;
+      return (value - 1) / 2147483646;
+    };
+  }
+  function nextEchoSeed(seed, cycle) {
+    var value = (Math.floor(Number(seed) || 1) ^ (Math.floor(Number(cycle) || 1) * 2654435761)) >>> 0;
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return Math.max(1, value);
+  }
+  function echoBasePower(state) {
+    var highest = 1;
+    GD().regions.forEach(function (region, idx) {
+      if ((state.claimedRegions || []).indexOf(region.id) >= 0) highest = Math.max(highest, idx);
+    });
+    return GD().regions[Math.min(highest, GD().regions.length - 1)].power;
+  }
+  function echoRewardBundle(rewardId, power, multiplier, cycle) {
+    var scale = Math.max(8, Math.sqrt(Math.max(1, power))), resources = {}, forgeMaterials = {};
+    function amount(factor) { return Math.max(1, round(scale * factor * multiplier)); }
+    if (rewardId === 'seelen') { resources.seelen = amount(2.4); resources.magie = amount(1.2); }
+    else if (rewardId === 'wissen') { resources.wissen = amount(1.8); resources.magie = amount(1.4); }
+    else if (rewardId === 'schatz') { resources.gold = amount(4.2); resources.material = amount(2.2); }
+    else if (rewardId === 'versorgung') { resources.nahrung = amount(3.2); resources.material = amount(2.0); resources.gold = amount(1.6); }
+    else if (rewardId === 'macht') { resources.magie = amount(3.0); resources.seelen = amount(1.5); }
+    else if (rewardId === 'boss') {
+      resources.seelen = amount(4.2); resources.magie = amount(3.5); resources.gold = amount(3.5); resources.wissen = amount(1.8);
+    }
+    if (rewardId === 'schmiede' || rewardId === 'boss') {
+      var tier = power >= 10000 ? 3 : (power >= 2500 ? 2 : (power >= 500 ? 1 : 0));
+      tier = Math.min(GD().forgeMaterials.length - 1, tier + Math.floor(Math.max(0, cycle - 1) / 5));
+      var material = GD().forgeMaterials[tier] || GD().forgeMaterials[0];
+      forgeMaterials[material.id] = rewardId === 'boss' ? Math.min(3, 1 + Math.floor(cycle / 3)) : 1;
+      if (rewardId === 'schmiede') resources.material = amount(1.4);
+    }
+    return { resources: resources, forgeMaterials: forgeMaterials };
+  }
+  function generateEchoMap(seed, cycle, basePower) {
+    seed = Math.max(1, Math.floor(Number(seed) || 1));
+    cycle = Math.max(1, Math.floor(Number(cycle) || 1));
+    basePower = Math.max(40, Math.floor(Number(basePower) || 120));
+    var random = echoSeededRandom(seed), nodes = [], columns = [], counter = 0;
+    ECHO_COLUMN_SIZES.forEach(function (size, col) {
+      var column = [];
+      for (var row = 0; row < size; row++) {
+        var boss = col === ECHO_COLUMN_SIZES.length - 1;
+        var environment = GD().echoEnvironments[Math.floor(random() * GD().echoEnvironments.length)];
+        var rewardPoolSize = Math.max(1, GD().echoRewards.length - 1);
+        var rewardId = boss ? 'boss' : GD().echoRewards[(counter + Math.floor(random() * rewardPoolSize)) % rewardPoolSize].id;
+        var affixCount = Math.min(3, 1 + Math.floor((cycle + col - 1) / 3)), affixIds = [];
+        while (affixIds.length < affixCount) {
+          var affix = GD().echoAffixes[Math.floor(random() * GD().echoAffixes.length)];
+          if (affixIds.indexOf(affix.id) < 0) affixIds.push(affix.id);
+        }
+        var enemyBonus = 0, rewardBonus = 0;
+        affixIds.forEach(function (id) { var a = GD().echoAffix(id); enemyBonus += a.enemyPower || 0; rewardBonus += a.reward || 0; });
+        var depthFactor = 0.72 + col * 0.24, cycleFactor = Math.pow(1.14, cycle - 1), variance = 0.92 + random() * 0.16;
+        var power = round(basePower * depthFactor * cycleFactor * variance * (1 + enemyBonus) * (boss ? 1.28 : 1));
+        var rewardMultiplier = 1 + col * 0.12 + (cycle - 1) * 0.06 + rewardBonus + (boss ? 0.35 : 0);
+        var parents = [];
+        if (col > 0) {
+          var previous = columns[col - 1];
+          parents.push(previous[(row + Math.floor(random() * previous.length)) % previous.length].id);
+          if (!boss && previous.length > 1 && random() > 0.55) {
+            var second = previous[Math.floor(random() * previous.length)].id;
+            if (parents.indexOf(second) < 0) parents.push(second);
+          }
+          if (boss) parents = previous.map(function (node) { return node.id; });
+        }
+        var reward = echoRewardBundle(rewardId, power, rewardMultiplier, cycle);
+        var node = {
+          id: 'echo-' + cycle + '-' + (counter + 1),
+          name: boss ? ('Kern des Zyklus ' + cycle) : (environment.name + ' ' + (counter + 1)),
+          icon: boss ? '👁️' : environment.icon,
+          environmentId: environment.id,
+          rewardId: rewardId,
+          affixIds: affixIds,
+          power: power,
+          reward: reward,
+          parents: parents,
+          col: col,
+          row: row,
+          x: 8 + col * 21,
+          y: boss ? 50 : round(((row + 1) / (size + 1)) * 84 + 8),
+          boss: boss
+        };
+        nodes.push(node); column.push(node); counter++;
+      }
+      columns.push(column);
+    });
+    return nodes;
+  }
+  function ensureEchoMap(state) {
+    if (!echoUnlocked(state)) return null;
+    if (!state.echoes || typeof state.echoes !== 'object') {
+      state.echoes = { cycle: 1, seed: Math.max(1, state.tick + 1), nodes: [], completed: [], stability: 0, mapsCompleted: 0, lastAutoTick: -999 };
+    }
+    if (!Array.isArray(state.echoes.completed)) state.echoes.completed = [];
+    if (!Array.isArray(state.echoes.nodes) || !state.echoes.nodes.length) {
+      state.echoes.nodes = generateEchoMap(state.echoes.seed, state.echoes.cycle, echoBasePower(state));
+      state.echoes.completed = [];
+      log(state, '🌀 Ein neues Echo-Netz öffnet sich: Zyklus ' + state.echoes.cycle + '.', 'gold');
+    }
+    return state.echoes;
+  }
+  function echoNode(state, nodeId) {
+    var echoes = ensureEchoMap(state); if (!echoes) return null;
+    for (var i = 0; i < echoes.nodes.length; i++) if (echoes.nodes[i].id === nodeId) return echoes.nodes[i];
+    return null;
+  }
+  function echoNodeCompleted(state, nodeId) { return !!(state.echoes && (state.echoes.completed || []).indexOf(nodeId) >= 0); }
+  function echoNodeAvailable(state, nodeOrId) {
+    var node = typeof nodeOrId === 'object' ? nodeOrId : echoNode(state, nodeOrId);
+    if (!node || echoNodeCompleted(state, node.id)) return false;
+    if (!node.parents.length) return true;
+    return node.parents.some(function (id) { return echoNodeCompleted(state, id); });
+  }
+  function availableEchoNodes(state) {
+    var echoes = ensureEchoMap(state); return echoes ? echoes.nodes.filter(function (node) { return echoNodeAvailable(state, node); }) : [];
+  }
+  function echoCasualtyMultiplier(node) {
+    var mult = 1;
+    (node.affixIds || []).forEach(function (id) { var affix = GD().echoAffix(id); mult *= (affix && affix.casualties) || 1; });
+    return mult;
+  }
+  function canChallengeEcho(state, groupId, nodeId) {
+    if (!echoUnlocked(state)) return { ok: false, reason: 'Echos öffnen sich nach zwei eroberten Territorien' };
+    var group = findArmyGroup(state, groupId), node = echoNode(state, nodeId);
+    if (!group || !node) return { ok: false, reason: 'Armee oder Echo unbekannt' };
+    if (!echoNodeAvailable(state, node)) return { ok: false, reason: echoNodeCompleted(state, node.id) ? 'Echo bereits abgeschlossen' : 'Kein abgeschlossener Pfad zu diesem Echo' };
+    if (armyCommandUsed(group) <= 0) return { ok: false, reason: 'Die Armee benötigt Truppen' };
+    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid);
+    if (leader && isWounded(state, leader)) return { ok: false, reason: 'Der Anführer ist verwundet' };
+    return { ok: true, group: group, node: node, power: armyGroupPower(state, group) };
+  }
+  function challengeEcho(state, groupId, nodeId, risk) {
+    var check = canChallengeEcho(state, groupId, nodeId); if (!check.ok) return check;
+    if (!RISK[risk]) risk = 'normal';
+    var group = check.group, node = check.node, power = check.power;
+    var won = power >= node.power, partial = !won && power >= node.power * 0.65;
+    var lossRate = won ? 0.035 : (partial ? 0.16 : 0.34);
+    lossRate *= echoCasualtyMultiplier(node);
+    if (risk === 'sicher') lossRate *= 0.65;
+    if (risk === 'riskant') lossRate *= 1.35;
+    var warded = (group.wardCharges || 0) > 0;
+    if (warded) { lossRate *= 0.5; group.wardCharges--; }
+    var losses = {}, totalLosses = 0;
+    Object.keys(group.troops || {}).forEach(function (id) {
+      var count = group.troops[id], lost = Math.min(count, Math.max(won ? 0 : 1, round(count * lossRate * (0.8 + rng() * 0.4))));
+      if (won && count >= 12) lost = Math.max(1, lost);
+      removeTroopStack(state, group.id, id, lost); losses[id] = lost; totalLosses += lost;
+    });
+    var gains = {}, forgeGains = {}, rk = RISK[risk];
+    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false;
+    if (won) {
+      for (var res in node.reward.resources) gains[res] = round(node.reward.resources[res] * rk.reward);
+      for (var materialId in node.reward.forgeMaterials) forgeGains[materialId] = Math.max(1, round(node.reward.forgeMaterials[materialId] * (risk === 'riskant' ? 1.5 : 1)));
+      addResources(state, gains); addForgeMaterials(state, forgeGains);
+      state.echoes.completed.push(node.id);
+      state.echoes.stability = (state.echoes.stability || 0) + (node.boss ? 4 : 1);
+      state.echoes.mapsCompleted = (state.echoes.mapsCompleted || 0) + 1;
+      state.metrics.echoesCleared = (state.metrics.echoesCleared || 0) + 1;
+      if (node.boss) state.metrics.echoBosses = (state.metrics.echoBosses || 0) + 1;
+      group.battlesWon = (group.battlesWon || 0) + 1;
+      if (leader) { addCreatureXp(state, leader, Math.max(20, round(node.power * 0.1))); addSkillXp(state, leader, Math.max(10, round(node.power * 0.04))); }
+    } else if (risk === 'riskant' && leader) {
+      releaseCreatureEquipment(state, leader); leaderDead = true;
+      Object.keys(group.troops || {}).forEach(function (speciesId) { removeTroopStack(state, group.id, speciesId, group.troops[speciesId]); });
+      state.creatures = state.creatures.filter(function (c) { return c.uid !== leader.uid; });
+      state.armyGroups = state.armyGroups.filter(function (g) { return g.id !== group.id; });
+    } else if (leader) {
+      leader.woundedUntil = state.tick + Math.max(10, Math.min(90, round(Math.sqrt(node.power) * 1.8)));
+    }
+    log(state, won ? ('🌀 ' + group.name + ' bezwingt ' + node.name + '.') : ('💥 ' + group.name + ' scheitert im Echo ' + node.name + '.'), won ? 'good' : 'bad');
+    if (node.boss && won) log(state, '👁️ Der Echo-Kern zerbricht. Ein stärkerer Zyklus kann geöffnet werden.', 'gold');
+    if (totalLosses) log(state, '⚰️ Echo-Verluste: ' + totalLosses + '.', won ? '' : 'bad');
+    return { ok: true, won: won, partial: partial, node: node, power: power, nodePower: node.power, losses: losses, totalLosses: totalLosses, gains: gains, forgeGains: forgeGains, leaderDead: leaderDead, warded: warded };
+  }
+  function echoBossCompleted(state) {
+    if (!state.echoes || !state.echoes.nodes) return false;
+    var boss = state.echoes.nodes.filter(function (node) { return node.boss; })[0];
+    return !!(boss && echoNodeCompleted(state, boss.id));
+  }
+  function advanceEchoCycle(state) {
+    ensureEchoMap(state);
+    if (!echoBossCompleted(state)) return { ok: false, reason: 'Bezwinge zuerst den Echo-Kern' };
+    state.echoes.cycle++;
+    state.echoes.seed = nextEchoSeed(state.echoes.seed, state.echoes.cycle);
+    state.echoes.nodes = generateEchoMap(state.echoes.seed, state.echoes.cycle, echoBasePower(state));
+    state.echoes.completed = [];
+    log(state, '🌀 Echo-Zyklus ' + state.echoes.cycle + ' beginnt. Gegner und Beute werden mächtiger.', 'gold');
+    return { ok: true, cycle: state.echoes.cycle, nodes: state.echoes.nodes };
+  }
+  function echoRerollCost(state) { return { wissen: 35 + Math.max(0, (state.echoes && state.echoes.cycle || 1) - 1) * 15 }; }
+  function canRerollEchoMap(state) {
+    ensureEchoMap(state);
+    if ((state.echoes.completed || []).length) return { ok: false, reason: 'Ein begonnener Echo-Pfad kann nicht neu gewoben werden' };
+    var cost = echoRerollCost(state);
+    if (!canAfford(state, cost)) return { ok: false, reason: missingCost(state, cost).join(', '), cost: cost };
+    return { ok: true, cost: cost };
+  }
+  function rerollEchoMap(state) {
+    var check = canRerollEchoMap(state); if (!check.ok) return check;
+    pay(state, check.cost);
+    state.echoes.seed = nextEchoSeed(state.echoes.seed, state.echoes.cycle + 17);
+    state.echoes.nodes = generateEchoMap(state.echoes.seed, state.echoes.cycle, echoBasePower(state));
+    log(state, '🌀 Das unberührte Echo-Netz wurde neu gewoben.', 'gold');
+    return { ok: true, nodes: state.echoes.nodes, cost: check.cost };
+  }
+
   // ---------- Expeditionen ----------
   function creatureBusy(state, uid) {
     for (var i = 0; i < state.expeditions.length; i++) {
@@ -2208,10 +2431,30 @@
     }
     // 14) beschwören (wenn Kapazität frei)
     if (usedCapacity(state) < capacity(state)) { var sp = bestSummon(state); if (sp) { var r13 = summon(state, sp.id); if (r13.ok) return { text: '✨ ' + sp.name + ' beschworen.' }; } }
-    // 15) Gebäude ausbauen (Lückenfüller mit Reserve)
+    // 15) In regelmäßigen Abständen einen erreichbaren Echo-Knoten räumen.
+    // Der Abstand verhindert, dass das Endlos-System alle Aufbauaktionen verdrängt.
+    if (echoUnlocked(state) && state.tick - ((state.echoes && state.echoes.lastAutoTick) || -999) >= 15) {
+      ensureEchoMap(state);
+      if (echoBossCompleted(state)) {
+        var nextEcho = advanceEchoCycle(state);
+        if (nextEcho.ok) { state.echoes.lastAutoTick = state.tick; return { text: '🌀 Echo-Zyklus ' + nextEcho.cycle + ' geöffnet.' }; }
+      }
+      var echoTargets = availableEchoNodes(state).sort(function (a, b) { return a.power - b.power; });
+      var echoArmies = (state.armyGroups || []).slice().sort(function (a, b) { return armyGroupPower(state, b) - armyGroupPower(state, a); });
+      for (var eti = 0; eti < echoTargets.length; eti++) {
+        for (var eai = 0; eai < echoArmies.length; eai++) {
+          var echoCheck = canChallengeEcho(state, echoArmies[eai].id, echoTargets[eti].id);
+          if (echoCheck.ok && echoCheck.power >= echoTargets[eti].power) {
+            var echoResult = challengeEcho(state, echoArmies[eai].id, echoTargets[eti].id, 'normal');
+            if (echoResult.ok) { state.echoes.lastAutoTick = state.tick; return { text: '🌀 ' + echoTargets[eti].name + ' bezwungen.' }; }
+          }
+        }
+      }
+    }
+    // 16) Gebäude ausbauen (Lückenfüller mit Reserve)
     var bup = bestBuildingUpgrade(state);
     if (bup) { var r14 = build(state, bup); if (r14.ok) return { text: GD().building(bup).icon + ' ' + GD().building(bup).name + ' Stufe ' + r14.level + '.' }; }
-    // 16) Runenschmiede: vorhandenes Arsenal zuerst verbessern, dann neue
+    // 17) Runenschmiede: vorhandenes Arsenal zuerst verbessern, dann neue
     // Baupläne lernen und jedes Rezept höchstens einmal herstellen.
     if ((state.buildings.schmiede || 0) >= 1) {
       var improvable = (state.inventory || []).slice().sort(function (a, b) { return itemQuality(a) - itemQuality(b); });
@@ -2771,6 +3014,13 @@
     canUpgradeMapSite: canUpgradeMapSite, upgradeMapSite: upgradeMapSite,
     canMoveArmyGroup: canMoveArmyGroup, moveArmyGroup: moveArmyGroup,
     stepArmyMap: stepArmyMap, attackWithArmyGroup: attackWithArmyGroup,
+    ECHO_UNLOCK_REGIONS: ECHO_UNLOCK_REGIONS,
+    echoUnlocked: echoUnlocked, echoBasePower: echoBasePower, generateEchoMap: generateEchoMap,
+    ensureEchoMap: ensureEchoMap, echoNode: echoNode, echoNodeCompleted: echoNodeCompleted,
+    echoNodeAvailable: echoNodeAvailable, availableEchoNodes: availableEchoNodes,
+    echoCasualtyMultiplier: echoCasualtyMultiplier, canChallengeEcho: canChallengeEcho, challengeEcho: challengeEcho,
+    echoBossCompleted: echoBossCompleted, advanceEchoCycle: advanceEchoCycle,
+    echoRerollCost: echoRerollCost, canRerollEchoMap: canRerollEchoMap, rerollEchoMap: rerollEchoMap,
     creatureBusy: creatureBusy, armyAvailable: armyAvailable, regionUnlocked: regionUnlocked,
     expeditionPower: expeditionPower, canStartExpedition: canStartExpedition, startExpedition: startExpedition,
     resolveExpedition: resolveExpedition,

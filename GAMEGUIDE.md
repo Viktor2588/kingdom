@@ -16,12 +16,13 @@ jedem Bereich außerdem einen **ℹ️-Knopf** mit einer Kurzerklärung.
 6. [Schmiede & Ausrüstung](#schmiede--ausrüstung)
 7. [Karte, Expeditionen & taktischer Kampf](#karte-expeditionen--taktischer-kampf)
 8. [Armeegruppen & Weltkarte](#armeegruppen--weltkarte)
-9. [Rivalen & Bedrohung](#rivalen--bedrohung)
-10. [Ereignisse](#ereignisse)
-11. [Herrscher-Progression](#herrscher-progression)
-12. [Chimära-Fusion](#chimära-fusion)
-13. [Zuschauer-Modus](#zuschauer-modus)
-14. [Speichern & Tipps](#speichern--tipps)
+9. [Echo-Territorien](#echo-territorien)
+10. [Rivalen & Bedrohung](#rivalen--bedrohung)
+11. [Ereignisse](#ereignisse)
+12. [Herrscher-Progression](#herrscher-progression)
+13. [Chimära-Fusion](#chimära-fusion)
+14. [Zuschauer-Modus](#zuschauer-modus)
+15. [Speichern & Tipps](#speichern--tipps)
 
 ---
 
@@ -244,6 +245,33 @@ zweite Armee. Jede weitere Armeegruppe braucht eine **benannte Kreatur** als Anf
   er endgültig fallen und die Armee wird aufgelöst.
 - **Armeelimit:** Anfangs eine Gruppe; Herrscherstufen und jeweils drei Arena-Stufen schaffen
   weitere Armeeslots.
+
+## Echo-Territorien
+
+Nach zwei eroberten Regionen lokalisiert der Große Weise instabile Nachhall-Welten. Jedes
+**Echo-Netz** wird aus einem gespeicherten Seed erzeugt und besitzt zwölf Knoten in fünf
+Spalten. Dadurch bleibt die laufende Karte nach Speichern und Laden identisch, während jeder
+neue Zyklus andere Umgebungen, Pfade, Belohnungen und Affixkombinationen erzeugt.
+
+- **Pfadwahl:** Zu Beginn sind zwei Echos erreichbar. Ein Sieg öffnet die verbundenen Knoten
+  rechts davon. Du musst nicht das ganze Netz räumen, sondern kannst gezielt einen Weg zum
+  Kern wählen.
+- **Angekündigte Beute:** Jeder Knoten zeigt vorher seinen Schwerpunkt – Seelen, Wissen,
+  Gold, Versorgung, Macht oder seltene Schmiedekomponenten. Riskant erhöht diese Beute wie
+  bei anderen Feldzügen.
+- **Gegneraffixe:** Gehärtet, Blutdurst, Überzahl, Arkaner Sturm, Seelenfluch und Unstete
+  Realität erhöhen Gegnerkraft und teilweise Truppenverluste. Dafür steigern sie stets den
+  Beutemultiplikator. Spätere Zyklen kombinieren bis zu drei Affixe.
+- **Truppenverluste:** Echo-Kämpfe verwenden bestehende Armeegruppen und die bekannten
+  Risikoregeln. Verluste bleiben dauerhaft; eine riskante Niederlage kann einen benannten
+  Anführer und damit seine Armee kosten. Feldbarriere wirkt auch hier.
+- **Echo-Kern:** Der Boss rechts beendet den aktuellen Pfad. Sein Sieg gibt große Beute und
+  erlaubt einen neuen Zyklus, dessen Gegner und Belohnungen weiter skalieren.
+- **Neu verweben:** Solange noch kein Knoten abgeschlossen ist, kann das Netz gegen Wissen
+  neu erzeugt werden. So lässt sich eine ungeeignete Kombination aus Pfaden und Beute
+  austauschen, ohne einen begonnenen Lauf zurückzusetzen.
+- **Zuschauer-Modus:** Der Berater räumt höchstens alle 15 Sekunden ein schaffbares Echo.
+  Dadurch bleibt das Endlossystem aktiv, ohne Reichsausbau und Forschung zu verdrängen.
 
 ## Rivalen & Bedrohung
 

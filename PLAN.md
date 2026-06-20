@@ -179,7 +179,14 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Neue responsive Schmiede-UI:** Komponenten-HUD, Bauplanarchiv, langlebiges Arsenal, fünfstufige Qualitätsleiste sowie Aufwertungsmodal mit Wertevergleich und exakten Kosten; mobile und Desktop-Layouts separat geprüft.
 - Save-Schema v7 migriert alte Seltenheiten zu Qualitätsstufen, erhält vorhandene Items und schaltet alle im alten System bereits zugänglichen Baupläne frei.
 
--Phase 22 Umgebungen  /  territorien  sollten wie  echos  von last epoch sein  prozuderal  generierte  maps mit unterschiedlichen belohnungs & stärke  der gegener affixen.
+[x] **Phase 22 – Prozedurale Echo-Territorien (2026-06-20)**
+- **Deterministische Endloskarten:** Nach zwei eroberten Regionen entsteht aus einem gespeicherten Seed ein Netz mit 12 Echos in fünf Spalten, mehreren Startpfaden und einem Boss-Kern. Jeder neue Zyklus erzeugt andere Verbindungen, Umgebungen, Belohnungen und Affixkombinationen.
+- **Echte Pfadentscheidung:** Nur Startknoten und Nachfolger bereits bezwungener Echos sind erreichbar. Spieler müssen nicht die ganze Karte leeren, sondern wählen anhand angekündigter Beute und Gefahr einen Weg zum Kern; ein unberührtes Netz kann gegen Wissen neu verwoben werden.
+- **7 Umgebungen, 7 Belohnungstypen, 6 Affixe:** Seelen, Wissen, Gold, Versorgung, Macht und seltene Schmiedekomponenten stehen sichtbar am Knoten. Gehärtet, Blutdurst, Überzahl, Arkaner Sturm, Seelenfluch und Unstete Realität erhöhen Gegnerkraft/Verluste und dafür die Beute; spätere Zyklen kombinieren bis zu drei Affixe.
+- **Armee- und Risikointegration:** Echo-Kämpfe verwenden bestehende Armeegruppen, dauerhafte Truppenverluste, Feldbarriere sowie Sicher/Normal/Riskant. Benannte Anführer können bei riskanter Niederlage fallen; Siege geben Ressourcen, Schmiedekomponenten, EP, Skill-EP und Echo-Stabilität.
+- **Boss & Skalierung:** Der Echo-Kern gewährt große Beute und öffnet den nächsten Zyklus. Gegnerkraft und Belohnungen wachsen deterministisch weiter; die Balance-Analyse prüft Zyklen 1, 3, 5 und 10.
+- **Responsive Echo-UI:** Eigenes scrollbares Knotenbrett mit Pfadlinien, Belohnungsmarkern, Erreichbarkeits-Glow, Affix-/Beutevorschau, Armeewahl, Risiko- und Ergebnisdialog; separate Mobil- und Desktop-Abnahme.
+- **Zuschauer-Modus & Save:** Der Berater räumt gedrosselt schaffbare Echos und öffnet neue Zyklen, ohne Aufbauaktionen zu verdrängen. Save-Schema v8 migriert alte Spielstände und persistiert Seed, Karte, abgeschlossene Knoten, Zyklus und Stabilität.
 
 Phase 23 – Fehlende Grafik-Assets (Bildgenerierung erforderlich)
 - **Kreaturen-Sprites nachliefern:** Das Sprite-Sheet `assets/creature-sprites.png` deckt bislang nur Schleim, Goblin, Wolf, Oger, Echsenmensch und Ork ab. Alle übrigen Linien (u. a. Greif/Harpyie, Geist/Fee, Baumhirte/Pflanze, Phönix, Kobold, Hasenmensch, Tengu, Meervolk, Skelett/Lich, Imp/Dämon, Vampir, Golem, Insekten, Drachen) nutzen nur einen Emoji-Fallback und brauchen erkennbare Portraits.
@@ -191,12 +198,12 @@ Phase 23 – Fehlende Grafik-Assets (Bildgenerierung erforderlich)
 - Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
 - Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough}.test.js`, `dev/balance.js` und `dev/shots.js`.
 
-### Verifikation (Stand 2026-06-20, nach Phase 21)
-- `dev/sim.test.js` → 227/227 Logiktests bestanden (inkl. Bauplanfreischaltung, Einmalfertigung, vier Qualitätsaufwertungen, Zerlegung, Komponentenbeute und Save-v7-Migration).
-- `dev/domtest.test.js` → 65/65 DOM-Rendertests bestanden (inkl. Komponenten-HUD, vollständigem Bauplanarchiv, Arsenal und funktionaler Aufwertungsvorschau).
-- `dev/playthrough.test.js` → 57/57 Durchspiel-Checks bestanden (komplette Sitzung, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
-- `bun run balance` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton.
-- Phase-18-Screenshot-Suite: 20 Aufnahmen im echten Chromium (13× Handy 390×844, 7× Desktop 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
+### Verifikation (Stand 2026-06-20, nach Phase 22)
+- `dev/sim.test.js` → 236/236 Logiktests bestanden (inkl. deterministischer Generierung, Pfad-/Affix-/Belohnungsintegrität, Echo-Kampf, Boss, Zykluswechsel, Neuverwebung und Save-v8-Migration).
+- `dev/domtest.test.js` → 67/67 DOM-Rendertests bestanden (inkl. Echo-Netz, Erreichbarkeitsstatus, Belohnungs-/Affixmodal und drei Risikostufen).
+- `dev/playthrough.test.js` → 61/61 Durchspiel-Checks bestanden (komplette Sitzung inkl. Echo-Pfad, Tod/Verwundung, Kartenbewegung/Anlageneroberung, Save-Roundtrip und 1000-Tick-Marathon).
+- `bun run balance` → Kraftkurven je Rang in den Bändern, Regions-Beute/Tick monoton; Echo-Zyklen 1/3/5/10 steigen in Kraft, Beute und Affixdichte.
+- Screenshot-Suite: 23 Aufnahmen im echten Chromium (inkl. Echo-Netz und -Modal bei 390×844 sowie Echo-Netz bei 1440×900), keine Browserfehler; zusätzlicher Desktop-Überbreitencheck bei 1366×768.
 - Talentbaum zusätzlich im echten Chromium bei 390×844 und 1440×900 geprüft; keine Browserfehler, mobile horizontale Zweig-Navigation und Desktop-Dreispaltenansicht funktionieren.
 - Runenschmiede zusätzlich im echten Chromium bei 390×844 und 1440×900 sowie das mobile Aufwertungsmodal geprüft; keine Browserfehler oder Seitenüberbreite.
 - Offline-/HTTP-Smoke-Test: `index.html` lädt alle klassischen Scripts über `file://`; index.html, CSS und alle fünf JS-Dateien liefern lokal HTTP 200 mit korrektem Content-Type.

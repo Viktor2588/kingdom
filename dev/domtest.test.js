@@ -298,6 +298,21 @@ tryRender('Strategische Karte zeigt steuerbare Armeefigur', function () {
   if (!document.querySelector('#screen .map-army-marker')) throw new Error('keine Armeefigur');
   if (document.getElementById('screen').textContent.indexOf('Kobalts Hundertschaft') < 0) throw new Error('keine Armee-Karte');
 });
+sArmy.claimedRegions = ['wald', 'hoehlen'];
+var echoUi = SYS.ensureEchoMap(sArmy);
+tryRender('Echo-Netz rendert prozedurale Pfade, Knoten und Zyklusstatus', function () {
+  window.GameUI.activeTab = 'karte'; window.GameUI.render();
+  if (!document.querySelector('#screen .echo-map') || !document.querySelector('#screen .echo-routes')) throw new Error('Echo-Karte fehlt');
+  if (document.querySelectorAll('#screen .echo-node').length !== 12) throw new Error('falsche Echo-Knotenzahl');
+  if (!document.querySelector('#screen .echo-node.available') || document.getElementById('screen').textContent.indexOf('Zyklus 1') < 0) throw new Error('erreichbarer Echo-Pfad fehlt');
+});
+tryRender('Echo-Modal zeigt Beute, Affixe und drei Risikostufen', function () {
+  window.GameUI.openEchoModal(SYS.availableEchoNodes(sArmy)[0]);
+  var txt = document.getElementById('modal-root').textContent;
+  if (txt.indexOf('Angekündigte Beute') < 0 || txt.indexOf('Aktive Gegneraffixe') < 0) throw new Error('Echo-Details fehlen');
+  if (txt.indexOf('Sicher') < 0 || txt.indexOf('Normal') < 0 || txt.indexOf('Riskant') < 0) throw new Error('Echo-Risikoauswahl fehlt');
+  document.querySelector('.modal-close').click();
+});
 tryRender('Armeeverwaltung rendert Truppen und Rekrutierung', function () {
   window.GameUI.openArmyModal(armyGroup);
   var txt = document.getElementById('modal-root').textContent;

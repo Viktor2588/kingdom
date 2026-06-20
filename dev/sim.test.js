@@ -229,7 +229,7 @@ oldForgeSave.resources.material = 500; oldForgeSave.resources.magie = 500;
 var oldItem = SYS.craft(oldForgeSave, 'magistahlklinge').item; oldItem.rarity = 'episch'; delete oldItem.quality;
 delete oldForgeSave.unlockedRecipes; delete oldForgeSave.forgeMaterials;
 var migratedForge = GST.normalize(JSON.parse(JSON.stringify(oldForgeSave)));
-ok(migratedForge.version === 7 && SYS.itemQuality(migratedForge.inventory[0]) === 2 && SYS.isRecipeUnlocked(migratedForge, 'windklinge'), 'Save-v7-Migration erhält alte Qualität und frühere Rezeptfreischaltungen');
+ok(migratedForge.version === GST.VERSION && SYS.itemQuality(migratedForge.inventory[0]) === 2 && SYS.isRecipeUnlocked(migratedForge, 'windklinge'), 'Save-Migration erhält alte Qualität und frühere Rezeptfreischaltungen');
 var inventoryBeforeDrop = sF.inventory.length, plansBeforeDrop = sF.unlockedRecipes.length, randomBeforeForge = Math.random;
 Math.random = function () { return 0.1; };
 SYS.resolveExpedition(sF, { regionId: 'goetterthron', creatureUids: [], rulerJoined: true, risk: 'normal', power: 999999, startTick: 0, returnsAtTick: 0 });
@@ -260,7 +260,7 @@ ok(SYS.rulerPower(sT) > talentPowerBefore && SYS.armyCommandCapacity(sT, SYS.rul
 ok(!SYS.canRefundTalent(sT, 't_magicule_koerper').ok, 'tragender Talentpunkt kann nicht unter abhängigen Knoten entfernt werden');
 ok(SYS.refundTalent(sT, 't_seelensinn').ok, 'nicht mehr tragender Folgeknoten kann gegen Gold zurückerstattet werden');
 var talentSave = GST.normalize(JSON.parse(JSON.stringify(sT)));
-ok(talentSave.version === 7 && SYS.talentRank(talentSave, 't_magicule_koerper') === 3, 'Talentbelegung übersteht Save-v7-Roundtrip');
+ok(talentSave.version === GST.VERSION && SYS.talentRank(talentSave, 't_magicule_koerper') === 3, 'Talentbelegung übersteht Save-Roundtrip');
 
 console.log('--- Expedition (Auto-Kampf) ---');
 gob.job = 'armee';
@@ -575,6 +575,39 @@ var souls13 = s13.resources.seelen || 0, discover13 = SYS.interactMapSite(s13, m
 ok(discover13.ok && SYS.mapSiteExplored(s13, 'drachennest') && s13.resources.seelen > souls13, 'einmaliger Fundort gibt Beute und bleibt erkundet');
 var save13 = GST.normalize(JSON.parse(JSON.stringify(s13)));
 ok(SYS.mapSiteClaimed(save13, 'manaquelle') && SYS.mapSiteExplored(save13, 'drachennest') && save13.mapSiteLevels.manaquelle === 2, 'Abenteuerkarten-Fortschritt übersteht Save-Roundtrip');
+
+console.log('--- Prozedurale Echo-Territorien (Phase 22) ---');
+var s22 = GST.createDefault(), main22 = SYS.rulerArmyGroup(s22);
+s22.claimedRegions = ['wald', 'hoehlen'];
+s22.resources.wissen = 9999;
+s22.creatures.filter(function (c) { return !c.named; }).forEach(function (c) { c.count = 250; main22.troops[c.speciesId] = 250; });
+var echoA = SYS.ensureEchoMap(s22);
+var generatedAgain = SYS.generateEchoMap(echoA.seed, echoA.cycle, SYS.echoBasePower(s22));
+ok(SYS.echoUnlocked(s22) && echoA.nodes.length === 12 && echoA.nodes.filter(function (n) { return n.boss; }).length === 1, 'Echo-System öffnet ein Netz aus 12 Knoten und einem Kern');
+ok(JSON.stringify(echoA.nodes) === JSON.stringify(generatedAgain), 'gleicher Seed erzeugt deterministisch dieselbe Echo-Karte');
+var echoIds22 = {}; echoA.nodes.forEach(function (n) { echoIds22[n.id] = true; });
+ok(echoA.nodes.every(function (n) { return n.parents.every(function (id) { return echoIds22[id]; }) && n.affixIds.length >= 1 && !!GD.echoReward(n.rewardId); }), 'Echo-Pfade, Affixe und Belohnungen sind vollständig referenziert');
+ok(new Set(echoA.nodes.map(function (n) { return n.rewardId; })).size >= 4, 'prozedurale Karte bietet mindestens vier verschiedene Belohnungstypen');
+var firstEcho22 = SYS.availableEchoNodes(s22)[0], resBefore22 = s22.resources.seelen + s22.resources.gold + s22.resources.magie + s22.resources.material + s22.resources.wissen;
+var clear22 = SYS.challengeEcho(s22, main22.id, firstEcho22.id, 'sicher');
+var resAfter22 = s22.resources.seelen + s22.resources.gold + s22.resources.magie + s22.resources.material + s22.resources.wissen;
+ok(clear22.ok && clear22.won && SYS.echoNodeCompleted(s22, firstEcho22.id) && resAfter22 > resBefore22, 'erreichbares Echo wird ausgewertet, belohnt und dauerhaft abgeschlossen');
+var safety22 = 20;
+while (!SYS.echoBossCompleted(s22) && safety22-- > 0) {
+  var target22 = SYS.availableEchoNodes(s22).sort(function (a, b) { return b.col - a.col || a.power - b.power; })[0];
+  if (!target22) break;
+  var result22 = SYS.challengeEcho(s22, main22.id, target22.id, 'sicher');
+  if (!result22.won) break;
+}
+ok(SYS.echoBossCompleted(s22) && s22.metrics.echoBosses === 1, 'verzweigter Pfad führt bis zum Echo-Kern');
+var oldSeed22 = s22.echoes.seed, oldMaxPower22 = Math.max.apply(null, s22.echoes.nodes.map(function (n) { return n.power; }));
+var next22 = SYS.advanceEchoCycle(s22), newMaxPower22 = Math.max.apply(null, s22.echoes.nodes.map(function (n) { return n.power; }));
+ok(next22.ok && s22.echoes.cycle === 2 && s22.echoes.seed !== oldSeed22 && newMaxPower22 > oldMaxPower22, 'neuer Echo-Zyklus erzeugt ein anderes, stärkeres Netz');
+var reroll22 = GST.createDefault(); reroll22.claimedRegions = ['wald', 'hoehlen']; reroll22.resources.wissen = 9999; SYS.ensureEchoMap(reroll22);
+var rerollSeed22 = reroll22.echoes.seed;
+ok(SYS.rerollEchoMap(reroll22).ok && reroll22.echoes.seed !== rerollSeed22, 'unberührtes Netz kann gegen Wissen neu verwoben werden');
+var save22 = GST.normalize(JSON.parse(JSON.stringify(s22)));
+ok(save22.version === 8 && save22.echoes.cycle === 2 && save22.echoes.nodes.length === 12 && save22.echoes.stability > 0, 'Save-v8 erhält Seed, Zyklus, Karte und Echo-Stabilität');
 
 console.log('--- Zuschauer-/Auto-Modus (spielt sich selbst) ---');
 var sW = GST.createDefault(); SYS.syncUnlocks(sW);

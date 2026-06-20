@@ -100,4 +100,21 @@ function armyExample(label, leaderSpecies, level, stage, arena, troops) {
 armyExample('Goldzahn (Hobgoblin)', 'hobgoblin', 10, 1, 3, { goblin: 100 });
 armyExample('Oger-Mischlegion', 'oger', 40, 3, 3, { goblin: 20, schleim: 100, ork: 50 });
 
+console.log('\n=== ECHO-ZYKLEN: prozedurale Kraft, Beute & Affixe (Basis 700) ===');
+console.log(pad('Zyklus', 9) + padL('min Kraft', 11) + padL('Ø Kraft', 10) + padL('Boss', 10) + padL('Ø Beute', 11) + padL('Affixe', 9));
+var previousEchoAverage = 0;
+[1, 3, 5, 10].forEach(function (cycle) {
+  var nodes = SYS.generateEchoMap(424242, cycle, 700), powers = nodes.map(function (n) { return n.power; });
+  var boss = nodes.filter(function (n) { return n.boss; })[0], rewardTotal = 0, affixTotal = 0;
+  nodes.forEach(function (node) {
+    for (var resource in node.reward.resources) rewardTotal += node.reward.resources[resource];
+    for (var material in node.reward.forgeMaterials) rewardTotal += node.reward.forgeMaterials[material] * 100;
+    affixTotal += node.affixIds.length;
+  });
+  var average = Math.round(powers.reduce(function (a, b) { return a + b; }, 0) / powers.length);
+  var flag = previousEchoAverage && average <= previousEchoAverage ? ' ⚠ nicht steigend' : '';
+  console.log(pad(String(cycle), 9) + padL(Math.min.apply(null, powers), 11) + padL(average, 10) + padL(boss.power, 10) + padL(Math.round(rewardTotal / nodes.length), 11) + padL((affixTotal / nodes.length).toFixed(1), 9) + flag);
+  previousEchoAverage = average;
+});
+
 console.log('');

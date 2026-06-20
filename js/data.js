@@ -762,6 +762,36 @@
       rewards: { gold: 1400, magie: 900, seelen: 700 }, forgeReward: { drachenessenz: 2 }, desc: 'Ein verborgener Hort hinter den Mauern des Schattenreichs.' }
   ];
 
+  // ---------- Prozedurale Echo-Territorien ----------
+  // Die konkrete Karte entsteht deterministisch in systems.js. Diese Pools
+  // definieren Umgebung, angekündigte Belohnung und stapelbare Gefahren.
+  var echoEnvironments = [
+    { id: 'jura', name: 'Jura-Nachhall', icon: '🌲', tone: 'gruen', desc: 'Ein überwucherter Abdruck des großen Waldes.' },
+    { id: 'kaverne', name: 'Kristallkaverne', icon: '💎', tone: 'violett', desc: 'Magicule-Kristalle brechen das Licht in kalten Höhlen.' },
+    { id: 'sumpf', name: 'Faulmoor', icon: '🐊', tone: 'gift', desc: 'Giftige Nebel verschlucken Wege und schwächen Marschkolonnen.' },
+    { id: 'ruinen', name: 'Versunkene Ruinen', icon: '🏚️', tone: 'bronze', desc: 'Die Erinnerung eines Reiches, das nie existiert hat.' },
+    { id: 'inferno', name: 'Glutgrenze', icon: '🔥', tone: 'rot', desc: 'Brennende Risse speien Dämonen und Asche.' },
+    { id: 'himmel', name: 'Zerrissener Himmel', icon: '🌩️', tone: 'blau', desc: 'Schwebende Inseln treiben in einem ewigen Sturm.' },
+    { id: 'schatten', name: 'Nachtspiegel', icon: '🌑', tone: 'schwarz', desc: 'Jede Bewegung wirft einen feindseligen Schatten.' }
+  ];
+  var echoRewards = [
+    { id: 'seelen', name: 'Seelenhort', icon: '👻', desc: 'Viele Seelen und etwas Magie.' },
+    { id: 'wissen', name: 'Verlorenes Wissen', icon: '📜', desc: 'Wissen und Magicules für Forschung.' },
+    { id: 'schatz', name: 'Goldschatz', icon: '💰', desc: 'Gold und Material aus einer Echo-Schatzkammer.' },
+    { id: 'schmiede', name: 'Runenfund', icon: '⚒️', desc: 'Eine zur Schwierigkeit passende seltene Schmiedekomponente.' },
+    { id: 'versorgung', name: 'Versorgungslager', icon: '📦', desc: 'Nahrung, Material und Gold für den nächsten Feldzug.' },
+    { id: 'macht', name: 'Machtkern', icon: '🔮', desc: 'Ein ausgewogener Vorrat aus Magie und Seelen.' },
+    { id: 'boss', name: 'Echo-Kern', icon: '👁️', desc: 'Große Beute, seltene Komponenten und ein neuer Echo-Zyklus.' }
+  ];
+  var echoAffixes = [
+    { id: 'gehaertet', name: 'Gehärtet', icon: '🛡️', enemyPower: 0.18, casualties: 1.00, reward: 0.10, desc: '+18 % Gegnerkraft, +10 % Beute' },
+    { id: 'blutdurst', name: 'Blutdurst', icon: '🩸', enemyPower: 0.12, casualties: 1.35, reward: 0.16, desc: '+12 % Gegnerkraft, +35 % Verluste, +16 % Beute' },
+    { id: 'ueberzahl', name: 'Überzahl', icon: '👥', enemyPower: 0.24, casualties: 1.15, reward: 0.18, desc: '+24 % Gegnerkraft, +15 % Verluste, +18 % Beute' },
+    { id: 'arkan', name: 'Arkaner Sturm', icon: '🌌', enemyPower: 0.15, casualties: 1.05, reward: 0.14, desc: '+15 % Gegnerkraft, +14 % Beute' },
+    { id: 'fluch', name: 'Seelenfluch', icon: '☠️', enemyPower: 0.20, casualties: 1.20, reward: 0.22, desc: '+20 % Gegnerkraft, +20 % Verluste, +22 % Beute' },
+    { id: 'unstet', name: 'Unstete Realität', icon: '🌀', enemyPower: 0.10, casualties: 1.10, reward: 0.12, desc: '+10 % Gegnerkraft, +10 % Verluste, +12 % Beute' }
+  ];
+
   // ---------- Rivalen-Dämonenlords (Bedrohungssystem) ----------
   // basePower wächst je abgewehrtem Angriff (growth^Fortschritt). reward = Abwehr-Beute.
   // defeatBonus = dauerhafter Reichsbonus nach endgültigem Sieg (Gegenangriff).
@@ -991,13 +1021,15 @@
         'Nur der Herrscher und benannte Elite tragen Ausrüstung; feste Positionen bilden einen Diablo-artigen Loadout.',
         'Alte Duplikate können zerlegt werden; angelegte und einzigartige Gegenstände sind dabei geschützt.'
       ] },
-    karte: { icon: '🗺️', title: 'Karte, Expeditionen & Rivalen',
-      text: 'Schicke deine Armee auf Expeditionen: Auto-Kämpfe bringen Seelen, Material, Erfahrung und Beute – und sichern Territorium.',
+    karte: { icon: '🗺️', title: 'Karte, Echos & Rivalen',
+      text: 'Erobere die feste Weltkarte und öffne danach prozedurale Echo-Netze mit sichtbaren Belohnungen, Gefahren und endlos steigender Schwierigkeit.',
       steps: [
         'Nur Kreaturen mit Job ⚔️ Armee ziehen in den Kampf; ist deine Kraft ≥ Gegnerkraft, gewinnst du.',
         'Sicher/Normal verwunden bei Niederlage. Riskant gibt ×1,4 Beute & Drop, aber eingesetzte Kreaturen sterben bei Niederlage.',
         'Taktische Kämpfe laufen auf einem 7×5-Raster mit Bewegung, Hindernissen, Initiative, Warten, Reichweite und Gegenwehr.',
         'Auf der Abenteuerkarte liegen bewachte Außenanlagen und Fundorte. Eroberte Anlagen produzieren und sind bis Stufe 3 ausbaubar.',
+        'Nach zwei Territorien öffnen sich deterministisch erzeugte Echo-Netze. Jeder Sieg öffnet verbundene Knoten; der Kern startet den nächsten, stärkeren Zyklus.',
+        'Echo-Affixe erhöhen Gegnerkraft und Verluste, steigern dafür aber die angekündigte Beute. Ein unberührtes Netz kann gegen Wissen neu verwoben werden.',
         'Regionen schalten sich der Reihe nach frei – die nächste wird als Ausblick gezeigt.',
         'Erobertes Territorium weckt Rivalen-Dämonenlords: Verteidigung = Labyrinth + stationierte Armee.'
       ] },
@@ -1076,6 +1108,9 @@
   var eventsById = {};    events.forEach(function (e) { eventsById[e.id] = e; });
   var affinitiesById = {}; affinities.forEach(function (a) { affinitiesById[a.id] = a; });
   var strategicSitesById = {}; strategicSites.forEach(function (s) { strategicSitesById[s.id] = s; });
+  var echoEnvironmentsById = {}; echoEnvironments.forEach(function (x) { echoEnvironmentsById[x.id] = x; });
+  var echoRewardsById = {}; echoRewards.forEach(function (x) { echoRewardsById[x.id] = x; });
+  var echoAffixesById = {}; echoAffixes.forEach(function (x) { echoAffixesById[x.id] = x; });
   var slotResearch = {};  research.forEach(function (r) { if (r.unlocks && r.unlocks.slots) r.unlocks.slots.forEach(function (sl) { slotResearch[sl] = r.id; }); });
 
   root.GameData = {
@@ -1087,6 +1122,7 @@
     regions: regions, rulerStages: rulerStages, research: research, talentBranches: talentBranches, talents: talents, sets: sets, slotResearch: slotResearch, rivals: rivals,
     events: events, affinities: affinities, help: help,
     strategicNodes: strategicNodes, strategicSites: strategicSites,
+    echoEnvironments: echoEnvironments, echoRewards: echoRewards, echoAffixes: echoAffixes,
     creature: function (id) { return byId[id]; },
     building: function (id) { return buildingsById[id]; },
     spell: function (id) { return magicById[id]; },
@@ -1102,6 +1138,9 @@
     event: function (id) { return eventsById[id]; },
     affinity: function (id) { return affinitiesById[id]; },
     strategicSite: function (id) { return strategicSitesById[id]; },
+    echoEnvironment: function (id) { return echoEnvironmentsById[id]; },
+    echoReward: function (id) { return echoRewardsById[id]; },
+    echoAffix: function (id) { return echoAffixesById[id]; },
     researchNode: function (id) { return researchById[id]; },
     talent: function (id) { return talentsById[id]; },
     set: function (id) { return setsById[id]; }

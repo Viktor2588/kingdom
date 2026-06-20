@@ -1268,11 +1268,16 @@ select.btn { text-align: left; min-height: 40px; }
   .kingdom-scene {
     display: block;
     position: relative;
-    min-height: clamp(430px, 53vh, 610px);
+    /* Bild-Seitenverhältnis (1536×1024 = 3:2) → kein Crop, damit die in
+       Prozent positionierten Gebäude-Hotspots exakt auf den Bauwerken sitzen. */
+    width: 100%;
+    max-width: 940px;
+    margin-inline: auto;
+    aspect-ratio: 3 / 2;
     overflow: hidden;
     border: 1px solid #3f607b;
     border-radius: 12px;
-    background: #101c24 url('assets/tempest-kingdom-desktop.png') center 57% / cover no-repeat;
+    background: #101c24 url('assets/tempest-kingdom-desktop.png') center / cover no-repeat;
     box-shadow: inset 0 0 80px rgba(0,0,0,.28), 0 18px 45px rgba(0,0,0,.38);
     isolation: isolate;
   }

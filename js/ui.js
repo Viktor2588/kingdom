@@ -379,10 +379,10 @@
             el('h1', { text: s.reich }),
             el('p', { text: 'Dein Monsterreich wächst mit jeder Entscheidung.' })
           ]),
-          sceneLink('reich', '🏰', 'Stadtbezirke', 'Bauen & ausbauen', [48, 35], [152, 122]),
-          sceneLink('magie', '🔮', 'Arkane Akademie', 'Zauber & Forschung', [30, 42], [112, 96]),
-          sceneLink('schmiede', '⚒️', 'Große Schmiede', 'Ausrüstung fertigen', [61, 33], [104, 88]),
-          sceneLink('karte', '🗺️', 'Abenteuertor', 'Armeen befehligen', [20, 76], [122, 94]),
+          sceneLink('reich', '🏰', 'Stadtbezirke', 'Bauen & ausbauen', [47, 34], [150, 120]),
+          sceneLink('magie', '🔮', 'Arkane Akademie', 'Zauber & Forschung', [29, 41], [108, 92]),
+          sceneLink('schmiede', '⚒️', 'Große Schmiede', 'Ausrüstung fertigen', [62, 32], [104, 88]),
+          sceneLink('karte', '🗺️', 'Abenteuertor', 'Armeen befehligen', [19, 78], [120, 92]),
           el('div', { class: 'scene-status' }, [
             el('span', { text: '👑 ' + stage.name }),
             el('span', { text: '⚔ ' + fmt(rp) + ' Kampfkraft' }),

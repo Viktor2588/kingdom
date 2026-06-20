@@ -1,13 +1,12 @@
 /* dev/shots.js — Handy-Screenshots via Playwright/Chromium.
    Lädt die echte index.html im Handy-Viewport, befüllt den Stand
    leicht und fotografiert alle Tabs + ein Modal. NICHT Teil des Spiels.
-   Aufruf:  node dev/shots.js                                          */
-'use strict';
-var path = require('path');
-var fs = require('fs');
-var chromium = require('/tmp/tempest-shots/node_modules/playwright').chromium;
+   Aufruf:  bun run dev/shots.js                                       */
+import fs from "node:fs";
+import path from "node:path";
+import { chromium } from "playwright";
 
-var dir = path.join(__dirname, '..');
+var dir = path.join(import.meta.dir, '..');
 var out = path.join(dir, 'dev', 'screenshots');
 fs.mkdirSync(out, { recursive: true });
 var fileUrl = 'file://' + path.join(dir, 'index.html');

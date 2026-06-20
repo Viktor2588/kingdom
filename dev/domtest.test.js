@@ -1,26 +1,24 @@
-/* dev/domtest.js — Headless-DOM-Test (jsdom). Lädt die echte
-   index.html, führt alle Skripte aus und prüft, dass die gesamte
+/* dev/domtest.test.js — Headless-DOM-Test (bun:test + jsdom). Lädt die
+   echte index.html, führt alle Skripte aus und prüft, dass die gesamte
    Oberfläche ohne Laufzeitfehler rendert. NICHT Teil des Spiels.
-   Aufruf:  node dev/domtest.js                                    */
-'use strict';
-var path = require('path');
-var fs = require('fs');
-var JSDOM = require('/tmp/tempest-domtest/node_modules/jsdom').JSDOM;
+   Aufruf:  bun test dev/domtest.test.js                              */
+import { test, expect } from "bun:test";
+import { JSDOM } from "jsdom";
 
-var dir = path.join(__dirname, '..');
-var html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+var dir = import.meta.dir + '/..';
+var html = await Bun.file(dir + '/index.html').text();
 
-var pass = 0, fail = 0;
-function ok(cond, msg) { if (cond) { pass++; } else { fail++; console.log('  ✗ ' + msg); } }
+var pass = 0, fail = 0, fails = [];
+function ok(cond, msg) { if (cond) { pass++; } else { fail++; fails.push(msg); console.log('  ✗ ' + msg); } }
 function tryRender(label, fn) { try { fn(); ok(true, label); } catch (e) { ok(false, label + ' — ' + e.message); console.log('     ' + (e.stack || '').split('\n')[1]); } }
 
 var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-['js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js'].forEach(function (f) {
-  window.eval(fs.readFileSync(path.join(dir, f), 'utf8'));
-});
+for (const f of ['js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
+  window.eval(await Bun.file(dir + '/' + f).text());
+}
 
 console.log('--- Globale Module ---');
 ok(window.GameData && window.GameSystems && window.GameState && window.GameUI, 'alle Module geladen');
@@ -312,4 +310,8 @@ console.log('\n========================================');
 console.log('  DOM-Test: ' + pass + ' bestanden, ' + fail + ' fehlgeschlagen');
 console.log('========================================');
 try { dom.window.close(); } catch (e) {}
-process.exit(fail > 0 ? 1 : 0);
+
+test('domtest — gesamte Oberfläche rendert ohne Laufzeitfehler', () => {
+  if (fails.length) console.log('FEHLER:\n  - ' + fails.join('\n  - '));
+  expect(fails).toEqual([]);
+});

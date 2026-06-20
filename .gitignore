@@ -1,2 +1,5 @@
 # Local Claude Code settings (machine-specific)
 .claude/settings.local.json
+
+# Dependencies (Bun)
+node_modules/

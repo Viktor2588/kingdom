@@ -3,25 +3,23 @@
    bauen, beschwören, benennen, entwickeln, leveln, schmieden,
    ausrüsten, Magie lernen, Expedition, speichern/laden. Prüft nach
    jedem Schritt Invarianten + dass die UI fehlerfrei rendert.
-   NICHT Teil des Spiels.   Aufruf:  node dev/playthrough.js          */
-'use strict';
-var path = require('path');
-var fs = require('fs');
-var JSDOM = require('/tmp/tempest-domtest/node_modules/jsdom').JSDOM;
+   NICHT Teil des Spiels.   Aufruf:  bun test dev/playthrough.test.js  */
+import { test, expect } from "bun:test";
+import { JSDOM } from "jsdom";
 
-var dir = path.join(__dirname, '..');
-var html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+var dir = import.meta.dir + '/..';
+var html = await Bun.file(dir + '/index.html').text();
 
-var pass = 0, fail = 0, warn = 0;
-function ok(cond, msg) { if (cond) { pass++; } else { fail++; console.log('  ✗ ' + msg); } }
+var pass = 0, fail = 0, warn = 0, fails = [];
+function ok(cond, msg) { if (cond) { pass++; } else { fail++; fails.push(msg); console.log('  ✗ ' + msg); } }
 function note(msg) { warn++; console.log('  ⚠ ' + msg); }
 function step(msg) { console.log('\n• ' + msg); }
 
 var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
 var window = dom.window, document = window.document;
-['js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js'].forEach(function (f) {
-  window.eval(fs.readFileSync(path.join(dir, f), 'utf8'));
-});
+for (const f of ['js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
+  window.eval(await Bun.file(dir + '/' + f).text());
+}
 
 var T = window.__TEMPEST__; T.stopLoop();
 var S = T.state, SYS = window.GameSystems, UI = window.GameUI, GD = window.GameData;
@@ -245,6 +243,9 @@ renderAll('Marathon');
 console.log('\n========================================');
 console.log('  Durchspiel: ' + pass + ' bestanden, ' + fail + ' fehlgeschlagen, ' + warn + ' Hinweise');
 console.log('========================================');
-if (fail > 0) process.exit(1);
-console.log('Durchspiel komplett ohne Fehler ✔');
-process.exit(0);  // jsdom-Timer offen → sauber beenden
+try { dom.window.close(); } catch (e) {}
+
+test('playthrough — komplette Sitzung ohne Laufzeitfehler', () => {
+  if (fails.length) console.log('FEHLER:\n  - ' + fails.join('\n  - '));
+  expect(fails).toEqual([]);
+});

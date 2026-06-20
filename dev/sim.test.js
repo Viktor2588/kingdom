@@ -1,12 +1,11 @@
-/* dev/sim.js — Headless-Logiktest (Node). Lädt die DOM-freien Module
-   und prüft den kompletten Spielkreislauf. NICHT Teil des Spiels.
-   Aufruf:  node dev/sim.js                                            */
-'use strict';
-var fs = require('fs');
-var path = require('path');
-require('../js/data.js');
-require('../js/state.js');
-require('../js/systems.js');
+/* dev/sim.test.js — Headless-Logiktest (bun:test). Lädt die DOM-freien
+   Module und prüft den kompletten Spielkreislauf. NICHT Teil des Spiels.
+   Aufruf:  bun test dev/sim.test.js                                    */
+import { test, expect } from "bun:test";
+import "../js/data.js";
+import "../js/state.js";
+import "../js/systems.js";
+
 var GD = globalThis.GameData, GST = globalThis.GameState, SYS = globalThis.GameSystems;
 
 var pass = 0, fail = 0, fails = [];
@@ -17,8 +16,8 @@ console.log('--- Daten-Integrität ---');
 ok(GD.creatures.length >= 40, 'mind. 40 Kreaturenformen (' + GD.creatures.length + ')');
 ok(['kobold', 'hasenmensch', 'tengu', 'meerling'].every(function (id) { return !!GD.creature(id); }), 'zusätzliche Tensura-nahe Völker sind spielbar');
 ok(['dryadenrat', 'zwergenkarawane', 'geisterfest', 'bestiengesandte'].every(function (id) { return !!GD.event(id); }), 'vier neue Welt-/Völkerereignisse vorhanden');
-var spritePath = path.join(__dirname, '..', 'assets', 'creature-sprites.png');
-ok(fs.existsSync(spritePath) && fs.statSync(spritePath).size > 100000, 'generiertes Kreaturen-Sprite-Sheet ist als lokales Spielasset vorhanden');
+var spritePath = import.meta.dir + '/../assets/creature-sprites.png';
+ok(Bun.file(spritePath).size > 100000, 'generiertes Kreaturen-Sprite-Sheet ist als lokales Spielasset vorhanden');
 // jede evolvesTo-Zielspezies existiert
 var badEvo = [];
 GD.creatures.forEach(function (sp) {
@@ -579,5 +578,8 @@ ok(SYS.production(clone).rates.magie >= 0, 'Geladener Stand ist berechenbar');
 console.log('\n========================================');
 console.log('  Ergebnis: ' + pass + ' bestanden, ' + fail + ' fehlgeschlagen');
 console.log('========================================');
-if (fail > 0) { console.log('FEHLER:'); fails.forEach(function (f) { console.log('  - ' + f); }); process.exit(1); }
-else { console.log('Alle Logiktests bestanden ✔'); }
+
+test('sim — Datenintegrität & kompletter Spielkreislauf', () => {
+  if (fails.length) console.log('FEHLER:\n  - ' + fails.join('\n  - '));
+  expect(fails).toEqual([]);
+});

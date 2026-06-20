@@ -160,29 +160,27 @@ console.log('Stufe:', GD.rulerStages[s.herrscher.stage].name,
 
 ## Tests
 
-Vier Test-/Analyse-Skripte plus Screenshots. **`sim.js` und `balance.js` laufen ohne
-jede Einrichtung.** Die jsdom- und Playwright-Tests brauchen einmal eine kleine Ablage
-unter `/tmp` (bewusst außerhalb des Repos, damit keine `node_modules` eingecheckt werden).
+Das Spiel selbst hat **keine Abhängigkeiten und keinen Build**. Das Dev-Tooling läuft
+auf [Bun](https://bun.sh): einmal `bun install` (zieht jsdom, pngjs und playwright als
+devDependencies), danach:
 
 ```bash
-# 1) Reine Logik – keine Abhängigkeiten
-node dev/sim.js          # Logiktests (Daten-Integrität, alle Systeme, Auto-Modus-Marathon)
-node dev/balance.js      # Balance-Analyse (Kraftkurven je Rang, Regions-Monotonie)
+bun install                  # einmalig: devDependencies installieren
 
-# 2) DOM-Tests – benötigen jsdom (einmalig einrichten)
-mkdir -p /tmp/tempest-domtest && ( cd /tmp/tempest-domtest && npm init -y >/dev/null && npm i jsdom@22 )
-node dev/domtest.js      # rendert alle Views & Modals, klickt echte Buttons
-node dev/playthrough.js  # komplettes Durchspiel + Invarianten-Checks
+bun test                     # alle Tests (sim, domtest, playthrough)
+bun test dev/sim.test.js     # nur die reinen Logiktests (ohne DOM)
+
+bun run balance              # Balance-Analyse (Kraftkurven je Rang, Regions-Monotonie)
 ```
 
 Erwartete Ausgabe (Soll-Stand):
 
-| Skript                 | Ergebnis                  |
-|------------------------|---------------------------|
-| `node dev/sim.js`         | `201 bestanden, 0 fehlgeschlagen` |
-| `node dev/domtest.js`     | `57 bestanden, 0 fehlgeschlagen`  |
-| `node dev/playthrough.js` | `57 bestanden, 0 fehlgeschlagen`  |
-| `node dev/balance.js`     | Kraftkurven in den Bändern, Beute/Tick monoton |
+| Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
+|------------------------------------|----------------------------------------------|
+| `bun test dev/sim.test.js`         | `1 pass` · `201 bestanden, 0 fehlgeschlagen` |
+| `bun test dev/domtest.test.js`     | `1 pass` · `57 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/playthrough.test.js` | `1 pass` · `57 bestanden, 0 fehlgeschlagen`  |
+| `bun run balance`                  | Kraftkurven in den Bändern, Beute/Tick monoton |
 
 ### Screenshots (optional, Linux/WSL)
 
@@ -192,8 +190,8 @@ horizontale Seitenüberbreite und meldet Browser-Laufzeitfehler. Es braucht
 Playwright/Chromium plus ein paar System-Libs. Ohne root (z. B. in WSL):
 
 ```bash
-# Playwright + Chromium
-mkdir -p /tmp/tempest-shots && ( cd /tmp/tempest-shots && npm init -y >/dev/null && npm i playwright && npx playwright install chromium )
+# Chromium-Browser für Playwright (Playwright selbst kommt via `bun install`)
+bunx playwright install chromium
 
 # Fehlende Chromium-System-Libs ohne root beschaffen
 mkdir -p /tmp/chromedeps /tmp/dldeps && ( cd /tmp/dldeps && apt-get download libnspr4 libnss3 libasound2t64 && for f in *.deb; do dpkg-deb -x "$f" /tmp/chromedeps; done )
@@ -203,7 +201,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
   && mkdir -p ~/.fonts && cp /tmp/emoji/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf ~/.fonts/ && fc-cache -f
 
 # Screenshots erzeugen
-LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu node dev/shots.js
+LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
 # → 20 PNGs in dev/screenshots/, darunter Mobile-/Desktop-Karte und Rasterkampf
 ```
 

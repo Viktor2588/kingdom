@@ -1,11 +1,10 @@
-/* dev/balance.js — Balance-Analyse (Node, DOM-frei). Rechnet Kraft-
+/* dev/balance.js — Balance-Analyse (Bun, DOM-frei). Rechnet Kraft-
    kurven, Regionskräfte, Kosten/Belohnungen durch und markiert Aus-
    reißer. Nur Analyse, ändert nichts. NICHT Teil des Spiels.
-   Aufruf:  node dev/balance.js                                        */
-'use strict';
-require('../js/data.js');
-require('../js/state.js');
-require('../js/systems.js');
+   Aufruf:  bun run dev/balance.js                                     */
+import "../js/data.js";
+import "../js/state.js";
+import "../js/systems.js";
 var GD = globalThis.GameData, GST = globalThis.GameState, SYS = globalThis.GameSystems;
 
 function pad(s, n) { s = '' + s; while (s.length < n) s += ' '; return s; }

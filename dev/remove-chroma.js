@@ -1,11 +1,9 @@
 /* Remove a flat magenta image-generation background with a soft alpha edge.
-   Developer utility only; requires pngjs in /tmp/imagegen-tools. */
-'use strict';
-var fs = require('fs');
-var PNG = require('/tmp/imagegen-tools/node_modules/pngjs').PNG;
+   Developer utility only (Bun). Aufruf: bun run dev/remove-chroma.js IN OUT */
+import { PNG } from "pngjs";
 var input = process.argv[2], output = process.argv[3];
-if (!input || !output) throw new Error('usage: node dev/remove-chroma.js INPUT OUTPUT');
-var png = PNG.sync.read(fs.readFileSync(input));
+if (!input || !output) throw new Error('usage: bun run dev/remove-chroma.js INPUT OUTPUT');
+var png = PNG.sync.read(Buffer.from(await Bun.file(input).arrayBuffer()));
 var key = [0, 0, 0], samples = 0;
 function sample(x, y) {
   var at = (y * png.width + x) * 4;
@@ -30,4 +28,4 @@ for (var i = 0; i < png.data.length; i += 4) {
   }
   png.data[i + 3] = Math.round(alpha * 255);
 }
-fs.writeFileSync(output, PNG.sync.write(png));
+await Bun.write(output, PNG.sync.write(png));

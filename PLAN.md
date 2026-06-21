@@ -230,6 +230,8 @@ Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas
 
 Phase 36 – Reichspanorama und Management-UI materialisieren
 
+[ ] **Phase 38 – Kreaturen-Kompendium / Bestiarium (in Bearbeitung)** — durchblätterbares Nachschlagewerk aller Linien & Formen (Evolutionsketten, Ränge, Werte, Skills) mit „entdeckt"-Tracking; als dritter Unter-Tab im Kompendium-Modal aus Phase 37.
+
 [x] **Phase 37 – Erfolge & Reichsstatistik (2026-06-21)** — zwei sich ergänzende Systeme, sauber getrennt von der bestehenden linearen Quest-Kette:
 - **Paralleles Erfolgssystem (`js/achievements.js`, DOM-frei):** 42 Erfolge über 5 Kategorien (Reich, Kreaturen, Kampf, Magie & Schmiede, Herrschaft). Bauen auf den bereits gepflegten `state.metrics` + abgeleitetem Zustand auf (Gebäudestufen, Ränge, Level, Echo-Zyklus, göttliche Items, Talente …). Dynamische Ziele leiten sich aus den Spieldaten ab (alle Regionen, höchste Herrscher-Stufe). `evaluate()` läuft pro Tick (auch beim Vorspulen), schaltet erfüllte Erfolge frei, gewährt einmalige Belohnung + Chronik-Eintrag und ist idempotent; `sync()` rückt beim Laden still vor (keine Belohnungsflut für Alt-Spielstände).
 - **Sichtbares Statistik-Dashboard (`js/ui-progress.js`):** Die bisher getrackten, aber nie angezeigten `metrics` erscheinen erstmals — Spielzeit, Seelen gesamt, Beschwörungen, Eliten, Evolutionen/Fusionen, Kampf-/Echo-/Schmiede-Werte, stärkste Kreatur. Eigenes Modal mit Unter-Tabs „🏆 Erfolge" (Kategorien-Grid mit Fortschrittsbalken, Belohnung, ✅/🔒) und „📊 Statistik"; Einstieg über die Übersicht, Freischalt-Toast über `onTick`.

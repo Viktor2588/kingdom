@@ -31,6 +31,23 @@
   };
   var MAX_FOCUS = 5, MAX_ROUNDS = 14, MAX_HEAT = 8;
 
+  // Kampfhaltungen (Phase 41): aktive Vor-Kampf-Entscheidung mit echtem Trade-off.
+  // „ausgewogen" ist neutral (Mults 1.0, Startfokus 1) → identisch zum Verhalten
+  // ohne Haltung, damit Default-Aufrufe (z. B. ältere Tests) unverändert bleiben.
+  var STANCES = [
+    { id: 'ausgewogen', icon: '⚖️', name: 'Ausgewogen', desc: 'Keine Sonderwirkung – das klassische Gefecht.',
+      hpMult: 1.0, atkMult: 1.0, startFocus: 1, retaliationMult: 1.0, magieMult: 1.0 },
+    { id: 'berserker', icon: '⚔️', name: 'Berserker', desc: '+30 % Angriff, aber +35 % Gegenschaden. Perfekte Konter werden Pflicht.',
+      hpMult: 0.85, atkMult: 1.3, startFocus: 1, retaliationMult: 1.35, magieMult: 1.0 },
+    { id: 'waechter', icon: '🛡️', name: 'Wächter', desc: '+35 % LP und −40 % Gegenschaden, dafür −15 % Angriff. Verzeihend.',
+      hpMult: 1.35, atkMult: 0.85, startFocus: 1, retaliationMult: 0.6, magieMult: 1.0 },
+    { id: 'arkanist', icon: '🔮', name: 'Arkanist', desc: 'Start mit 3 Fokus und +35 % Magieschaden – schneller zum Finisher.',
+      hpMult: 1.0, atkMult: 0.95, startFocus: 3, retaliationMult: 1.0, magieMult: 1.35 }
+  ];
+  var STANCE_BY = {};
+  STANCES.forEach(function (st) { STANCE_BY[st.id] = st; });
+  function stanceById(id) { return STANCE_BY[id] || STANCES[0]; }
+
   function mission(id) { return MISSION_BY[id] || null; }
   function missionUnlocked(state, m) { return !!m && (!m.unlock || m.unlock(state)); }
   function availableMissions(state) { return MISSIONS.filter(function (m) { return missionUnlocked(state, m); }); }
@@ -44,6 +61,8 @@
     sk.bestCombo = Math.max(0, Math.floor(finite(sk.bestCombo, 0)));
     if (!sk.lastResult || typeof sk.lastResult !== 'object') sk.lastResult = null;
     if (sk.active && (!mission(sk.active.missionId) || ['enemyHp', 'enemyMaxHp', 'enemyAttack', 'heroHp', 'heroMaxHp', 'heroAttack', 'round', 'focus'].some(function (key) { return !isFinite(Number(sk.active[key])); }))) sk.active = null;
+    if (!STANCE_BY[sk.stance]) sk.stance = STANCES[0].id;
+    if (sk.active && !STANCE_BY[sk.active.stanceId]) sk.active.stanceId = sk.stance;
     return sk;
   }
 
@@ -51,18 +70,21 @@
     return INTENT_SEQUENCE[(active.seed + active.round - 1) % INTENT_SEQUENCE.length];
   }
 
-  function startSkirmish(state, missionId) {
+  function startSkirmish(state, missionId, stanceId) {
     var sk = ensureState(state), m = mission(missionId);
     if (sk.active) return { ok: false, reason: 'Ein Sturmeinsatz läuft bereits.' };
     if (!m) return { ok: false, reason: 'Unbekannter Einsatz.' };
     if (!missionUnlocked(state, m)) return { ok: false, reason: m.hint || 'Noch nicht freigeschaltet.' };
+    var st = stanceById(STANCE_BY[stanceId] ? stanceId : sk.stance);
+    sk.stance = st.id;  // gewählte Haltung als Voreinstellung merken
     var heatScale = 1 + sk.heat * 0.12;
     var rulerPower = Math.max(1, SYS.rulerPower(state));
-    var heroMax = Math.round(92 + (state.herrscher.level || 1) * 9 + (state.herrscher.stage || 0) * 18 + Math.sqrt(rulerPower) * 2);
-    var heroAttack = Math.round(10 + (state.herrscher.level || 1) * 2.2 + (state.herrscher.stage || 0) * 4 + Math.sqrt(rulerPower) * 0.75);
+    var heroMax = Math.round((92 + (state.herrscher.level || 1) * 9 + (state.herrscher.stage || 0) * 18 + Math.sqrt(rulerPower) * 2) * st.hpMult);
+    var heroAttack = Math.round((10 + (state.herrscher.level || 1) * 2.2 + (state.herrscher.stage || 0) * 4 + Math.sqrt(rulerPower) * 0.75) * st.atkMult);
     var played = (state.metrics && state.metrics.skirmishesPlayed) || 0;
     sk.active = {
       missionId: m.id,
+      stanceId: st.id,
       round: 1,
       maxRounds: MAX_ROUNDS,
       heroHp: heroMax,
@@ -71,17 +93,17 @@
       enemyHp: Math.round(m.baseHp * heatScale),
       enemyMaxHp: Math.round(m.baseHp * heatScale),
       enemyAttack: Math.round(m.baseAttack * (1 + sk.heat * 0.09)),
-      focus: 1,
+      focus: Math.min(MAX_FOCUS, st.startFocus),
       combo: 0,
       bestCombo: 0,
       seed: Math.abs(Math.floor(finite(state.tick, 0) + played * 2 + MISSIONS.indexOf(m))) % INTENT_SEQUENCE.length,
       intentId: null,
-      log: ['Der Einsatz beginnt. Lies die Absicht und kontere!']
+      log: ['Der Einsatz beginnt (' + st.name + '). Lies die Absicht und kontere!']
     };
     sk.active.intentId = intentFor(sk.active);
     sk.lastResult = null;
-    I.log(state, '⚡ Sturmeinsatz gestartet: ' + m.name + '.', 'gold');
-    return { ok: true, active: sk.active, mission: m };
+    I.log(state, '⚡ Sturmeinsatz gestartet: ' + m.name + ' · ' + st.name + '.', 'gold');
+    return { ok: true, active: sk.active, mission: m, stance: st };
   }
 
   function actionAvailable(state, actionId) {
@@ -133,6 +155,7 @@
     if (!actionAvailable(state, actionId)) return { ok: false, reason: 'Nicht genug Fokus.' };
 
     var intent = INTENTS[active.intentId] || INTENTS.hieb;
+    var st = stanceById(active.stanceId);
     var correct = intent.counter === actionId;
     if (action.cost) active.focus -= action.cost;
     if (action.focus) active.focus = Math.min(MAX_FOCUS, active.focus + action.focus);
@@ -143,7 +166,8 @@
     active.bestCombo = Math.max(active.bestCombo, active.combo);
 
     var comboMult = 1 + Math.min(10, active.combo) * 0.09;
-    var hit = Math.max(1, Math.round(active.heroAttack * action.damage * comboMult * (correct ? 1.45 : 1)));
+    var stanceDmg = actionId === 'magie' ? st.magieMult : 1;
+    var hit = Math.max(1, Math.round(active.heroAttack * action.damage * comboMult * stanceDmg * (correct ? 1.45 : 1)));
     active.enemyHp = Math.max(0, active.enemyHp - hit);
     var line = action.icon + ' ' + action.name + ': ' + hit + ' Schaden' + (correct ? ' — perfekter Konter!' : '.');
 
@@ -159,7 +183,7 @@
 
     var retaliation = 0;
     if (!correct) {
-      retaliation = Math.max(1, Math.round(active.enemyAttack * intent.damage * (actionId === 'block' ? 0.45 : 1)));
+      retaliation = Math.max(1, Math.round(active.enemyAttack * intent.damage * (actionId === 'block' ? 0.45 : 1) * st.retaliationMult));
       active.heroHp = Math.max(0, active.heroHp - retaliation);
       line += ' ' + intent.icon + ' ' + retaliation + ' Gegenschaden.';
     } else line += ' Kein Gegenschaden.';
@@ -194,17 +218,29 @@
       active: active,
       mission: active ? mission(active.missionId) : null,
       intent: active ? INTENTS[active.intentId] : null,
+      stanceId: sk.stance,
+      stance: active ? stanceById(active.stanceId) : stanceById(sk.stance),
       lastResult: sk.lastResult
     };
+  }
+
+  // Gewählte Voreinstellungs-Haltung setzen (vor dem Start im Hub).
+  function setSkirmishStance(state, stanceId) {
+    var sk = ensureState(state);
+    if (STANCE_BY[stanceId]) sk.stance = stanceId;
+    return sk.stance;
   }
 
   Object.assign(SYS, {
     SKIRMISH_MISSIONS: MISSIONS,
     SKIRMISH_INTENTS: INTENTS,
     SKIRMISH_ACTIONS: ACTIONS,
+    SKIRMISH_STANCES: STANCES,
     SKIRMISH_MAX_FOCUS: MAX_FOCUS,
     SKIRMISH_MAX_HEAT: MAX_HEAT,
     skirmishMission: mission,
+    skirmishStance: stanceById,
+    setSkirmishStance: setSkirmishStance,
     missionUnlocked: missionUnlocked,
     availableSkirmishMissions: availableMissions,
     skirmishStatus: skirmishStatus,

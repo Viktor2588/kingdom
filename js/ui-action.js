@@ -62,6 +62,26 @@
           el('span', { text: '🎯 Eskalation ' + status.heat + '/' + SYS.SKIRMISH_MAX_HEAT })
         ])
       ]);
+
+      // Kampfhaltung wählen (aktive Vor-Kampf-Entscheidung, Phase 41).
+      body.appendChild(el('div', { class: 'section-label', text: 'Kampfhaltung' }));
+      var stancePicker = el('div', { class: 'skirmish-stances' });
+      SYS.SKIRMISH_STANCES.forEach(function (st) {
+        var selected = status.stanceId === st.id;
+        stancePicker.appendChild(el('button', {
+          type: 'button',
+          class: 'skirmish-stance' + (selected ? ' selected' : ''),
+          'aria-pressed': selected ? 'true' : 'false',
+          onclick: function () { SYS.setSkirmishStance(s, st.id); self.persist(s); self.openSkirmishHub(); }
+        }, [
+          el('span', { class: 'stance-icon', text: st.icon }),
+          el('b', { text: st.name }),
+          el('small', { text: st.desc })
+        ]));
+      });
+      body.appendChild(stancePicker);
+
+      body.appendChild(el('div', { class: 'section-label', text: 'Einsatz wählen' }));
       var grid = el('div', { class: 'skirmish-missions' });
       SYS.SKIRMISH_MISSIONS.forEach(function (m) {
         var unlocked = SYS.missionUnlocked(s, m);
@@ -73,7 +93,7 @@
             unlocked ? el('small', { text: 'Basisbeute: ' + costText(m.reward) }) : null
           ]),
           btn(unlocked ? 'Start' : 'Gesperrt', function () {
-            var res = SYS.startSkirmish(s, m.id);
+            var res = SYS.startSkirmish(s, m.id, SYS.skirmishStatus(s).stanceId);
             if (!res.ok) { toast(res.reason, 'bad'); return; }
             self.persist(s); self.refresh(); self.openSkirmishBattle();
           }, { small: true, cls: unlocked ? 'btn-action' : '', disabled: !unlocked })
@@ -112,7 +132,7 @@
       body.appendChild(el('div', { class: 'skirmish-meters' }, [
         el('div', null, [el('small', { text: 'Fokus' }), focusPips(active.focus)]),
         el('div', null, [el('small', { text: 'Kombo' }), el('b', { class: active.combo ? 'combo-live' : '', text: '⚡ x' + active.combo })]),
-        el('div', null, [el('small', { text: 'Eskalation' }), el('b', { text: status.heat + '/' + SYS.SKIRMISH_MAX_HEAT })])
+        el('div', null, [el('small', { text: 'Haltung' }), el('b', { text: status.stance.icon + ' ' + status.stance.name })])
       ]));
 
       function actButton(id, hint) {

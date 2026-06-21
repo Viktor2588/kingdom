@@ -133,10 +133,16 @@ tryRender('Sturmeinsatz-Karte und aktives Konter-Gefecht', function () {
   if (!document.querySelector('#screen .skirmish-card')) throw new Error('keine prominente Sturmeinsatz-Karte');
   window.GameUI.openSkirmishHub();
   if (document.querySelectorAll('#modal-root .skirmish-mission').length !== 3) throw new Error('Missionen fehlen');
+  if (document.querySelectorAll('#modal-root .skirmish-stance').length !== window.GameSystems.SKIRMISH_STANCES.length) throw new Error('Haltungs-Picker fehlt');
+  var berserk = Array.prototype.filter.call(document.querySelectorAll('#modal-root .skirmish-stance'), function (b) { return b.textContent.indexOf('Berserker') >= 0; })[0];
+  if (!berserk) throw new Error('Berserker-Haltung fehlt');
+  berserk.click(); // wählt Haltung, rendert Hub neu
+  if (window.GameSystems.skirmishStatus(s).stanceId !== 'berserker') throw new Error('Haltung nicht gewählt');
   var startBtn = Array.prototype.filter.call(document.querySelectorAll('#modal-root .skirmish-mission .btn'), function (b) { return b.textContent.indexOf('Start') >= 0 && !b.hasAttribute('disabled'); })[0];
   if (!startBtn) throw new Error('kein spielbarer Einsatz');
   startBtn.click();
   if (!s.skirmish.active || !document.querySelector('#modal-root .skirmish-battle')) throw new Error('Gefecht nicht gestartet');
+  if (s.skirmish.active.stanceId !== 'berserker') throw new Error('Gefecht nutzt gewählte Haltung nicht');
   var counter = window.GameSystems.skirmishStatus(s).intent.counter;
   var actionBtn = document.querySelector('#modal-root .action-' + counter);
   if (!actionBtn) throw new Error('Konteraktion fehlt');

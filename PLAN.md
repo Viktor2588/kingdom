@@ -218,7 +218,7 @@ Phase 26 installiere UE 5.8 MCP
 - **Mobil/Performance/Offline:** maximal 30 FPS, DPR-Limit 1,5, ereignisbasierter Renderloop außerhalb voller Idle-Animation und lokaler PWA-Cache v3 inklusive Canvas-Scripts und Kampfassets.
 - **Verifikation:** `bun test` → 22/22 Testfälle grün (238 Logik-, 68 DOM- und 61 Durchspiel-Checks plus 5 Renderer-/Assettests); echte Chromium-Abnahme bei 390×844 und 1440×900 ohne Browserfehler, Canvas-Kampf auf beiden Größen spielbar.
 
-Phase 34 – Illustrierte Abenteuerkarte als echte Spielwelt (Ortsobjekte, Nebelmaske, animierte Armeen)
+[ ] **Phase 34 – Illustrierte Abenteuerkarte als echte Spielwelt (in Bearbeitung, 2026-06-21)** — Ortsobjekte, Nebelmaske, Wegvorschau und animierte Armeen.
 
 Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas
 

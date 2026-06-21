@@ -14,6 +14,31 @@
   var openModal = H.openModal, closeModal = H.closeModal, toast = H.toast;
   var bonusName = H.bonusName, slotName = H.slotName, claimBonusText = H.claimBonusText;
 
+  function battleViewMap(view) {
+    var out = {};
+    (view && view.actors || []).forEach(function (actor) { out[actor.renderKey] = actor; });
+    return out;
+  }
+
+  // Erzeugt nur Darstellungsereignisse aus Vorher/Nachher-View-Modellen.
+  // Die bereits abgeschlossene GameSystems-Aktion bleibt alleinige Wahrheit.
+  function battleVisualDiff(before, after, intent) {
+    var events = [], oldActors = battleViewMap(before), newActors = battleViewMap(after);
+    Object.keys(newActors).forEach(function (key) {
+      var oldActor = oldActors[key], actor = newActors[key];
+      if (oldActor && (oldActor.pos.x !== actor.pos.x || oldActor.pos.y !== actor.pos.y)) {
+        events.push({ type: 'move', key: key, from: oldActor.pos, to: actor.pos });
+      }
+    });
+    if (intent && newActors[intent.key]) events.push(intent);
+    Object.keys(newActors).forEach(function (key) {
+      var oldActor = oldActors[key], actor = newActors[key]; if (!oldActor) return;
+      if (actor.hp < oldActor.hp) events.push({ type: 'hit', key: key, amount: Math.max(1, Math.round(oldActor.hp - actor.hp)) });
+      if (!oldActor.dead && actor.dead) events.push({ type: 'death', key: key });
+    });
+    return events.slice(0, 12);
+  }
+
   Object.assign(UI, {
     armyGroupCard: function (group) {
       var s = this.state, self = this;
@@ -605,7 +630,9 @@
     openBattleModal: function () {
       var s = this.state, self = this, cbt = s.activeCombat;
       if (!cbt) return;
+      if (self._battleScene) { self._battleScene.destroy(); self._battleScene = null; }
       SYS.ensureCombatGrid(s);
+      var renderView = SYS.battleRenderState(s);
       var region = GD.region(cbt.regionId), content = el('div', { class: 'battle-stage' });
       function unitCard(a, enemy) {
         var statuses = (a.statuses || []).map(function (st) { return ({ brand:'🔥 Brand', frost:'❄️ Frost', schock:'⚡ Schock' }[st.id] || st.id) + ' ' + st.turns; });
@@ -626,7 +653,11 @@
       content.appendChild(battleHeader);
       var reachable = {};
       if (current && current.side === 'party') SYS.battleReachableCells(cbt, current).forEach(function (cell) { reachable[cell.x + ',' + cell.y] = true; });
-      var board = el('div', { class: 'battle-board element-' + region.element, role: 'grid', 'aria-label': 'Taktisches Kampffeld 7 mal 5' });
+      var canvas = el('canvas', {
+        class: 'battle-canvas', width: '960', height: '540', role: 'img',
+        'aria-label': 'Illustriertes taktisches Kampffeld, 7 Spalten mal 5 Reihen. Erreichbare Felder sind grün markiert.'
+      });
+      var board = el('div', { class: 'battle-board battle-board-fallback element-' + region.element, role: 'grid', 'aria-label': 'Taktisches Kampffeld 7 mal 5' });
       function actorAt(x, y) {
         return cbt.party.concat(cbt.enemies).filter(function (a) { return !a.dead && a.pos && a.pos.x === x && a.pos.y === y; })[0] || null;
       }
@@ -640,7 +671,9 @@
               disabled: obstacle || !reachable[key] || !!actorOnCell,
               title: obstacle ? 'Hindernis' : (actorOnCell ? actorOnCell.name : (reachable[key] ? 'Hierhin bewegen' : 'Feld ' + (x + 1) + '/' + (y + 1))),
               onclick: reachable[key] && !actorOnCell ? function () {
+                var before = SYS.battleRenderState(s);
                 var r = SYS.battleMove(s, x, y); if (!r.ok) { toast(r.reason, 'bad'); return; }
+                self._battleVisualEvents = battleVisualDiff(before, SYS.battleRenderState(s), null);
                 self.persist(s); self.openBattleModal();
               } : null
             }, actorOnCell ? [
@@ -651,12 +684,24 @@
           })(bx, by);
         }
       }
-      var fieldColumn = el('div', { class: 'battle-field-column' }, board);
+      var canvasShell = el('div', { class: 'battle-canvas-shell' }, [canvas, board]);
+      var fieldColumn = el('div', { class: 'battle-field-column' }, canvasShell);
       var commandPanel = el('aside', { class: 'battle-command-panel' });
       var rosterGrid = el('div', { class: 'battle-rosters' });
       var enemyGrid = el('div', { class: 'battle-grid enemies' }); cbt.enemies.forEach(function (a) { enemyGrid.appendChild(unitCard(a, true)); }); rosterGrid.appendChild(enemyGrid);
       var partyGrid = el('div', { class: 'battle-grid party' }); cbt.party.forEach(function (a) { partyGrid.appendChild(unitCard(a, false)); }); rosterGrid.appendChild(partyGrid);
       commandPanel.appendChild(rosterGrid);
+      var effectSelect = el('select', { class: 'btn battle-effects-select', 'aria-label': 'Animationseffekte' });
+      [['off', 'Effekte: Aus'], ['reduced', 'Effekte: Reduziert'], ['full', 'Effekte: Voll']].forEach(function (entry) {
+        effectSelect.appendChild(el('option', { value: entry[0], text: entry[1], selected: s.settings.effects === entry[0] ? '' : null }));
+      });
+      effectSelect.value = s.settings.effects || 'full';
+      effectSelect.addEventListener('change', function () {
+        s.settings.effects = effectSelect.value;
+        self._battleVisualEvents = [];
+        self.persist(s); self.openBattleModal();
+      });
+      commandPanel.appendChild(el('label', { class: 'battle-effects-row' }, [el('span', { text: 'Darstellung' }), effectSelect]));
 
       if (cbt.status === 'active') {
         var actor = current;
@@ -671,13 +716,22 @@
           var ab = GD.battleAbility(id);
           actions.appendChild(btn(ab.icon + ' ' + ab.name, function () {
             var target = ab.kind === 'heal' ? Number(allySel.value) : Number(enemySel.value);
+            var before = SYS.battleRenderState(s);
+            var own = before.actors.filter(function (x) { return x.side === 'party'; });
+            var foes = before.actors.filter(function (x) { return x.side === 'enemy'; });
+            var targetActor = ab.kind === 'heal' ? own[target] : foes[target];
             var r = SYS.battleAction(s, id, target);
             if (!r.ok) { toast(r.reason, 'bad'); return; }
+            var visualType = ab.kind === 'heal' ? 'heal' : (ab.kind === 'damage' || ab.kind === 'drain' ? (ab.element === 'physisch' ? 'attack' : 'magic') : null);
+            var intent = visualType && !r.moved ? { type: visualType, key: before.currentKey, targetKey: targetActor ? targetActor.renderKey : null, element: ab.element } : null;
+            self._battleVisualEvents = battleVisualDiff(before, SYS.battleRenderState(s), intent);
             self.persist(s); self.openBattleModal();
           }, { small: true, cls: id === 'angriff' ? 'btn-primary' : '', disabled: actor.mp < ab.cost, cost: ab.cost ? ab.cost + ' MP' : '' }));
         });
         actions.appendChild(btn('⏳ Warten', function () {
+          var before = SYS.battleRenderState(s);
           var r = SYS.battleWait(s); if (!r.ok) { toast(r.reason, 'bad'); return; }
+          self._battleVisualEvents = battleVisualDiff(before, SYS.battleRenderState(s), null);
           self.persist(s); self.openBattleModal();
         }, { small: true, disabled: !!actor.waited, cost: 'später handeln' }));
         commandPanel.appendChild(actions);
@@ -694,6 +748,19 @@
       fieldColumn.appendChild(el('div', { class: 'battle-log' }, cbt.log.slice().reverse().map(function (line) { return el('div', { text: line }); })));
       content.appendChild(el('div', { class: 'battle-arena-layout' }, [fieldColumn, commandPanel]));
       openModal('Kampf · ' + region.name, content, '⚔️', 'battle-modal');
+      var queuedEvents = self._battleVisualEvents || [];
+      self._battleVisualEvents = [];
+      if (window.GameBattleScene) {
+        self._battleScene = window.GameBattleScene.mount(canvas, renderView, {
+          mode: s.settings.effects || 'full', events: queuedEvents,
+          onCell: function (x, y) {
+            var before = SYS.battleRenderState(s);
+            var move = SYS.battleMove(s, x, y); if (!move.ok) { toast(move.reason, 'bad'); return; }
+            self._battleVisualEvents = battleVisualDiff(before, SYS.battleRenderState(s), null);
+            self.persist(s); self.openBattleModal();
+          }
+        });
+      }
     },
 
 

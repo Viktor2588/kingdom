@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/state.js', 'js/systems.js', 'js/systems-combat.js', 'js/ui.js', 'js/ui-adventure.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-combat.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -261,6 +261,7 @@ tryRender('Aktive taktische Kampfbühne rendert Aktionen, LP und MP', function (
   var txt = document.getElementById('modal-root').textContent;
   if (txt.indexOf('RUNDE') < 0 || txt.indexOf('MP') < 0 || txt.indexOf('Angriff') < 0 || txt.indexOf('Warten') < 0) throw new Error('Kampfbühne unvollständig');
   if (document.querySelectorAll('#modal-root .battle-cell').length !== 35 || !document.querySelector('#modal-root .battle-initiative')) throw new Error('7×5-Raster oder Initiative fehlt');
+  if (!document.querySelector('#modal-root .battle-canvas') || !document.querySelector('#modal-root .battle-effects-select')) throw new Error('Canvas oder Effektsteuerung fehlt');
   var reachable = document.querySelector('#modal-root .battle-cell.reachable');
   if (!reachable) throw new Error('kein erreichbares Bewegungsfeld');
   reachable.click();

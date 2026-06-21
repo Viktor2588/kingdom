@@ -126,7 +126,7 @@ Pro Schlachtfeld:
 
 ## Umsetzungsphasen
 
-### Phase 33 – Renderer-Grundlage und Kampf-Vertical-Slice
+### Phase 33 – Renderer-Grundlage und Kampf-Vertical-Slice (umgesetzt 2026-06-21)
 
 - `canvas-core.js`, Asset-Manifest, Kamera, Skalierung und Hit-Test.
 - Jura-Wald-Schlachtfeld und sechs animierte Einheitenlinien.

@@ -119,7 +119,7 @@
       uidCounter: 0,
       seenUnlocks: [],
       questProgress: 0,
-      settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [] },
+      settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
       log: [],
       metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0 }
     };
@@ -234,6 +234,7 @@
     if (!s.settings || typeof s.settings !== 'object') s.settings = { watch: false };
     fill(s.settings, def.settings);
     if (!Array.isArray(s.settings.watchHistory)) s.settings.watchHistory = [];
+    if (['off', 'reduced', 'full'].indexOf(s.settings.effects) < 0) s.settings.effects = 'full';
     // Alle bekannten Diablo-artigen Positionen ergänzen, ohne alte Ausrüstung zu verlieren.
     [s.herrscher].concat(s.creatures || []).forEach(function (holder) {
       if (!holder.equipment) holder.equipment = {};

@@ -68,7 +68,7 @@ Den ganzen Ordner aufs Gerät kopieren und `index.html` im mobilen Browser öffn
 GRAPHICS_ROADMAP.md Phase-25-Zielbild, Art Bible, Asset-Pipeline und visuelle Folgephasen
 index.html          Minimales Grundgerüst: Topbar, Tab-Container, Navigation, Modal-/Toast-Wurzel
 style.css           Responsives Theme (mobile Fallback + Desktop-Spiel-Shell)
-assets/             Zwei lokale Kreaturen-Atlanten, Königreichspanorama und Abenteuerkarte
+assets/             Kreaturen-/Kampf-Atlanten, Jura-Kampfbühne, Königreichspanorama und Abenteuerkarte
 js/
   data-tables.js    Reine statische Inhaltstabellen (DOM-frei)
   data.js           Daten-API und Nachbearbeitung: Ränge, Werte, Lookups und Skills;
@@ -83,6 +83,8 @@ js/
                     Affinität, Fusion, Runenschmiede, Echo-Generator/-Kämpfe, Herrscher-Talente,
                     Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
   systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
+  art-data.js       Reine Atlas-/Asset-Metadaten für die Canvas-Szenen
+  render/           DPR-/30-FPS-Canvas-Core, Animationstimeline und isometrische Kampfszene
   ui.js             UI-Kern: Views, Management-Modals und gemeinsame DOM-Helfer
   ui-adventure.js   Karten-, Armee-, Echo-, Expeditions- und Kampf-UI; erweitert GameUI
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
@@ -90,6 +92,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
   sim.test.js       Headless-Logiktest (Bun, ohne DOM)
   domtest.test.js   DOM-Rendertest (jsdom)
   playthrough.test.js Komplettes Headless-Durchspiel (jsdom)
+  canvas.test.js    Renderer-Vertrag, Hit-Test, Effektstufen und transparente Assets
   balance.js        Balance-Analyse der Kraftkurven (Bun)
   shots.js          Mobile-/Desktop-Screenshots via Playwright/Chromium
   screenshots/      Erzeugte PNGs (390×844 und 1440×900)

@@ -113,7 +113,8 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
     SYS.startCombat(S, 'wald', [], true, 'normal');
     window.GameUI.openBattleModal();
   });
-  await page.waitForTimeout(180);
+  await page.waitForSelector('.battle-canvas[data-assets-ready="1"]');
+  await page.waitForTimeout(420);
   await page.screenshot({ path: path.join(out, '10-taktischer-kampf.png') });
   console.log('  📸 10-taktischer-kampf.png');
 
@@ -192,7 +193,8 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
     SYS.startCombat(S, 'wald', [], true, 'normal');
     window.GameUI.openBattleModal();
   });
-  await page.waitForTimeout(180);
+  await page.waitForSelector('.battle-canvas[data-assets-ready="1"]');
+  await page.waitForTimeout(420);
   await page.screenshot({ path: path.join(out, '15-desktop-kampf.png') });
   console.log('  📸 15-desktop-kampf.png');
 

@@ -66,18 +66,22 @@
     return {
       key: holderKey, name: ruler ? state.herrscher.name : (c.named ? c.name : sp.name),
       icon: ruler ? GD().rulerStages[state.herrscher.stage].icon : sp.icon,
+      line: ruler ? 'Schleim' : sp.line, speciesId: ruler ? 'herrscher' : c.speciesId,
       side: 'party', stack: count, stats: scaled, hp: scaled.lp, maxHp: scaled.lp, mp: maxMp, maxMp: maxMp,
       abilities: combatAbilitiesFor(state, holderKey), defending: false, statuses: [], dead: false,
       moveRange: clamp(2 + Math.floor((scaled.tmp || 0) / 35), 2, 4), attackRange: ranged ? 3 : 1,
       retaliated: false, waited: false, pos: null, fieldAffinity: ruler ? state.affinity : null
     };
   }
+  var ENEMY_BOARD_LINES = ['Goblin', 'Wolf', 'Oger', 'Untot', 'Drache'];
   function enemyFor(region, index, count) {
     var rootPower = Math.sqrt(region.power);
     var maxHp = Math.max(45, round(rootPower * 10 / Math.sqrt(count)));
     var names = ['Vorhut', 'Hexer', 'Gebietsfürst'];
+    var regionIndex = Math.max(0, GD().regions.indexOf(region));
     return {
       key: 'enemy_' + index, name: region.name + ' – ' + names[index % names.length], icon: region.icon,
+      line: ENEMY_BOARD_LINES[(regionIndex + index) % ENEMY_BOARD_LINES.length],
       side: 'enemy', stack: Math.max(1, round(rootPower / (4 + index * 2))),
       element: region.element || 'erde', weakness: ELEMENT_OPPOSITE[region.element] || 'feuer', analyzed: false,
       stats: { lp: maxHp, ang: Math.max(8, round(rootPower * 1.65)), ver: Math.max(4, round(rootPower * 0.55)), mag: Math.max(7, round(rootPower * 1.5)), tmp: 8 + index * 2 },
@@ -128,11 +132,20 @@
     if (!Array.isArray(combat.obstacles)) combat.obstacles = ['3,1', '3,3'];
     combat.party.forEach(function (a, i) {
       a.side = 'party'; if (!a.pos) a.pos = { x: 0, y: Math.min(BATTLE_H - 1, i * 2) };
+      if (!a.line) {
+        var creature = a.key === 'herrscher' ? null : findCreature(state, a.key);
+        var species = creature ? GD().creature(creature.speciesId) : null;
+        a.line = species ? species.line : 'Schleim';
+      }
       if (a.moveRange == null) a.moveRange = 2; if (a.attackRange == null) a.attackRange = 1;
       if (a.retaliated == null) a.retaliated = false; if (a.waited == null) a.waited = false;
     });
     combat.enemies.forEach(function (a, i) {
       a.side = 'enemy'; if (!a.pos) a.pos = { x: BATTLE_W - 1, y: Math.min(BATTLE_H - 1, i * 2) };
+      if (!a.line) {
+        var region = GD().region(combat.regionId), regionIndex = Math.max(0, GD().regions.indexOf(region));
+        a.line = ENEMY_BOARD_LINES[(regionIndex + i) % ENEMY_BOARD_LINES.length];
+      }
       if (a.moveRange == null) a.moveRange = 2; if (a.attackRange == null) a.attackRange = 1;
       if (a.retaliated == null) a.retaliated = false; if (a.waited == null) a.waited = false;
     });
@@ -405,11 +418,41 @@
   }
   function closeCombat(state) { state.activeCombat = null; }
 
+  // Normalisiertes, kopiertes View-Modell für Renderer. Canvas-Code erhält
+  // keine Referenz auf den Spielzustand und kann Kampflogik nie verändern.
+  function battleRenderState(state) {
+    var combat = ensureCombatGrid(state);
+    if (!combat) return null;
+    var current = combat.status === 'active' ? battleCurrentActor(combat) : null;
+    var reachable = current && current.side === 'party' ? battleReachableCells(combat, current) : [];
+    function actorView(actor) {
+      return {
+        key: actor.key, renderKey: actor.side + ':' + String(actor.key),
+        name: actor.name, icon: actor.icon, line: actor.line || null, side: actor.side,
+        stack: Math.max(1, actor.stack || 1), hp: Math.max(0, actor.hp || 0), maxHp: Math.max(1, actor.maxHp || 1),
+        hpFraction: Math.max(0, Math.min(1, (actor.hp || 0) / Math.max(1, actor.maxHp || 1))),
+        mp: Math.max(0, actor.mp || 0), maxMp: Math.max(0, actor.maxMp || 0),
+        dead: !!actor.dead, pos: { x: actor.pos.x, y: actor.pos.y },
+        statuses: (actor.statuses || []).map(function (status) { return { id: status.id, turns: status.turns }; })
+      };
+    }
+    var region = GD().region(combat.regionId);
+    return {
+      width: BATTLE_W, height: BATTLE_H, round: combat.round, status: combat.status,
+      regionId: combat.regionId, element: region ? region.element : 'erde', biome: 'jura',
+      currentKey: current ? current.side + ':' + String(current.key) : null,
+      reachable: reachable.map(function (cell) { return { x: cell.x, y: cell.y, d: cell.d }; }),
+      obstacles: (combat.obstacles || []).slice(),
+      actors: combat.party.concat(combat.enemies).map(actorView)
+    };
+  }
+
 
   Object.assign(root.GameSystems, {
     combatAbilitiesFor: combatAbilitiesFor, canStartCombat: canStartCombat, startCombat: startCombat,
     BATTLE_W: BATTLE_W, BATTLE_H: BATTLE_H, ensureCombatGrid: ensureCombatGrid,
     battleCurrentActor: battleCurrentActor, battleDistance: battleDistance, battleReachableCells: battleReachableCells,
+    battleRenderState: battleRenderState,
     battleMove: battleMove, battleWait: battleWait, battleAction: battleAction,
     fleeCombat: fleeCombat, closeCombat: closeCombat
   });

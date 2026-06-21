@@ -210,7 +210,13 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 
 Phase 26 installiere UE 5.8 MCP
 
-[ ] **Phase 33 – Canvas-Renderer & Kampf-Vertical-Slice (in Bearbeitung, 2026-06-21)** — Jura-Biom, Canvas-Grundlage und 6 animierte Einheitenlinien.
+[x] **Phase 33 – Canvas-Renderer & Kampf-Vertical-Slice (2026-06-21)**
+- **Hybride Kampfbühne:** Der bestehende 7×5-Kampf rendert im Browser primär auf einer isometrischen Canvas-Szene; DOM-Befehlsleiste, Initiative, Zielwahl und ein vollständiges 35-Zellen-Fallback bleiben erhalten.
+- **Renderer-Vertrag:** `battleRenderState()` liefert ein kopiertes View-Modell. Canvas und Animationen verändern niemals Spielzustand, Treffer oder Bewegung; Zell-Hit-Tests rufen ausschließlich bestehende `GameSystems`-Aktionen auf.
+- **Jura-Vertical-Slice:** handgemalter lokaler Jura-Hintergrund und transparenter 3×2-Atlas für Schleim, Goblin, Wolf, Oger, Untot und Drache; Teamringe, Stackzahlen, LP-Balken, Hindernisse, Auswahl und erreichbare Felder sind direkt auf der Bühne lesbar.
+- **Bewegung & Effekte:** sichtbare Bewegungsinterpolation, Nahkampflunge/Hieb, Trefferzahlen, Tod sowie elementare Magie-/Heilpartikel; drei persistierte Stufen `Aus / Reduziert / Voll` respektieren `prefers-reduced-motion`.
+- **Mobil/Performance/Offline:** maximal 30 FPS, DPR-Limit 1,5, ereignisbasierter Renderloop außerhalb voller Idle-Animation und lokaler PWA-Cache v3 inklusive Canvas-Scripts und Kampfassets.
+- **Verifikation:** `bun test` → 22/22 Testfälle grün (238 Logik-, 68 DOM- und 61 Durchspiel-Checks plus 5 Renderer-/Assettests); echte Chromium-Abnahme bei 390×844 und 1440×900 ohne Browserfehler, Canvas-Kampf auf beiden Größen spielbar.
 
 Phase 34 – Illustrierte Abenteuerkarte als echte Spielwelt (Ortsobjekte, Nebelmaske, animierte Armeen)
 

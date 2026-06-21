@@ -1,10 +1,12 @@
 /* Service Worker — App-Shell-Cache für echtes Offline (Phase 32).
    Cache-first für die Shell; alle übrigen gleichartigen GETs (Assets)
    werden zur Laufzeit beim ersten Laden gecached. */
-var CACHE = 'tempest-shell-v1';
+var CACHE = 'tempest-shell-v2';
 var SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest', './icon.svg',
-  './js/data.js', './js/state.js', './js/systems.js', './js/ui.js', './js/main.js'
+  './js/data-tables.js', './js/data.js', './js/state.js',
+  './js/systems.js', './js/systems-combat.js',
+  './js/ui.js', './js/ui-adventure.js', './js/main.js'
 ];
 
 self.addEventListener('install', function (e) {

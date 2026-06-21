@@ -17,7 +17,7 @@ function step(msg) { console.log('\n• ' + msg); }
 
 var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
 var window = dom.window, document = window.document;
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/state.js', 'js/systems.js', 'js/ui.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/state.js', 'js/systems.js', 'js/systems-combat.js', 'js/ui.js', 'js/ui-adventure.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -198,7 +198,13 @@ var echoRun = SYS.ensureEchoMap(S);
 ok(echoRun && echoRun.nodes.length === 12 && SYS.availableEchoNodes(S).length >= 2, 'Echo-Netz mit mehreren Startpfaden erzeugt');
 var echoArmy = (typeof formed !== 'undefined' && formed && formed.ok) ? formed.group : SYS.rulerArmyGroup(S);
 if (SYS.armyCommandUsed(echoArmy) <= 0) SYS.recruitTroops(S, echoArmy.id, 'schleim', 10);
-var echoTarget = SYS.availableEchoNodes(S)[0];
+// Ein Startknoten kann bei einem zufälligen Seed ein legitimer Seitenarm ohne
+// direkten Nachfolger sein. Für diesen Pfad-Test gezielt einen verbundenen
+// Start wählen, damit die Aussage unabhängig von Date.now() reproduzierbar ist.
+var echoStarts = SYS.availableEchoNodes(S);
+var echoTarget = echoStarts.filter(function (start) {
+  return echoRun.nodes.some(function (node) { return node.parents.indexOf(start.id) >= 0; });
+})[0] || echoStarts[0];
 var echoFight = SYS.challengeEcho(S, echoArmy.id, echoTarget.id, 'sicher');
 ok(echoFight.ok && echoFight.won && SYS.echoNodeCompleted(S, echoTarget.id), 'erstes Echo mit einer Armee abgeschlossen');
 ok(SYS.availableEchoNodes(S).some(function (node) { return node.parents.indexOf(echoTarget.id) >= 0; }), 'Sieg öffnet einen verbundenen Folgepfad');

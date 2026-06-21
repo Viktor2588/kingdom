@@ -69,17 +69,21 @@ index.html          Minimales Grundgerüst: Topbar, Tab-Container, Navigation, M
 style.css           Responsives Theme (mobile Fallback + Desktop-Spiel-Shell)
 assets/             Zwei lokale Kreaturen-Atlanten, Königreichspanorama und Abenteuerkarte
 js/
-  data.js           Statische Inhalte (DOM-frei): Ränge, Ressourcen, Gebäude, Kreaturen +
+  data-tables.js    Reine statische Inhaltstabellen (DOM-frei)
+  data.js           Daten-API und Nachbearbeitung: Ränge, Werte, Lookups und Skills;
+                    Inhalte aus data-tables.js umfassen Gebäude, Kreaturen +
                     Evolutionsketten, Skills/Aspekte, Magie, Baupläne/Schmiedekomponenten/Sets, Regionen,
                     Rivalen, Events, Affinitäten, Echo-Umgebungen/-Affixe/-Belohnungen,
                     Forschung, Herrscher-Stufen/-Talente, Hilfe-Texte
   state.js          Spielzustand, Standardwerte, Speichern/Laden (localStorage), normalize()
-  systems.js        Spiellogik (DOM-frei, reine Funktionen): Tick/Produktion, Bauen,
+  systems.js        Kern-Spiellogik (DOM-frei): Tick/Produktion, Bauen,
                     Beschwören, Namensgebung, Evolution, Skills, Magie/Forschung, Schmieden,
-                    Expeditionen, Armeegruppen/Kartenbewegung, taktischer Elementkampf, Rivalen/Bedrohung, Events,
+                    Expeditionen, Armeegruppen/Kartenbewegung, Rivalen/Bedrohung, Events,
                     Affinität, Fusion, Runenschmiede, Echo-Generator/-Kämpfe, Herrscher-Talente,
                     Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
-  ui.js             Darstellung: Views je Tab + Modals, alles per DOM-API gerendert
+  systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
+  ui.js             UI-Kern: Views, Management-Modals und gemeinsame DOM-Helfer
+  ui-adventure.js   Karten-, Armee-, Echo-, Expeditions- und Kampf-UI; erweitert GameUI
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
 dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
   sim.test.js       Headless-Logiktest (Bun, ohne DOM)
@@ -92,11 +96,11 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ### Architektur-Prinzipien
 
-- **Logik DOM-frei halten.** `data.js`, `state.js` und `systems.js` dürfen *kein* `document`/
+- **Logik DOM-frei halten.** `data*.js`, `state.js` und `systems*.js` dürfen *kein* `document`/
   `window`-DOM benutzen → unter Node headless testbar. Sie exportieren als
   `window.GameData` / `window.GameState` / `window.GameSystems` (im Browser) bzw.
   `globalThis.*` (unter Node).
-- **UI nur in `ui.js`.** Oberfläche ausschließlich per `document.createElement`/`textContent`
+- **UI nur in `ui*.js`.** Oberfläche ausschließlich per `document.createElement`/`textContent`
   bauen (Helfer `el(tag, attrs, children)`), **niemals** HTML-Strings zusammensetzen.
 - **`index.html` minimal halten.** Inhalte kommen aus den Daten, nicht aus handgeschriebenem
   Markup.
@@ -152,7 +156,8 @@ T.state.settings.watch = false;                   // wieder ausschalten
 
 **Headless (Node, ohne DOM)** – z. B. zum Tunen der Auto-Logik oder für Langzeit-Stabilität:
 ```js
-require('./js/data.js'); require('./js/state.js'); require('./js/systems.js');
+require('./js/data-tables.js'); require('./js/data.js'); require('./js/state.js');
+require('./js/systems.js'); require('./js/systems-combat.js');
 const GST = globalThis.GameState, SYS = globalThis.GameSystems, GD = globalThis.GameData;
 
 const s = GST.createDefault();
@@ -221,7 +226,7 @@ LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
 
 - **Keine externen Abhängigkeiten** im Spiel, **kein Build**. Klassische `<script>`-Tags,
   relative Pfade, muss über `file://` laufen.
-- Logik **DOM-frei** (data/state/systems), UI **nur** über die DOM-Helfer in `ui.js`.
+- Logik **DOM-frei** (`data*`/`state`/`systems*`), UI **nur** über die gemeinsamen DOM-Helfer in `ui*.js`.
 - Neue Zustandsfelder in `createDefault()` **und** `normalize()` ergänzen (Save-Kompatibilität).
 - Nach Änderungen **die Tests laufen lassen** (mindestens `sim.test.js` + `domtest.test.js`),
   bei UI-Änderungen idealerweise auch Screenshots.

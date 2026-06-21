@@ -209,12 +209,13 @@ Phase 26 installiere UE 5.8 MCP
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
 
-Phase 27 – Code-Architektur: Monolithen modularisieren  🔶 TEILWEISE (2026-06-20, Automode pausiert)
-- ✅ **data.js entkoppelt (fertig):** alle 25 reinen Daten-Tabellen (creatures, buildings, magic, recipes, regions, strategic*, echo*, events, talents, research, help …) liegen jetzt in `js/data-tables.js` (`GameDataTables`, vor data.js geladen). data.js **1093 → 290 Z.** (nur noch Helfer, skills-Merge, Nachbearbeitung/Lookups, GameData-API); data-tables.js 916 Z. (reiner Inhalt). Alle Loader (index.html, ESM-Tests, eval-Listen, balance.js) umgestellt; 13 Test-Dateien grün.
-- ⏳ **systems.js / ui.js (Logik-Monolithen):** erfordern, die closure-privaten Helfer (el/btn/SYS-Helper bzw. interne System-Funktionen) auf einen gemeinsamen Namensraum zu heben — größerer, riskanterer Umbau, am besten mit visueller Browser-Verifikation. Noch offen.
-- Befund: `js/systems.js` (~2590 Zeilen), `js/ui.js` (~2170) und `js/data.js` (~1090) sind Einzeldateien. Beim parallelen Mehr-Phasen-Workflow (mehrere Worktrees gleichzeitig) erzeugen sie große, konfliktträchtige Diffs/Merges.
-- Ziel: thematische Aufteilung **ohne Build-Schritt** — weiterhin klassische `<script>`-Tags, Namensraum `Game*`. Z. B. `systems/` (produktion, kampf, armee, magie, echo, auto-modus), `data/` (kreaturen, gebäude, magie, regionen, talente, schmiede). `index.html` lädt die Teile in fester Reihenfolge.
-- Nutzen: deutlich weniger Merge-Konflikte, schnellere Orientierung, gezieltere Tests. Save-Kompatibilität & Offline-/`file://`-Betrieb bleiben unberührt.
+[x] **Phase 27 – Code-Architektur: Monolithen modularisiert (2026-06-21)**
+- **Daten getrennt:** 25 reine Inhaltstabellen liegen in `js/data-tables.js` (916 Z.); `data.js` sank von 1093 auf 290 Zeilen und enthält nur noch Helfer, Skill-Merge, Nachbearbeitung, Lookups und die `GameData`-API.
+- **Kampfsystem getrennt:** Der taktische 7×5-Rasterkampf liegt in `js/systems-combat.js` (416 Z.) und erweitert `GameSystems` über ein kleines explizites `GameSystemsInternal`-API. `systems.js` sank von 3036 auf 2656 Zeilen.
+- **Abenteuer-UI getrennt:** Karten-, Armee-, Echo-, Expeditions- und Kampf-UI liegen in `js/ui-adventure.js` (701 Z.) und nutzen ein explizites `GameUIInternal`-Helper-API. `ui.js` sank von 2435 auf 1768 Zeilen.
+- **Offline ohne Build-Schritt:** `index.html`, Service-Worker-App-Shell und alle ESM-/jsdom-Testloader laden die klassischen Scripts in fester Abhängigkeitsreihenfolge; Cache-Version auf v2 erhöht. `file://`, PWA und Save-Schema bleiben kompatibel.
+- **Architektur-Guard:** `dev/modules.test.js` sichert Reihenfolge, Offline-Cache, DOM-Freiheit und Größenobergrenzen. Ein dabei sichtbar gewordener `Date.now()`-abhängiger Echo-Playthrough wurde seed-unabhängig stabilisiert.
+- **Verifikation:** `bun test` → 16/16 Testfälle grün (238 Logik-, 68 DOM-, 61 Durchspiel-Checks); 25 echte Chromium-Aufnahmen über `file://` in Mobil/Desktop ohne Browserfehler oder Überbreite.
 
 [x] Phase 28 – CI-Pipeline: Tests vor jedem Deploy  (umgesetzt 2026-06-20: `ci.yml` für Branches/PRs + Test-Job in `deploy.yml`, Pages-Deploy nur bei grün)
 - Befund: Es existiert nur `.github/workflows/deploy.yml`; `bun test`/`balance` laufen ausschließlich lokal. Rote Regressionen können ungebremst nach `main` und auf Pages gelangen.
@@ -242,8 +243,8 @@ Phase 27 – Code-Architektur: Monolithen modularisieren  🔶 TEILWEISE (2026-0
 - Nutzen: echtes installierbares Offline ohne manuelles Dateikopieren.
 
 ### Dateien
-- Spiel: `index.html`, `style.css`, `js/{data,state,systems,ui,main}.js` (offline-/`file://`-tauglich).
-- Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough}.test.js`, `dev/balance.js` und `dev/shots.js`.
+- Spiel: `index.html`, `style.css`, `js/{data-tables,data,state,systems,systems-combat,ui,ui-adventure,main}.js` (offline-/`file://`-tauglich).
+- Dev-Tests (nicht Teil des Spiels): `dev/{sim,domtest,playthrough,balance,fuzz,perf,save,modules}.test.js`, `dev/balance.js` und `dev/shots.js`.
 
 ### Verifikation (Stand 2026-06-20, nach Phase 23)
 - `dev/sim.test.js` → 238/238 Logiktests bestanden (inkl. beider lokaler Grafikassets sowie deterministischer Echo-Generierung und Save-v8-Migration).

@@ -6,6 +6,7 @@ import "../js/data-tables.js";
 import "../js/data.js";
 import "../js/state.js";
 import "../js/systems.js";
+import "../js/systems-combat.js";
 var GD = globalThis.GameData, GST = globalThis.GameState, SYS = globalThis.GameSystems;
 
 function pad(s, n) { s = '' + s; while (s.length < n) s += ' '; return s; }

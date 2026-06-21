@@ -230,6 +230,8 @@ Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas
 
 Phase 36 – Reichspanorama und Management-UI materialisieren
 
+[ ] **Phase 37 – Erfolge & Reichsstatistik (in Bearbeitung)** — paralleles Erfolgssystem (getrennt von der linearen Quest-Kette) + sichtbares Statistik-Dashboard für die bereits getrackten `metrics`.
+
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
 

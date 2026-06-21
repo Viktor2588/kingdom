@@ -242,6 +242,10 @@ Phase 36 – Reichspanorama und Management-UI materialisieren
 - **Nebenbei: vorbestehender Flaky-Test stabilisiert** — `dev/sim.test.js` verglich die Max-Power eines einzelnen Echo-Knotens (±8 % RNG-Varianz → ~1/6 Läufe rot, auch auf `main`). Jetzt Vergleich der Netz-Gesamtkraft (Varianz mittelt sich weg; deterministischer Zyklusfaktor wächst zuverlässig).
 - **Verifikation:** `bun test` → 36/36 Testfälle grün (inkl. neuem `dev/achievements.test.js` mit 8 Checks + Codex-Modal-DOM-Test); volle Suite 6×/sim.test.js 25× ohne Flake; `bun run balance` weiterhin sauber (Echo-Zyklen 1/3/5/10 streng steigend). Headless-Screenshots in dieser Code-Umgebung nicht ausgeführt (Chromium-Libs nicht verfügbar); UI durch jsdom-DOM-Test abgedeckt.
 
+[~] **Phase 40 – Sturmeinsätze: schnelle aktive Gefechte (in Arbeit, Worktree `/worktree/phase-40`)**
+- Das Spiel ist aktuell zu passiv. Eine sofort wiederholbare Action-Schleife soll Entscheidungen und direktes Feedback zwischen Aufbau-, Karten- und Rasterkampfphasen bringen.
+- Geplant: kurze Gefechte mit angekündigter Gegneraktion, drei direkten Kontern, Fokus-/Komboaufbau, Eskalationsstufen und sofortigen Belohnungen; prominent auf der Reichsübersicht statt hinter der Weltkarte verborgen.
+
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
 

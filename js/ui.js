@@ -39,6 +39,20 @@
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
   function $(id) { return document.getElementById(id); }
 
+  // Einheitliche, lokale Symbolfamilie für Ressourcen, Navigation,
+  // Reichsorte und Status. Der SVG-Atlas bleibt auch unter file:// nutzbar.
+  function uiIcon(id, label, extraClass) {
+    return el('span', {
+      class: 'ui-icon ui-icon-' + id + (extraClass ? ' ' + extraClass : ''),
+      'aria-hidden': 'true', title: label || ''
+    });
+  }
+  var BUILDING_ICONS = {
+    magieturm: 'magic', mine: 'material', farm: 'food', markt: 'gold', forschungsgilde: 'knowledge',
+    wohnbezirk: 'city', beschwoerungskreis: 'creatures', arkane_akademie: 'magic', schmiede: 'forge',
+    labyrinth: 'defense', handelshafen: 'map', bibliothek: 'knowledge', arena: 'arena', seelentempel: 'temple'
+  };
+
   // ---------- Formatierung ----------
   var RES = {};
   function fmt(n) {
@@ -71,7 +85,7 @@
   // ---------- Komponenten ----------
   function btn(label, onClick, opts) {
     opts = opts || {};
-    var inner = [el('span', { text: label })];
+    var inner = opts.icon ? [uiIcon(opts.icon, ''), el('span', { text: label })] : [el('span', { text: label })];
     if (opts.cost != null) inner.push(el('span', { class: 'btn-cost', text: opts.cost }));
     return el('button', {
       type: 'button',
@@ -255,8 +269,12 @@
       clear(res);
       GD.resources.forEach(function (r) {
         var rt = (r.id === 'nahrung') ? prod.rates.nahrung : prod.rates[r.id];
-        var chip = el('span', { class: 'chip ' + r.cls }, [
-          el('span', { class: 'chip-ico', text: r.icon }),
+        var chip = el('span', {
+          class: 'chip ' + r.cls,
+          title: r.name + ': ' + fmt(s.resources[r.id] || 0) + ' (' + rate(rt || 0) + '/s)',
+          'aria-label': r.name + ' ' + fmt(s.resources[r.id] || 0) + ', ' + rate(rt || 0) + ' pro Sekunde'
+        }, [
+          uiIcon(r.id === 'nahrung' ? 'food' : (r.id === 'wissen' ? 'knowledge' : r.id), r.name, 'chip-ico'),
           el('span', { class: 'chip-val', text: fmt(s.resources[r.id] || 0) }),
           el('span', { class: 'chip-rate', text: rate(rt || 0), style: (rt < 0 ? 'color:var(--bad)' : '') })
         ]);
@@ -266,26 +284,28 @@
       var rm = $('ruler-mini');
       clear(rm);
       append(rm, [
-        el('span', { class: 'rm-emoji', text: stage.icon }),
+        uiIcon('crown', stage.name, 'rm-emoji'),
         el('span', { class: 'rm-lvl', text: 'Lv ' + s.herrscher.level })
       ]);
+      rm.title = stage.name + ' · Level ' + s.herrscher.level;
       var wt = $('watch-toggle');
       if (wt) {
         var watching = !!(s.settings && s.settings.watch);
-        if (!wt.textContent) wt.textContent = '👁️';
+        clear(wt); wt.appendChild(uiIcon('watch', 'Zuschauer-Modus'));
         wt.classList.toggle('on', watching);
+        wt.setAttribute('aria-pressed', watching ? 'true' : 'false');
         wt.title = watching ? 'Zuschauer-Modus läuft – tippen zum Stoppen' : 'Zuschauer-Modus starten';
       }
     },
 
     // ---------- Tabbar ----------
     tabs: [
-      { id: 'uebersicht', icon: '📜', label: 'Übersicht' },
-      { id: 'reich', icon: '🏰', label: 'Reich' },
-      { id: 'kreaturen', icon: '🐉', label: 'Kreaturen' },
-      { id: 'magie', icon: '🔮', label: 'Magie' },
-      { id: 'schmiede', icon: '⚒️', label: 'Schmiede' },
-      { id: 'karte', icon: '🗺️', label: 'Karte' }
+      { id: 'uebersicht', icon: 'overview', label: 'Übersicht' },
+      { id: 'reich', icon: 'realm', label: 'Reich' },
+      { id: 'kreaturen', icon: 'creatures', label: 'Kreaturen' },
+      { id: 'magie', icon: 'magic', label: 'Magie' },
+      { id: 'schmiede', icon: 'forge', label: 'Schmiede' },
+      { id: 'karte', icon: 'map', label: 'Karte' }
     ],
     renderTabbar: function () {
       var self = this;
@@ -299,7 +319,7 @@
           class: 'tab' + (self.activeTab === t.id ? ' active' : ''),
           onclick: function () { self.activeTab = t.id; self.renderTabbar(); self.render(); }
         }, [
-          el('span', { class: 'tab-ico', text: t.icon }),
+          uiIcon(t.icon, t.label, 'tab-ico'),
           el('span', { class: 'tab-label', text: t.label })
         ]);
         if (t.id === 'karte' && (self.state.expeditions.length || self.state.raid)) b.appendChild(el('span', { class: 'tab-dot' }));
@@ -362,7 +382,7 @@
         var rp = SYS.rulerPower(s);
         var rxpNeed = SYS.rulerXpForLevel(s.herrscher.level);
 
-        function sceneLink(tab, icon, label, hint, pos, size) {
+        function sceneLink(tab, label, hint, pos, size) {
           if (!SYS.tabUnlocked(s, tab)) return null;
           var style = 'left:' + pos[0] + '%;top:' + pos[1] + '%';
           if (size) style += ';--hs-w:' + size[0] + 'px;--hs-h:' + size[1] + 'px';
@@ -373,24 +393,36 @@
             'aria-label': label + ' – ' + hint,
             onclick: function () { self.activeTab = tab; self.renderTabbar(); self.render(); }
           }, [
-            el('span', { class: 'scene-hotspot-copy' }, [el('b', { text: icon + ' ' + label }), el('small', { text: hint })])
+            el('span', { class: 'scene-hotspot-copy' }, [
+              el('b', { class: 'scene-hotspot-title' }, [uiIcon(tab, label), el('span', { text: label })]),
+              el('small', { text: hint })
+            ])
           ]);
         }
         box.appendChild(el('section', { class: 'kingdom-scene', 'aria-label': 'Interaktive Ansicht des Königreichs Tempest' }, [
           el('div', { class: 'scene-shade' }),
+          el('div', { class: 'scene-ambience', 'aria-hidden': 'true' }, [
+            el('span', { class: 'scene-water' }),
+            el('span', { class: 'scene-smoke scene-smoke-forge' }),
+            el('span', { class: 'scene-smoke scene-smoke-town' }),
+            el('span', { class: 'scene-banner scene-banner-gate' }),
+            el('span', { class: 'scene-banner scene-banner-keep' }),
+            el('span', { class: 'scene-magic scene-magic-tower' }),
+            el('span', { class: 'scene-magic scene-magic-well' })
+          ]),
           el('div', { class: 'scene-heading' }, [
             el('span', { class: 'scene-kicker', text: 'HAUPTSTADT DES JURA-BUNDES' }),
             el('h1', { text: s.reich }),
             el('p', { text: 'Dein Monsterreich wächst mit jeder Entscheidung.' })
           ]),
-          sceneLink('reich', '🏰', 'Stadtbezirke', 'Bauen & ausbauen', [47, 34], [150, 120]),
-          sceneLink('magie', '🔮', 'Arkane Akademie', 'Zauber & Forschung', [29, 41], [108, 92]),
-          sceneLink('schmiede', '⚒️', 'Große Schmiede', 'Ausrüstung fertigen', [62, 32], [104, 88]),
-          sceneLink('karte', '🗺️', 'Abenteuertor', 'Armeen befehligen', [19, 78], [120, 92]),
+          sceneLink('reich', 'Stadtbezirke', 'Bauen & ausbauen', [47, 34], [150, 120]),
+          sceneLink('magie', 'Arkane Akademie', 'Zauber & Forschung', [29, 41], [108, 92]),
+          sceneLink('schmiede', 'Große Schmiede', 'Ausrüstung fertigen', [62, 32], [104, 88]),
+          sceneLink('karte', 'Abenteuertor', 'Armeen befehligen', [19, 78], [120, 92]),
           el('div', { class: 'scene-status' }, [
-            el('span', { text: '👑 ' + stage.name }),
-            el('span', { text: '⚔ ' + fmt(rp) + ' Kampfkraft' }),
-            el('span', { text: '🏳 ' + s.claimedRegions.length + ' Territorien' })
+            el('span', null, [uiIcon('crown', 'Herrscher'), el('b', { text: stage.name })]),
+            el('span', null, [uiIcon('combat', 'Kampfkraft'), el('b', { text: fmt(rp) + ' Kampfkraft' })]),
+            el('span', null, [uiIcon('territory', 'Territorien'), el('b', { text: s.claimedRegions.length + ' Territorien' })])
           ])
         ]));
 
@@ -554,7 +586,11 @@
         var s = this.state, self = this;
         var box = el('div');
         box.appendChild(this.title('Reich ' + s.reich, 'Baue und rüste deine Bezirke auf', 'reich'));
-        box.appendChild(el('div', { class: 'empty-hint', style: 'text-align:left', text: 'Kapazität: ' + SYS.usedCapacity(s) + ' / ' + SYS.capacity(s) + ' Kreaturen. Höhere Stufen = mehr Produktion.' }));
+        box.appendChild(el('div', { class: 'realm-summary' }, [
+          uiIcon('realm', 'Reich'),
+          el('span', { text: 'Kapazität ' }), el('b', { text: SYS.usedCapacity(s) + ' / ' + SYS.capacity(s) }),
+          el('small', { text: 'Höhere Gebäudestufen steigern Produktion, Kapazität und Reichsboni.' })
+        ]));
 
         function buildCard(bd) {
           var lvl = s.buildings[bd.id] || 0;
@@ -568,9 +604,9 @@
           if (bd.special === 'craft') effs.push('Schmieden & bessere Qualität');
           if (bd.special === 'fieldMagic') effs.push('Aktive Kampf- & Abenteuerzauber');
           if (bd.special === 'defense') effs.push('+' + bd.defensePer + ' Verteidigung/Stufe');
-          return el('div', { class: 'card' }, [
+          return el('article', { class: 'district-card district-' + (BUILDING_ICONS[bd.id] || 'realm') }, [
             el('div', { class: 'card-head' }, [
-              el('div', { class: 'card-emoji', text: bd.icon }),
+              el('div', { class: 'district-icon' }, uiIcon(BUILDING_ICONS[bd.id] || 'realm', bd.name)),
               el('div', { class: 'card-title' }, [
                 el('div', { class: 'name' }, [bd.name, el('span', { class: 'pill', text: 'Stufe ' + lvl })]),
                 el('div', { class: 'meta', text: bd.cat })
@@ -583,12 +619,12 @@
                 var r = SYS.build(s, bd.id);
                 if (!r.ok) toast((r.missing || ['Nicht genug Ressourcen']).join(', '), 'bad');
                 self.commit();
-              }, { cls: 'btn-primary', disabled: !afford, cost: costText(cost) })
+              }, { cls: 'btn-primary', icon: lvl === 0 ? 'build' : 'time', disabled: !afford, cost: costText(cost) })
             ])
           ]);
         }
 
-        var grid = el('div', { class: 'grid', style: 'margin-top:10px' });
+        var grid = el('div', { class: 'district-ledger' });
         GD.buildings.forEach(function (bd) { if (SYS.buildingUnlocked(s, bd.id)) grid.appendChild(buildCard(bd)); });
         box.appendChild(grid);
 
@@ -600,7 +636,7 @@
           locked.forEach(function (bd) {
             lg.appendChild(el('div', { class: 'card teaser' }, [
               el('div', { class: 'card-head' }, [
-                el('div', { class: 'card-emoji', text: bd.icon }),
+                el('div', { class: 'card-emoji' }, uiIcon(BUILDING_ICONS[bd.id] || 'realm', bd.name)),
                 el('div', { class: 'card-title' }, [
                   el('div', { class: 'name' }, [bd.name, el('span', { class: 'pill', text: '🔒' })]),
                   el('div', { class: 'meta', text: SYS.buildingHint(bd.id) })

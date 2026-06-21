@@ -31,6 +31,10 @@ ok(document.getElementById('resources').children.length === 6, 'Topbar: 6 Ressou
 ok(document.getElementById('tabbar').children.length === 3, 'Tabbar: anfangs 3 Tabs (Magie/Schmiede/Karte noch gegated)');
 ok(document.getElementById('screen').children.length > 0, '#screen hat Inhalt (Übersicht)');
 ok(document.getElementById('ruler-mini').textContent.indexOf('Lv') >= 0, 'Herrscher-Mini zeigt Level');
+ok(document.querySelectorAll('#resources .ui-icon').length === 6, 'Topbar nutzt sechs einheitliche Ressourcensymbole');
+ok(document.querySelectorAll('#tabbar .ui-icon').length === 3, 'sichtbare Tabs nutzen die lokale Symbolfamilie');
+ok(document.querySelectorAll('#screen .scene-ambience > span').length === 7, 'Reichspanorama besitzt Wasser-, Rauch-, Banner- und Magieakzente');
+ok(document.querySelectorAll('#screen .scene-status .ui-icon').length === 3, 'Panorama-Status nutzt die lokale Symbolfamilie');
 var wtBtn = document.getElementById('watch-toggle');
 ok(!!wtBtn, 'Top-Bar hat einen Zuschauer-Modus-Toggle');
 wtBtn.click();
@@ -78,6 +82,8 @@ tryRender('Alle 20 Kreaturenlinien besitzen lokale Portraits ohne Emoji-Fallback
 
 tryRender('Reich rendern & "Bauen"-Button klicken', function () {
   window.GameUI.activeTab = 'reich'; window.GameUI.render();
+  if (!document.querySelector('#screen .district-ledger')) throw new Error('kein materialisiertes Bezirksbrett');
+  if (!document.querySelector('#screen .district-card .district-icon .ui-icon')) throw new Error('Gebäudesymbole fehlen');
   var btns = document.querySelectorAll('#screen .btn');
   var before = JSON.stringify(s.buildings);
   if (btns.length) btns[0].click();

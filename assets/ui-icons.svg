@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 96" width="144" height="96">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff0ae"/><stop offset="1" stop-color="#c68b36"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#baf6ff"/><stop offset="1" stop-color="#45b9d3"/>
+    </linearGradient>
+    <style>
+      .g{fill:none;stroke:url(#gold);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .c{fill:none;stroke:url(#cyan);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .fg{fill:url(#gold)}.fc{fill:url(#cyan)}
+    </style>
+  </defs>
+  <!-- Row 1: resources -->
+  <g transform="translate(0 0)"><path class="c" d="M12 3l6 8-6 10-6-10z"/><path class="c" d="M8 11h8M12 3v18"/></g>
+  <g transform="translate(24 0)"><circle class="g" cx="12" cy="12" r="8"/><circle class="g" cx="12" cy="12" r="4.5"/><path class="g" d="M12 7.5v9M9.5 10h4a2 2 0 010 4h-3"/></g>
+  <g transform="translate(48 0)"><path class="g" d="M12 21V8M12 10c-4 0-6-2-6-5 4 0 6 2 6 5zm0 4c4 0 6-2 6-5-4 0-6 2-6 5zM8 18l-3-3m11 3l3-3"/></g>
+  <g transform="translate(72 0)"><path class="c" d="M5 8h14l-2 9H7zM8 5h8l2 3H6z"/><path class="c" d="M9 12h6M12 8v9"/></g>
+  <g transform="translate(96 0)"><path class="c" d="M12 3c4 4 6 7 6 11a6 6 0 01-12 0c0-3 2-6 4-8 0 4 2 5 2 5 2-2 1-5 0-8z"/><path class="c" d="M12 13c2 2 2 4 0 6-2-2-2-4 0-6z"/></g>
+  <g transform="translate(120 0)"><path class="g" d="M4 5h7c2 0 3 1 3 3v12c0-2-1-3-3-3H4zM20 5h-7c-2 0-3 1-3 3v12c0-2 1-3 3-3h7z"/><path class="g" d="M7 9h4M7 12h4M13 9h4M13 12h4"/></g>
+  <!-- Row 2: primary places -->
+  <g transform="translate(0 24)"><path class="g" d="M5 19h14M6 17V8l3-3 3 3 3-3 3 3v9M9 17v-4h6v4"/><path class="g" d="M4 8h16"/></g>
+  <g transform="translate(24 24)"><path class="c" d="M12 3l2.5 5.5L20 11l-5.5 2.5L12 21l-2.5-7.5L4 11l5.5-2.5z"/><circle class="c" cx="12" cy="11" r="2"/></g>
+  <g transform="translate(48 24)"><path class="g" d="M5 20l5-10 4 4 5-9M4 20h16"/><path class="g" d="M14 5l5 0 0 5"/></g>
+  <g transform="translate(72 24)"><path class="g" d="M4 6l6-2 4 2 6-2v14l-6 2-4-2-6 2zM10 4v14M14 6v14"/></g>
+  <g transform="translate(96 24)"><path class="c" d="M12 3c4 0 7 3 7 7 0 6-7 11-7 11S5 16 5 10c0-4 3-7 7-7z"/><circle class="c" cx="12" cy="10" r="2.5"/></g>
+  <g transform="translate(120 24)"><path class="g" d="M5 18h14M7 18V9h10v9M9 9V5h6v4M10 18v-5h4v5"/><path class="g" d="M5 9h14"/></g>
+  <!-- Row 3: commands and status -->
+  <g transform="translate(0 48)"><path class="g" d="M12 4v16M6 8l6-4 6 4-6 4zM8 20h8"/></g>
+  <g transform="translate(24 48)"><path class="g" d="M6 5l13 13M18 5L5 18M15 4l4 1-1 4M9 4L5 5l1 4"/></g>
+  <g transform="translate(48 48)"><path class="c" d="M6 21V4M7 5h11l-3 4 3 4H7"/></g>
+  <g transform="translate(72 48)"><path class="g" d="M4 13h7V6h4v7h5v7H4zM8 13v7M15 13v7"/></g>
+  <g transform="translate(96 48)"><path class="c" d="M12 4a8 8 0 018 8 8 8 0 01-8 8 8 8 0 01-8-8"/><path class="c" d="M4 12l3-3 3 3M12 8v5l3 2"/></g>
+  <g transform="translate(120 48)"><path class="g" d="M4 12s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5z"/><circle class="g" cx="12" cy="12" r="2.5"/></g>
+  <!-- Row 4: utility -->
+  <g transform="translate(0 72)"><path class="c" d="M12 3l3 4 5 1-3 4 1 5-6-2-6 2 1-5-3-4 5-1z"/><circle class="c" cx="12" cy="11" r="2"/></g>
+  <g transform="translate(24 72)"><path class="g" d="M5 18h14M7 18l1-9h8l1 9M9 9V5h6v4M10 13h4"/></g>
+  <g transform="translate(48 72)"><path class="g" d="M4 19h16M7 19v-8l5-6 5 6v8M10 19v-5h4v5"/><circle class="c" cx="12" cy="10" r="1.5"/></g>
+  <g transform="translate(72 72)"><path class="g" d="M6 19l4-9M14 10l4 9M8 14h8M9 6h6l-1 4h-4z"/></g>
+  <g transform="translate(96 72)"><path class="c" d="M12 4l2 3 4-1 1 4 3 2-3 2-1 4-4-1-2 3-2-3-4 1-1-4-3-2 3-2 1-4 4 1z"/><circle class="c" cx="12" cy="12" r="3"/></g>
+  <g transform="translate(120 72)"><path class="g" d="M5 5h14v14H5zM8 8h8M8 12h5M8 16h7"/></g>
+</svg>

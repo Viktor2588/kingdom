@@ -157,7 +157,7 @@ Nebelmaske, vier formverschiedenen Statusmarkern, animierter Wegvorschau und
 responsivem Ortsinspektor. Die Canvas-Schicht konsumiert nur das kopierte
 `adventureRenderState()`; DOM-Fallback, Spielregeln und Save-Schema bleiben unverändert.
 
-### Phase 35 – Alle Biome, Kreaturen und Effekte
+### Phase 35 – Alle Biome, Kreaturen und Effekte (umgesetzt 2026-06-21)
 
 - Sechs Biome für Karte/Kampf.
 - Board-Sprites für alle 20 Kreaturenlinien und wichtige Evolutionssilhouetten.
@@ -169,7 +169,13 @@ Abnahme:
 - Jede Linie ist bei 64–96 px sichtbarer Höhe anhand ihrer Silhouette erkennbar.
 - Assetbudget und Ladezeit bleiben innerhalb der definierten Grenzen.
 
-### Phase 36 – Reich und UI materialisieren
+Umgesetzt mit einem 3×2-Biomatlas, transparentem 5×4-Atlas für alle 20
+Kreaturenlinien und einem 4×2-Effektatlas. Regionen wählen das Biome im
+kopierten Kampf-View-Modell; Status, Projektile und Umgebungsakzente bleiben
+reine Darstellung. Die drei Laufzeitassets bleiben einzeln unter 3 MB und
+zusammen deutlich unter dem 25-MB-Budget.
+
+### Phase 36 – Reich und UI materialisieren (umgesetzt 2026-06-21)
 
 - Panorama-Hotspots auf echte Gebäudeflächen legen; Rauch, Wasser, Banner und Magielicht.
 - Allgemeine Kartenmenge reduzieren und Rahmen auf Obsidian/Metall/Pergament vereinheitlichen.
@@ -180,6 +186,15 @@ Abnahme:
 - Szene nimmt auf Desktop mindestens 70 % der sichtbaren Fläche ein.
 - Mobile Tap-Ziele bleiben mindestens 44 px groß.
 - Kontrast, Fokuszustände und `prefers-reduced-motion` bestehen automatisierte Checks.
+
+Umgesetzt ohne weitere Rasterproduktion: Das vorhandene Reichspanorama nutzt
+die volle Desktop-Inhaltsbreite und erhält Wasser-, Rauch-, Banner- und
+Magielicht-Ebenen aus CSS. Große Gebäudeflächen bleiben die Trefferziele; nur
+bei Fokus/Hover erscheinen kompakte Obsidian-Schilder. Die Reichsverwaltung
+ist ein zusammenhängendes Bezirksbrett statt einer Kartenwand. Ein lokaler
+24-Symbol-SVG-Atlas vereinheitlicht Ressourcen, Navigation, Orte, Aktionen und
+Status. 44-px-Tapziele, sichtbarer Tastaturfokus, AA-Kontrastguards,
+`prefers-contrast` und `prefers-reduced-motion` sind automatisiert abgesichert.
 
 ## Produktionsworkflow
 

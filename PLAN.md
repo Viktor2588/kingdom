@@ -226,9 +226,20 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Renderer-Vertrag & Performance:** `adventureRenderState()` liefert ausschließlich Kopien an `adventure-scene.js`; die Canvas-Szene verändert keine Regeln oder Zustände. Maximal 20 FPS, DPR-Limit 1,25, gecachte Nebelmaske, sauberer Renderloop-Abbau und die vorhandenen Effektstufen begrenzen Mobilkosten.
 - **Offline & Verifikation:** PWA-Cache v4 enthält Renderer, Weltkarte und finale Atlanten. `bun test` → 28/28 Testfälle grün (238 Logik-, 68 DOM- und 61 Durchspiel-Checks plus Karten-/Canvas-/Assettests); 27 echte Chromium-Aufnahmen bei 390×844 und 1440×900 ohne Browserfehler oder Seitenüberbreite.
 
-[~] **Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas (in Arbeit, Worktree `/worktree/phase-35`)**
+[x] **Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas (2026-06-21)**
+- **Sechs Kampfräume:** lokaler 3×2-Biomatlas für Jura-Wald, Kristallhöhlen, Giftsumpf, Glutruinen, Drachengebirge und Schatten-/Himmelsreich; alle neun Regionen wählen ihr Biome im kopierten Kampf-View-Modell. Schatten und Himmel erhalten getrennte Lichttönungen.
+- **Alle 20 Kreaturenlinien auf dem Board:** transparenter 5×4-Atlas mit einer klaren Vollkörper-Silhouette je Linie ersetzt die sechs Jura-Platzhalter; Gegner werden weiter renderer-seitig gespiegelt. Quelldatei und freigestelltes Laufzeitasset sind gemeinsam versioniert.
+- **Effekte & Leben:** achtteiliger Effektatlas für Hieb, Block, Feuer, Frost, Blitz, Heilung, Seelensog und Tod; Statusrauten, Projektilbewegung sowie biomeabhängige Partikel auf Kampf- und Abenteuerbühne. Renderer bleiben zustandslos.
+- **Offline/Budget:** PWA-Cache v7 enthält alle drei neuen Laufzeitatlanten; jeder bleibt unter 3 MB, zusammen deutlich unter dem 25-MB-Budget.
+- **Verifikation:** `bun test` → 53/53 Testfälle, 1.624 Assertions (inkl. Atlaszellen, Transparenz, View-Modell, Region-Biome und Assetbudget); `bun run balance` unverändert sauber; Atlanten visuell auf Zuschnitt, Silhouette und freie Kampfflächen geprüft.
 
-Phase 36 – Reichspanorama und Management-UI materialisieren
+[x] **Phase 36 – Reichspanorama und Management-UI materialisiert (2026-06-21)**
+- **Gebäude statt Hotspot-Chips:** Das bestehende 3:2-Reichspanorama nutzt auf Desktop die volle Inhaltsbreite; vier große unsichtbare Trefferflächen liegen direkt auf Stadt, Akademie, Schmiede und Tor. Kleine SVG-Symbole und Obsidian-Schilder erscheinen nur als Beschriftung, nicht als schwebende Rundkarten.
+- **Lebendige Stadt:** rein dekorative, leistungsarme CSS-Ebenen ergänzen Wasserlauf, zwei Rauchfahnen, Banner und Magielichter. Alle Animationen respektieren die bestehende Effekt-/`prefers-reduced-motion`-Strategie.
+- **Materialisierte Verwaltung:** Die Reichsgebäude bilden ein zusammenhängendes Bezirksbrett mit Metall-/Obsidianflächen, schmalen Produktions-/Magie-/Kampfakzenten und kompakten Bauaktionen statt einer Wand gleichartiger blauer Karten. Allgemeine Desktop-Panels und Knöpfe nutzen dieselbe dunkle Materialpalette.
+- **Einheitliche Iconfamilie:** kompakter lokaler 6×4-SVG-Atlas mit 24 Symbolen für Ressourcen, Navigation, Orte, Aktionen und Status; über CSS-Spriteklassen verdrahtet, unter `file://` verfügbar und im PWA-Cache v8.
+- **Bedienbarkeit:** mobile Primär-, Klein-, Hilfe- und Schließen-Ziele sind mindestens 44 px hoch; globale sichtbare Tastatur-Fokusringe, `prefers-contrast: more` und WCAG-AA-Kontrastguards ergänzen die bestehende Bewegungsreduktion. Keine Save-Schema-Änderung.
+- **Verifikation:** `bun test` → **64/64** grün, 1.741 Assertions (DOM-Test 75 Checks); `dev/material-ui.test.js` prüft Panoramaabdeckung, Materialbrett, Symbolkategorien, Tap-Ziele, Fokus, Kontrast und reduzierte Bewegung. `bun run balance` unverändert sauber. 27 echte Chromium-Aufnahmen unter `file://` bei 390×844 und 1440×900 ohne Browserfehler; 1366×768 ohne Seitenüberbreite, Panorama und Bezirksbrett visuell geprüft.
 
 [x] **Phase 39 – Zentrale Einstellungen (2026-06-21)** — ein auffindbares Options-Modal (`openSettingsModal` in `js/ui-progress.js`) bündelt erstmals verstreute Optionen:
 - **Darstellung & Leistung:** Effektstufe Aus/Reduziert/Voll war bisher **nur im Kampf-Modal** erreichbar — jetzt prominent umstellbar (wichtig für Akku/Leistung auf dem Handy; `prefers-reduced-motion` wird weiterhin respektiert).
@@ -262,6 +273,12 @@ Phase 36 – Reichspanorama und Management-UI materialisieren
 - **Aktive Entscheidung pro Lauf:** Haltungs-Picker im Sturmeinsatz-Hub vor jedem Start; die Wahl wird als Voreinstellung gemerkt und im Gefecht angezeigt. Erhöht Variabilität und macht das Kontern (besonders als Berserker) wieder spürbar relevant.
 - **Isoliert & abwärtskompatibel:** nur `systems-skirmish.js` + `ui-action.js` + CSS berührt. Die neutrale Default-Haltung reproduziert exakt das alte Verhalten (Aufrufe ohne Haltung unverändert), daher keine Save-Schema-Änderung nötig — `active.stanceId`/`skirmish.stance` überstehen den v11-Roundtrip, `ensureState` defaultet korrupte Werte.
 - **Verifikation:** `bun test` → **56/56** grün (neu: 6 Haltungs-Tests in `dev/skirmish-stance.test.js`; bestehende 8 Sturmeinsatz-Tests unverändert grün; DOM-Test um Picker erweitert), 3× ohne Flake; `bun run balance` unverändert; eigener End-to-End-Drive aller 4 Haltungen durchgespielt.
+
+[ ] **Phase 42 – Gegnerprofile & Bossphasen für Sturmeinsätze (vorgeschlagen 2026-06-21)**
+- **Befund:** Die drei Missionen skalieren derzeit vor allem Zahlen, verwenden aber denselben Intent-Pool. Nach Beherrschung des Konterdreiecks unterscheiden sich Läufe zu wenig; Haltungen verändern die eigene Rechnung, nicht das Gegnerverhalten.
+- **Vorschlag:** drei deterministische Gegnerprofile mit lesbaren Intent-Grammatiken (Bestie: Doppelhieb/Raserei, Wächter: Block-Konterschlag, Hexer: Ritualketten) sowie je eine klar angekündigte Bossphase unter 50 % LP. Keine versteckte Reaktions-RNG.
+- **Wiederspielbarkeit:** rotierende Einsatzmodifikatoren und optionale Ziele (z. B. „kein Finisher", „3 perfekte Konter in Folge", „Sieg vor Runde 8") geben zusätzliche Beute, ohne Pflichtfortschritt zu blockieren.
+- **Abnahme:** jede Profil-/Haltungs-Kombination ist gewinnbar; Intents bleiben vor der Aktion vollständig erkennbar; laufende v11-Spielstände normalisieren abwärtskompatibel; eine Szenariomatrix prüft Profile, Phasenwechsel, Ziele, Sieg/Niederlage und deterministische Seeds.
 
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.

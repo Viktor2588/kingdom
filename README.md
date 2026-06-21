@@ -22,7 +22,10 @@ ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
 Die Desktop-Ansicht besitzt eine vollwertige Strategie-Spieloberfläche mit Seitenleiste,
 Ressourcen-HUD, interaktivem Tempest-Panorama, großer Abenteuerkarte und nahezu
 bildschirmfüllender Kampfbühne. Alle 20 Kreaturenlinien besitzen erkennbare lokale
-Monster-Portraits. Die illustrierte Weltkarte zeigt 18 echte Ortsobjekte, weich
+Monster-Portraits und eigene Board-Silhouetten; sechs lokale Biome und ein vollständiger
+Effektatlas tragen die Rasterkämpfe. Das lebendige Reichspanorama, ein materialisiertes
+Bezirksbrett und eine gemeinsame lokale SVG-Iconfamilie verbinden Szene und Management.
+Die illustrierte Weltkarte zeigt 18 echte Ortsobjekte, weich
 auslaufenden Entdeckungsnebel, Wegvorschauen und animierte Armeen; ein responsiver
 Inspector hält Ortsaktionen außerhalb der Szene. Das Spiel bleibt vollständig offline.
 Die Magie ist in aktive Kampf-/Abenteuerzauber der Arkanen Akademie, dauerhafte
@@ -73,7 +76,7 @@ Den ganzen Ordner aufs Gerät kopieren und `index.html` im mobilen Browser öffn
 GRAPHICS_ROADMAP.md Phase-25-Zielbild, Art Bible, Asset-Pipeline und visuelle Folgephasen
 index.html          Minimales Grundgerüst: Topbar, Tab-Container, Navigation, Modal-/Toast-Wurzel
 style.css           Responsives Theme (mobile Fallback + Desktop-Spiel-Shell)
-assets/             Kreaturen-/Kampf-Atlanten, Jura-Kampfbühne, Königreichspanorama und Abenteuerkarte
+assets/             Kreaturen-/Biome-/Effektatlanten, UI-Symbole, Königreichspanorama und Abenteuerkarte
 js/
   data-tables.js    Reine statische Inhaltstabellen (DOM-frei)
   data.js           Daten-API und Nachbearbeitung: Ränge, Werte, Lookups und Skills;

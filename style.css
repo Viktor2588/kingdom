@@ -66,6 +66,47 @@ body {
 
 button { font-family: inherit; }
 
+:where(button, [href], input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #ffe09a;
+  outline-offset: 3px;
+}
+
+/* Lokaler 6×4-SVG-Atlas (Phase 36): eine Formensprache statt gemischter
+   Plattform-Emoji für Ressourcen, Navigation, Reichsorte und Status. */
+.ui-icon {
+  --icon-x: 0%; --icon-y: 0%;
+  display: inline-block;
+  width: 1.35em;
+  height: 1.35em;
+  flex: 0 0 auto;
+  background: url('assets/ui-icons.svg') var(--icon-x) var(--icon-y) / 600% 400% no-repeat;
+  vertical-align: -.25em;
+}
+.ui-icon-magic { --icon-x: 0%; --icon-y: 0%; }
+.ui-icon-gold { --icon-x: 20%; --icon-y: 0%; }
+.ui-icon-food { --icon-x: 40%; --icon-y: 0%; }
+.ui-icon-material { --icon-x: 60%; --icon-y: 0%; }
+.ui-icon-seelen, .ui-icon-soul { --icon-x: 80%; --icon-y: 0%; }
+.ui-icon-knowledge { --icon-x: 100%; --icon-y: 0%; }
+.ui-icon-realm, .ui-icon-reich { --icon-x: 0%; --icon-y: 33.333%; }
+.ui-icon-creatures, .ui-icon-kreaturen { --icon-x: 20%; --icon-y: 33.333%; }
+.ui-icon-forge, .ui-icon-schmiede { --icon-x: 40%; --icon-y: 33.333%; }
+.ui-icon-map, .ui-icon-karte { --icon-x: 60%; --icon-y: 33.333%; }
+.ui-icon-place { --icon-x: 80%; --icon-y: 33.333%; }
+.ui-icon-city { --icon-x: 100%; --icon-y: 33.333%; }
+.ui-icon-crown { --icon-x: 0%; --icon-y: 66.667%; }
+.ui-icon-combat { --icon-x: 20%; --icon-y: 66.667%; }
+.ui-icon-territory { --icon-x: 40%; --icon-y: 66.667%; }
+.ui-icon-build { --icon-x: 60%; --icon-y: 66.667%; }
+.ui-icon-time { --icon-x: 80%; --icon-y: 66.667%; }
+.ui-icon-watch { --icon-x: 100%; --icon-y: 66.667%; }
+.ui-icon-overview { --icon-x: 0%; --icon-y: 100%; }
+.ui-icon-defense { --icon-x: 20%; --icon-y: 100%; }
+.ui-icon-temple { --icon-x: 40%; --icon-y: 100%; }
+.ui-icon-arena { --icon-x: 60%; --icon-y: 100%; }
+.ui-icon-settings { --icon-x: 80%; --icon-y: 100%; }
+.ui-icon-log { --icon-x: 100%; --icon-y: 100%; }
+
 #app {
   display: flex;
   flex-direction: column;
@@ -105,6 +146,7 @@ button { font-family: inherit; }
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
+  min-height: var(--tap);
 }
 #ruler-mini:active { background: var(--panel-2); }
 #ruler-mini .rm-emoji { font-size: 20px; line-height: 1; }
@@ -140,7 +182,8 @@ button { font-family: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 42px;
+  min-width: var(--tap);
+  min-height: var(--tap);
   padding: 4px 9px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -206,13 +249,16 @@ button { font-family: inherit; }
 @media (min-width: 540px) { .grid.two { grid-template-columns: 1fr 1fr; } }
 
 .card {
-  background: linear-gradient(180deg, var(--panel-2), var(--panel));
-  border: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 88% 0%, rgba(104,140,156,.08), transparent 32%),
+    linear-gradient(155deg, #221d2d, #14131d 72%);
+  border: 1px solid #484050;
   border-radius: var(--radius);
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: inset 0 1px rgba(255,255,255,.035), 0 7px 18px rgba(0,0,0,.18);
 }
 .card-head {
   display: flex;
@@ -273,6 +319,77 @@ button { font-family: inherit; }
 .card-stats b { color: var(--text); font-weight: 600; }
 
 .card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+
+/* Reichsverwaltung als zusammenhängendes Materialbrett statt Kartenwand. */
+.realm-summary {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  align-items: center;
+  gap: 5px;
+  min-height: 56px;
+  padding: 10px 12px;
+  border: 1px solid #635536;
+  border-radius: var(--radius-sm);
+  color: #eadfca;
+  background:
+    linear-gradient(90deg, rgba(197,150,67,.11), transparent 38%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+    #1b1918;
+  box-shadow: inset 0 0 24px rgba(0,0,0,.28);
+}
+.realm-summary > .ui-icon { width: 27px; height: 27px; margin-right: 3px; }
+.realm-summary b { color: #fff1be; }
+.realm-summary small { justify-self: end; color: #aa9d88; }
+.district-ledger {
+  display: grid;
+  gap: 1px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid #514b43;
+  border-radius: var(--radius);
+  background: #514b43;
+  box-shadow: 0 14px 30px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.04);
+}
+.district-card {
+  --district-accent: #60c9df;
+  position: relative;
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--district-accent) 10%, transparent), transparent 34%),
+    linear-gradient(155deg, #1d2227, #11161b);
+}
+.district-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--district-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--district-accent) 55%, transparent);
+}
+.district-gold, .district-food { --district-accent: #d9ad55; }
+.district-material, .district-forge, .district-defense { --district-accent: #91a8b6; }
+.district-knowledge, .district-magic { --district-accent: #7fd8ee; }
+.district-creatures, .district-temple { --district-accent: #a989e5; }
+.district-arena { --district-accent: #dc7654; }
+.district-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--district-accent) 55%, #4b4b48);
+  border-radius: 4px 10px 4px 10px;
+  background: linear-gradient(145deg, #31353a, #14191e);
+  box-shadow: inset 0 1px rgba(255,255,255,.06), 0 4px 10px rgba(0,0,0,.25);
+}
+.district-icon .ui-icon { width: 29px; height: 29px; }
+.district-card .card-actions { margin-top: auto; }
+@media (min-width: 540px) {
+  .district-ledger { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ---------------- Badges ---------------- */
 .badge {
@@ -343,7 +460,7 @@ button { font-family: inherit; }
 }
 .btn-ghost { background: transparent; }
 .btn-danger { color: var(--bad); border-color: #5e2740; background: #25132099; }
-.btn-small { min-height: 36px; padding: 0 10px; font-size: 12.5px; flex: 0 0 auto; }
+.btn-small { min-height: var(--tap); padding: 0 10px; font-size: 12.5px; flex: 0 0 auto; }
 .btn-cost { font-size: 11px; color: var(--text-dim); font-weight: 600; }
 .btn:disabled .btn-cost { color: var(--bad); }
 
@@ -406,7 +523,7 @@ button { font-family: inherit; }
 .modal-head h3 { margin: 0; font-size: 17px; flex: 1; }
 .modal-close {
   background: var(--panel-3); border: 1px solid var(--line); color: var(--text);
-  width: 34px; height: 34px; border-radius: 9px; font-size: 18px; cursor: pointer; flex: 0 0 auto;
+  width: var(--tap); height: var(--tap); border-radius: 9px; font-size: 18px; cursor: pointer; flex: 0 0 auto;
 }
 .field { margin: 10px 0; }
 .field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 5px; }
@@ -973,12 +1090,12 @@ hr.sep { border: none; border-top: 1px solid var(--line); margin: 14px 0; }
 .info-btn {
   flex: 0 0 auto;
   background: var(--bg-2); border: 1px solid var(--line); color: var(--text-dim);
-  width: 26px; height: 26px; border-radius: 999px; font-size: 13px; line-height: 1;
+  min-width: var(--tap); width: var(--tap); height: var(--tap); border-radius: 999px; font-size: 13px; line-height: 1;
   cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
   padding: 0;
 }
 .info-btn:active { background: var(--panel-3); }
-.view-title .info-btn { width: auto; padding: 0 9px; height: 28px; gap: 4px; font-size: 12px; }
+.view-title .info-btn { width: auto; padding: 0 12px; height: var(--tap); gap: 4px; font-size: 12px; }
 
 .help-list { margin: 6px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
 .help-list li { font-size: 13px; color: var(--text-dim); line-height: 1.45; }
@@ -1248,10 +1365,12 @@ select.btn { text-align: left; min-height: 40px; }
   }
 
   .card, .hero, .name-seal, .empty-hint {
-    border-color: #2d4861;
+    border-color: #4c4d49;
     background:
-      linear-gradient(145deg, rgba(26,41,59,.96), rgba(14,24,36,.98));
-    box-shadow: inset 0 1px rgba(255,255,255,.035), 0 9px 22px rgba(0,0,0,.18);
+      radial-gradient(circle at 88% 0%, rgba(190,154,83,.07), transparent 32%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 4px),
+      linear-gradient(145deg, rgba(30,34,37,.98), rgba(13,17,21,.99));
+    box-shadow: inset 0 1px rgba(255,255,255,.045), inset 0 0 28px rgba(0,0,0,.16), 0 9px 22px rgba(0,0,0,.22);
   }
   .card {
     padding: 14px;
@@ -1259,21 +1378,21 @@ select.btn { text-align: left; min-height: 40px; }
   }
   .card:hover {
     transform: translateY(-2px);
-    border-color: #456983;
+    border-color: #766c58;
     box-shadow: inset 0 1px rgba(255,255,255,.04), 0 13px 26px rgba(0,0,0,.25);
   }
   .card-emoji {
-    border-color: #395b76;
-    background: linear-gradient(145deg, #233a51, #111e2d);
+    border-color: #5c5b55;
+    background: linear-gradient(145deg, #34383b, #15191d);
   }
   .btn {
-    border-color: #3b5872;
-    border-radius: 7px;
-    background: linear-gradient(180deg, #29435f, #1d3149);
+    border-color: #59616a;
+    border-radius: 4px 8px 4px 8px;
+    background: linear-gradient(180deg, #3b444c, #242c33);
     box-shadow: inset 0 1px rgba(255,255,255,.06), 0 3px 7px rgba(0,0,0,.2);
     transition: transform .1s ease, filter .15s ease, border-color .15s ease;
   }
-  .btn:hover:not(:disabled) { filter: brightness(1.16); border-color: #5a7891; }
+  .btn:hover:not(:disabled) { filter: brightness(1.16); border-color: #8c846e; }
   .btn-primary {
     color: #07181f;
     border-color: #86e7f5;
@@ -1308,14 +1427,14 @@ select.btn { text-align: left; min-height: 40px; }
     /* Bild-Seitenverhältnis (1536×1024 = 3:2) → kein Crop, damit die in
        Prozent positionierten Gebäude-Hotspots exakt auf den Bauwerken sitzen. */
     width: 100%;
-    max-width: 940px;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
     aspect-ratio: 3 / 2;
     overflow: hidden;
-    border: 1px solid #3f607b;
-    border-radius: 12px;
+    border: 2px solid #665b47;
+    border-radius: 6px;
     background: #101c24 url('assets/tempest-kingdom-desktop.png') center / cover no-repeat;
-    box-shadow: inset 0 0 80px rgba(0,0,0,.28), 0 18px 45px rgba(0,0,0,.38);
+    box-shadow: inset 0 0 0 1px #171b1f, inset 0 0 90px rgba(0,0,0,.32), 0 18px 45px rgba(0,0,0,.38);
     isolation: isolate;
   }
   .kingdom-scene::before {
@@ -1345,6 +1464,52 @@ select.btn { text-align: left; min-height: 40px; }
     animation: scene-breathe 8s ease-in-out infinite alternate;
   }
   @keyframes scene-breathe { to { opacity: .45; transform: scale(1.025); } }
+  .scene-ambience { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .scene-water {
+    position: absolute; left: 4%; bottom: 2%; width: 24%; height: 24%;
+    background: repeating-radial-gradient(ellipse at 50% 100%, transparent 0 13px, rgba(99,213,241,.16) 14px 15px, transparent 16px 29px);
+    filter: blur(.4px); opacity: .52; transform: skewX(-12deg);
+    animation: scene-water-flow 5.5s ease-in-out infinite alternate;
+  }
+  @keyframes scene-water-flow { to { transform: skewX(-12deg) translate3d(8px,-3px,0); opacity: .72; } }
+  .scene-smoke {
+    position: absolute; width: 18px; height: 46px; border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 75%, rgba(210,220,221,.3), rgba(119,135,139,.12) 48%, transparent 72%);
+    filter: blur(3px); transform-origin: 50% 100%;
+    animation: scene-smoke-rise 4.8s ease-in-out infinite;
+  }
+  .scene-smoke::after {
+    content: ""; position: absolute; inset: -20% -45%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(194,207,209,.18), transparent 67%);
+  }
+  .scene-smoke-forge { left: 63.4%; top: 18%; }
+  .scene-smoke-town { left: 54%; top: 48%; animation-delay: -2.4s; opacity: .68; }
+  @keyframes scene-smoke-rise {
+    0% { transform: translate3d(0,8px,0) scale(.65); opacity: 0; }
+    35% { opacity: .65; }
+    100% { transform: translate3d(9px,-25px,0) scale(1.25); opacity: 0; }
+  }
+  .scene-banner {
+    position: absolute; width: 8px; height: 30px; border-left: 2px solid #b9b3a0;
+    transform-origin: 0 0; animation: scene-banner-wave 2.8s ease-in-out infinite alternate;
+  }
+  .scene-banner::after {
+    content: ""; position: absolute; left: 2px; top: 2px; width: 13px; height: 18px;
+    clip-path: polygon(0 0,100% 8%,78% 52%,100% 100%,0 91%);
+    background: linear-gradient(90deg,#173f72,#4fa5d2); box-shadow: 0 0 5px rgba(64,160,207,.25);
+  }
+  .scene-banner-gate { left: 20.7%; top: 72%; }
+  .scene-banner-keep { left: 46%; top: 42%; animation-delay: -1.4s; }
+  @keyframes scene-banner-wave { to { transform: skewY(5deg) rotate(2deg); } }
+  .scene-magic {
+    position: absolute; width: 13px; height: 13px; border-radius: 50%;
+    background: radial-gradient(circle, #e8ffff 0 8%, #66e7ff 25%, rgba(49,191,235,.42) 48%, transparent 73%);
+    box-shadow: 0 0 12px 4px rgba(76,209,245,.48);
+    animation: scene-magic-pulse 2.6s ease-in-out infinite alternate;
+  }
+  .scene-magic-tower { left: 29%; top: 42%; }
+  .scene-magic-well { left: 78.5%; top: 76%; animation-delay: -1.3s; }
+  @keyframes scene-magic-pulse { to { transform: scale(1.35); filter: brightness(1.3); box-shadow: 0 0 20px 7px rgba(76,209,245,.58); } }
   .scene-heading {
     position: absolute;
     z-index: 2;
@@ -1395,7 +1560,8 @@ select.btn { text-align: left; min-height: 40px; }
     width: 13px;
     height: 13px;
     transform: translate(-50%, -50%);
-    border-radius: 50%;
+    border-radius: 2px;
+    rotate: 45deg;
     background: radial-gradient(circle, rgba(196,240,255,.95), rgba(120,200,255,.4) 60%, transparent 72%);
     box-shadow: 0 0 10px 3px rgba(120,205,255,.5);
     animation: hotspot-beacon 2.6s ease-in-out infinite;
@@ -1425,9 +1591,9 @@ select.btn { text-align: left; min-height: 40px; }
     align-items: center;
     white-space: nowrap;
     padding: 5px 12px;
-    border-radius: 9px;
-    background: rgba(10,28,40,.95);
-    border: 1px solid rgba(150,210,235,.5);
+    border-radius: 4px 9px 4px 9px;
+    background: linear-gradient(180deg, rgba(35,38,40,.97), rgba(13,17,20,.97));
+    border: 1px solid rgba(222,187,112,.62);
     box-shadow: 0 8px 20px rgba(0,0,0,.55);
     opacity: 0;
     pointer-events: none;
@@ -1441,6 +1607,8 @@ select.btn { text-align: left; min-height: 40px; }
   }
   .scene-hotspot-copy b { font-size: 12.5px; color: #eaf6ff; }
   .scene-hotspot-copy small { color: #9fc4d6; font-size: 9.5px; }
+  .scene-hotspot-title { display: flex; align-items: center; gap: 6px; }
+  .scene-hotspot-title .ui-icon { width: 17px; height: 17px; }
   .scene-status {
     position: absolute;
     z-index: 2;
@@ -1451,10 +1619,13 @@ select.btn { text-align: left; min-height: 40px; }
     justify-content: flex-end;
     gap: 7px;
   }
-  .scene-status span {
+  .scene-status > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px 10px;
-    border: 1px solid rgba(139,184,205,.42);
-    border-radius: 6px;
+    border: 1px solid rgba(211,177,107,.46);
+    border-radius: 3px 7px 3px 7px;
     color: #d6e5eb;
     background: rgba(5,14,22,.78);
     backdrop-filter: blur(4px);
@@ -1462,6 +1633,7 @@ select.btn { text-align: left; min-height: 40px; }
     font-weight: 800;
     box-shadow: 0 5px 14px rgba(0,0,0,.25);
   }
+  .scene-status > span > .ui-icon { width: 17px; height: 17px; padding: 0; border: 0; background-color: transparent; box-shadow: none; }
   .ruler-card { min-height: 142px; }
   .hero-name { font-family: Georgia, "Times New Roman", serif; font-size: 25px; }
   .hero-emoji { border-color: #4f7894; background: radial-gradient(circle at 50% 35%, #315c73, #132638); }
@@ -1479,10 +1651,8 @@ select.btn { text-align: left; min-height: 40px; }
     grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
     gap: 13px;
   }
-  .game-view-reich > .grid > .card { min-height: 205px; }
-  .game-view-reich > .grid > .card:nth-child(3n+1) { background: radial-gradient(circle at 90% 10%, rgba(76,155,134,.16), transparent 34%), linear-gradient(145deg, #1a2b3a, #101a28); }
-  .game-view-reich > .grid > .card:nth-child(3n+2) { background: radial-gradient(circle at 90% 10%, rgba(198,138,55,.16), transparent 34%), linear-gradient(145deg, #2b2932, #171b29); }
-  .game-view-reich > .grid > .card:nth-child(3n+3) { background: radial-gradient(circle at 90% 10%, rgba(102,112,202,.18), transparent 34%), linear-gradient(145deg, #222a43, #131a2a); }
+  .game-view-reich .district-ledger { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+  .game-view-reich .district-card { min-height: 178px; padding: 15px; }
   .game-view-kreaturen .creature-art { width: 82px; height: 82px; }
   .game-view-kreaturen .grid.two { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
   .game-view-schmiede .loadout-grid { grid-template-columns: repeat(8, minmax(70px, 1fr)); }
@@ -1732,6 +1902,8 @@ select.btn { text-align: left; min-height: 40px; }
 .skirmish-result-meta { color: var(--text-mut); font-size: 11px; }
 
 @media (max-width: 460px) {
+  .realm-summary { grid-template-columns: auto auto 1fr; }
+  .realm-summary small { grid-column: 1 / -1; justify-self: start; min-width: 0; }
   .skirmish-card-stats { grid-template-columns: 1fr 1fr; }
   .skirmish-card-stats > div:first-child { grid-column: 1 / -1; }
   .skirmish-mission { grid-template-columns: 36px minmax(0, 1fr); }
@@ -1751,4 +1923,10 @@ select.btn { text-align: left; min-height: 40px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --text-mut: #c0b8d4; --line: #776b9a; }
+  .card, .district-card, .realm-summary, .btn { border-color: #a49a83; }
+  :where(button, [href], input, select, textarea, [tabindex]):focus-visible { outline-width: 4px; }
 }

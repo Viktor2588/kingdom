@@ -76,3 +76,14 @@ test('Abenteuerkarten-Assets sind lokal gecacht und im Gesamtbudget', async () =
   expect(worker).toContain("'./assets/world/adventure-locations.png'");
   expect(worker).toContain("'./assets/world/adventure-armies.png'");
 });
+
+test('Materialisierte UI-Symbole sind lokal, kompakt und offline verfügbar', async () => {
+  const icons = Bun.file(root + '/assets/ui-icons.svg');
+  const source = await icons.text();
+  const worker = await Bun.file(root + '/sw.js').text();
+  expect(icons.size).toBeLessThan(20 * 1024);
+  expect(source).toContain('viewBox="0 0 144 96"');
+  expect(source.match(/transform="translate\(/g)?.length).toBe(24);
+  expect(worker).toContain("'./assets/ui-icons.svg'");
+  expect(worker).toContain("tempest-shell-v8");
+});

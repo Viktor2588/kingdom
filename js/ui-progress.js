@@ -8,9 +8,9 @@
   'use strict';
   var UI = window.GameUI, H = window.GameUIInternal;
   if (!UI || !H) throw new Error('ui-progress.js muss nach ui.js geladen werden');
-  var GD = window.GameData;
+  var GD = window.GameData, GST = window.GameState;
   var el = H.el, fmt = H.fmt, bar = H.bar, btn = H.btn;
-  var openModal = H.openModal, costText = H.costText, creatureArt = H.creatureArt, rankBadge = H.rankBadge, statsLine = H.statsLine;
+  var openModal = H.openModal, toast = H.toast, costText = H.costText, creatureArt = H.creatureArt, rankBadge = H.rankBadge, statsLine = H.statsLine;
 
   function ACH() { return window.GameAchievements; }
 
@@ -228,6 +228,86 @@
         : (this._codexTab === 'bestiarium' ? buildBestiary(s) : buildAchievements(s));
       body.appendChild(view);
       openModal('Kompendium', body, '📖', 'codex-modal');
+    },
+
+    // ---------- Zentrale Einstellungen (Phase 39) ----------
+    openSettingsModal: function () {
+      var self = this, s = this.state;
+      var content = el('div', { class: 'settings-body' });
+
+      // Darstellung / Leistung: Effektstufe (war bisher nur im Kampf erreichbar).
+      content.appendChild(el('div', { class: 'section-label', text: 'Darstellung & Leistung' }));
+      content.appendChild(el('p', { class: 'muted', text: 'Animationsstufe der Canvas-Szenen. „Reduziert"/„Aus" schont Akku & Leistung auf Handys; „prefers-reduced-motion" wird ohnehin respektiert.' }));
+      var effectRow = el('div', { class: 'opt-choice' });
+      [['off', 'Aus'], ['reduced', 'Reduziert'], ['full', 'Voll']].forEach(function (entry) {
+        var active = (s.settings.effects || 'full') === entry[0];
+        effectRow.appendChild(btn(entry[1], function () {
+          s.settings.effects = entry[0];
+          toast('🎚️ Effekte: ' + entry[1], 'gold');
+          self.persist(s); self.openSettingsModal();
+        }, { small: true, cls: active ? 'btn-gold' : '' }));
+      });
+      content.appendChild(effectRow);
+
+      // Zuschauer-Modus bequem hier umschaltbar.
+      content.appendChild(el('div', { class: 'section-label', text: 'Zuschauer-Modus' }));
+      var watchOn = !!s.settings.watch, watchDetailed = !!s.settings.watchDetailed;
+      content.appendChild(el('div', { class: 'opt-choice' }, [
+        btn(watchOn ? '👁️ An' : '👁️ Aus', function () {
+          s.settings.watch = !watchOn;
+          toast(s.settings.watch ? '👁️ Zuschauer-Modus an' : '⏸ Zuschauer-Modus aus', s.settings.watch ? 'gold' : '');
+          self.persist(s); self.openSettingsModal();
+        }, { small: true, cls: watchOn ? 'btn-gold' : '' }),
+        btn(watchDetailed ? '🎬 Einzelschritte: an' : '🎬 Einzelschritte: aus', function () {
+          s.settings.watchDetailed = !watchDetailed;
+          s.settings.watchCooldownUntil = s.tick;
+          self.persist(s); self.openSettingsModal();
+        }, { small: true, cls: watchDetailed ? 'btn-gold' : '' })
+      ]));
+
+      // Spielstand-Verwaltung (Export/Import) — aus dem Herrscher-Modal hierher zentralisiert.
+      content.appendChild(el('hr', { class: 'sep' }));
+      content.appendChild(el('div', { class: 'section-label', text: 'Spielstand' }));
+      content.appendChild(el('p', { class: 'muted', text: 'Automatisch gespeichert. Exportiere als Datei für Backup oder Gerätewechsel.' }));
+      content.appendChild(el('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap' }, [
+        btn('💾 Exportieren', function () {
+          try {
+            var blob = new Blob([GST.exportSave(s)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = 'tempest-spielstand.json';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast('💾 Spielstand als Datei exportiert.', 'gold');
+          } catch (e) { toast('Export fehlgeschlagen.', 'bad'); }
+        }, { small: true }),
+        btn('📂 Importieren', function () {
+          var input = document.createElement('input');
+          input.type = 'file'; input.accept = 'application/json,.json';
+          input.onchange = function () {
+            var file = input.files && input.files[0]; if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function () {
+              var res = GST.importSave(String(reader.result));
+              if (!res.ok) { toast('Import fehlgeschlagen: ' + res.reason, 'bad'); return; }
+              toast('📂 Spielstand importiert – wird geladen …', 'gold');
+              setTimeout(function () { window.location.reload(); }, 400);
+            };
+            reader.readAsText(file);
+          };
+          input.click();
+        }, { small: true })
+      ]));
+
+      content.appendChild(el('hr', { class: 'sep' }));
+      content.appendChild(btn('🗑 Spielstand zurücksetzen', function () {
+        if (window.confirm('Wirklich den gesamten Fortschritt löschen?')) {
+          if (window.__TEMPEST__ && window.__TEMPEST__.resetGame) window.__TEMPEST__.resetGame();
+          else { GST.reset(); window.location.reload(); }
+        }
+      }, { cls: 'btn-danger', small: true }));
+
+      openModal('Einstellungen', content, '⚙️', 'settings-modal');
     }
   });
 })();

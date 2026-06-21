@@ -52,6 +52,15 @@
     ctx.drawImage(image, (width - dw) / 2, (height - dh) / 2, dw, dh);
   }
 
+  function coverAtlasCell(ctx, image, sprite, columns, rows, width, height) {
+    var cellW = image.width / columns, cellH = image.height / rows;
+    var scale = Math.max(width / cellW, height / cellH);
+    var sourceW = width / scale, sourceH = height / scale;
+    var sx = sprite.col * cellW + (cellW - sourceW) / 2;
+    var sy = sprite.row * cellH + (cellH - sourceH) / 2;
+    ctx.drawImage(image, sx, sy, sourceW, sourceH, 0, 0, width, height);
+  }
+
   function fallbackBackdrop(ctx, width, height) {
     var gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, '#355636'); gradient.addColorStop(0.5, '#6f7138'); gradient.addColorStop(1, '#173a31');
@@ -62,9 +71,23 @@
     return ({ feuer: '#ff7b3f', wasser: '#79d9ff', wind: '#d8ff8d', erde: '#e9bf72', licht: '#fff2a5', dunkel: '#c488ff', geist: '#72f1e5' })[element] || '#ffe09a';
   }
 
-  function drawMagic(ctx, from, to, event, progress, reduced) {
+  function effectSpriteId(element) {
+    return ({ feuer: 'fire', wasser: 'frost', wind: 'lightning', erde: 'slash', licht: 'heal', dunkel: 'death', geist: 'soul' })[element] || 'soul';
+  }
+
+  function drawEffectSprite(ctx, atlas, Art, id, x, y, size, progress, rotation) {
+    var sprite = atlas && Art.effectFor(id); if (!sprite) return false;
+    var sw = atlas.width / Art.battleEffectAtlas.columns, sh = atlas.height / Art.battleEffectAtlas.rows;
+    var pulse = Math.sin(Math.PI * Math.max(0, Math.min(1, progress)));
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rotation || 0); ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.max(0.18, pulse); ctx.drawImage(atlas, sprite.col * sw, sprite.row * sh, sw, sh, -size / 2, -size / 2, size, size);
+    ctx.restore(); return true;
+  }
+
+  function drawMagic(ctx, from, to, event, progress, reduced, effectAtlas, Art) {
     var color = effectColor(event.element), eased = root.GameCanvasEffects.easeOut(progress);
     var x = from.x + (to.x - from.x) * eased, y = from.y + (to.y - from.y) * eased;
+    if (drawEffectSprite(ctx, effectAtlas, Art, effectSpriteId(event.element), x, y - 18, reduced ? 52 : 74, Math.min(1, progress * 1.35), Math.atan2(to.y - from.y, to.x - from.x))) return;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = color; ctx.fillStyle = color;
     ctx.globalAlpha = 0.85 * (1 - progress * 0.35); ctx.lineWidth = reduced ? 3 : 5;
@@ -78,18 +101,45 @@
     ctx.restore();
   }
 
-  function drawSlash(ctx, from, to, progress) {
+  function drawSlash(ctx, from, to, progress, effectAtlas, Art) {
     var pulse = Math.sin(Math.PI * progress), mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2 - 18;
+    if (drawEffectSprite(ctx, effectAtlas, Art, 'slash', mx, my, 82 + pulse * 26, progress, Math.atan2(to.y - from.y, to.x - from.x))) return;
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = '#fff0b0'; ctx.lineWidth = 2 + pulse * 5; ctx.globalAlpha = pulse;
     ctx.beginPath(); ctx.arc(mx, my, 12 + pulse * 25, -1.1, 0.65); ctx.stroke(); ctx.restore();
   }
 
-  function drawHeal(ctx, point, progress, reduced) {
+  function drawHeal(ctx, point, progress, reduced, effectAtlas, Art) {
+    if (drawEffectSprite(ctx, effectAtlas, Art, 'heal', point.x, point.y - 25, reduced ? 58 : 84, progress, 0)) return;
     var count = reduced ? 3 : 7;
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = '#8dffc2'; ctx.globalAlpha = 0.9 * (1 - progress * 0.45);
     for (var i = 0; i < count; i++) {
       var angle = i / count * Math.PI * 2, radius = 10 + progress * 25;
       ctx.fillRect(point.x + Math.cos(angle) * radius - 2, point.y - 25 + Math.sin(angle) * radius * 0.5 - progress * 18, 4, 11);
+    }
+    ctx.restore();
+  }
+
+  function drawStatusIcons(ctx, actor, x, y) {
+    var palette = { brand: '#ff744a', frost: '#79dfff', schock: '#d493ff' };
+    (actor.statuses || []).slice(0, 3).forEach(function (status, index) {
+      var px = x + (index - ((actor.statuses.length - 1) / 2)) * 14;
+      ctx.fillStyle = palette[status.id] || '#ffe091'; ctx.strokeStyle = 'rgba(8,10,16,.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px, y - 6); ctx.lineTo(px + 6, y); ctx.lineTo(px, y + 6); ctx.lineTo(px - 6, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    });
+  }
+
+  function drawAmbient(ctx, size, now, biome, mode, color) {
+    if (mode !== 'full') return;
+    var count = 13, rising = biome === 'ruins' || biome === 'swamp' || biome === 'shadow';
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = color || '#dff3a0';
+    for (var i = 0; i < count; i++) {
+      var cycle = (now / (biome === 'mountain' ? 34 : 55) + i * 79) % (size.height + 80);
+      var x = (i * 137 + now / (biome === 'sky' ? 42 : 95)) % (size.width + 60) - 30;
+      var y = rising ? size.height + 20 - cycle : cycle - 40;
+      var radius = biome === 'mountain' ? 1.8 + (i % 3) : 1.2 + (i % 2);
+      ctx.globalAlpha = 0.18 + (i % 4) * 0.08;
+      if (biome === 'jura') { ctx.save(); ctx.translate(x, y); ctx.rotate(now / 700 + i); ctx.fillRect(-3, -1, 6, 2); ctx.restore(); }
+      else { ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); }
     }
     ctx.restore();
   }
@@ -111,7 +161,7 @@
     var effectiveMode = options.mode || 'full';
     if (Core.reducedMotion() && effectiveMode === 'full') effectiveMode = 'reduced';
     var timeline = FX.createTimeline(options.events || [], effectiveMode);
-    var background = null, atlas = null, assetsReady = false, hover = null, lastGeometry = null, timelineDone = !timeline.active();
+    var background = null, atlas = null, effectAtlas = null, assetsReady = false, hover = null, lastGeometry = null, timelineDone = !timeline.active();
     var reachable = {}, actorsByKey = {};
     (view.reachable || []).forEach(function (cell) { reachable[cellKey(cell.x, cell.y)] = true; });
     (view.actors || []).forEach(function (actor) { actorsByKey[actor.renderKey || renderKey(actor)] = actor; });
@@ -155,6 +205,9 @@
         ctx.fillStyle = '#fff'; ctx.font = Math.round(g.tileW * 0.32) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(actor.icon || '?', point.x, footY - g.tileW * 0.18 + idle);
       }
 
+      if (actor.defending) drawEffectSprite(ctx, effectAtlas, Art, 'block', point.x, footY - g.tileW * 0.34, g.tileW * 0.56, 0.5, 0);
+      if ((actor.statuses || []).length) drawStatusIcons(ctx, actor, point.x, footY - g.tileW * 0.83);
+
       var barW = Math.min(58, g.tileW * 0.74), barY = footY + g.tileH * 0.38;
       ctx.fillStyle = 'rgba(4,8,9,.8)'; ctx.fillRect(point.x - barW / 2, barY, barW, 6);
       ctx.fillStyle = actor.side === 'party' ? '#53d98b' : '#ff6579'; ctx.fillRect(point.x - barW / 2 + 1, barY + 1, Math.max(0, (barW - 2) * actor.hpFraction), 4);
@@ -171,8 +224,12 @@
 
     function draw(ctx, size, now) {
       var g = geometry(size.width, size.height, view.width, view.height); lastGeometry = g;
-      if (background) coverImage(ctx, background, size.width, size.height); else fallbackBackdrop(ctx, size.width, size.height);
+      var biome = Art.biomeFor(view.biome || view.regionId || 'jura');
+      if (background && biome) coverAtlasCell(ctx, background, biome, Art.battleBiomeAtlas.columns, Art.battleBiomeAtlas.rows, size.width, size.height);
+      else if (background) coverImage(ctx, background, size.width, size.height); else fallbackBackdrop(ctx, size.width, size.height);
       ctx.fillStyle = 'rgba(3,12,10,.13)'; ctx.fillRect(0, 0, size.width, size.height);
+      if (view.biome === 'shadow') { ctx.fillStyle = 'rgba(35,5,67,.22)'; ctx.fillRect(0, 0, size.width, size.height); }
+      else if (view.biome === 'sky') { ctx.fillStyle = 'rgba(255,245,208,.08)'; ctx.fillRect(0, 0, size.width, size.height); }
       var sample = timeline.sample(now); timelineDone = sample.done;
 
       var occupied = {};
@@ -199,10 +256,13 @@
       if (sample.event) {
         var event = sample.event, source = actorsByKey[event.key], target = actorsByKey[event.targetKey];
         var from = source ? actorPoint(g, source, sample) : null, to = target ? cellPoint(g, target.pos.x, target.pos.y) : null;
-        if (event.type === 'magic' && from && to) drawMagic(ctx, from, to, event, sample.progress, effectiveMode !== 'full');
-        else if (event.type === 'attack' && from && to) drawSlash(ctx, from, to, sample.progress);
-        else if (event.type === 'heal' && to) drawHeal(ctx, to, sample.progress, effectiveMode !== 'full');
+        if (event.type === 'magic' && from && to) drawMagic(ctx, from, to, event, sample.progress, effectiveMode !== 'full', effectAtlas, Art);
+        else if (event.type === 'attack' && from && to) drawSlash(ctx, from, to, sample.progress, effectAtlas, Art);
+        else if (event.type === 'heal' && to) drawHeal(ctx, to, sample.progress, effectiveMode !== 'full', effectAtlas, Art);
+        else if (event.type === 'death' && source) drawEffectSprite(ctx, effectAtlas, Art, 'death', from.x, from.y - 18, 92, sample.progress, 0);
       }
+
+      drawAmbient(ctx, size, now, view.biome || 'jura', effectiveMode, biome && biome.particle);
 
       if (surface && timelineDone && effectiveMode !== 'full') surface.setAnimated(false);
     }
@@ -219,8 +279,8 @@
 
     var surface = root.GameCanvasCore.createSurface(canvas, { maxFps: 30, dprCap: 1.5, animate: effectiveMode === 'full' || timeline.active(), draw: draw, onPointer: onPointer });
     if (!surface) return null;
-    Promise.all([root.GameCanvasCore.loadImage(Art.assets.battleJura), root.GameCanvasCore.loadImage(Art.assets.battleJuraUnits)]).then(function (images) {
-      background = images[0]; atlas = images[1]; assetsReady = true;
+    Promise.all([root.GameCanvasCore.loadImage(Art.assets.battleBiomes), root.GameCanvasCore.loadImage(Art.assets.battleUnits), root.GameCanvasCore.loadImage(Art.assets.battleEffects)]).then(function (images) {
+      background = images[0]; atlas = images[1]; effectAtlas = images[2]; assetsReady = true;
       if (canvas.parentNode) canvas.parentNode.classList.add('canvas-enhanced');
       canvas.setAttribute('data-assets-ready', '1'); surface.invalidate();
       if (options.onReady) options.onReady();

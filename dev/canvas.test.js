@@ -16,15 +16,35 @@ const State = globalThis.GameState;
 const Systems = globalThis.GameSystems;
 const Scene = globalThis.GameBattleScene;
 
-test('sechs Jura-Einheitenlinien besitzen eindeutige Atlaszellen', () => {
-  const lines = ['Schleim', 'Goblin', 'Wolf', 'Oger', 'Untot', 'Drache'];
+test('alle 20 Kreaturenlinien besitzen eindeutige Board-Atlaszellen', () => {
+  const lines = Array.from(new Set(globalThis.GameData.creatures.map(function (species) { return species.line; })));
+  expect(lines.length).toBe(20);
   const cells = lines.map(function (line) {
     const unit = Art.unitFor(line);
     expect(unit).toBeTruthy();
     return unit.col + ',' + unit.row;
   });
-  expect(new Set(cells).size).toBe(6);
-  expect(Art.unitFor('Phönix')).toBeNull();
+  expect(new Set(cells).size).toBe(20);
+  expect(Art.unitFor('Phönix')).toBeTruthy();
+  expect(Art.unitFor('Meervolk')).toBeTruthy();
+});
+
+test('Regionen werden auf sechs Atlas-Biome plus Schatten-/Himmelstönung verteilt', () => {
+  const expected = {
+    wald: 'jura', hoehlen: 'cave', sumpf: 'swamp', ruinen: 'ruins', grenze: 'ruins',
+    gebirge: 'mountain', schattenreich: 'shadow', himmelsfeste: 'sky', goetterthron: 'sky'
+  };
+  Object.keys(expected).forEach(function (id) { expect(Art.biomeFor(id).key).toBe(expected[id]); });
+  const atlasCells = ['jura', 'cave', 'swamp', 'ruins', 'mountain', 'shadow'].map(function (id) {
+    const biome = Art.biomeFor(id); return biome.col + ',' + biome.row;
+  });
+  expect(new Set(atlasCells).size).toBe(6);
+});
+
+test('vollständiger Effektatlas besitzt acht eindeutige Effekte', () => {
+  const ids = ['slash', 'block', 'fire', 'frost', 'lightning', 'heal', 'soul', 'death'];
+  const cells = ids.map(function (id) { const fx = Art.effectFor(id); expect(fx).toBeTruthy(); return fx.col + ',' + fx.row; });
+  expect(new Set(cells).size).toBe(8);
 });
 
 test('Kampf-View-Modell ist vollständig und vom Zustand entkoppelt', () => {
@@ -65,14 +85,27 @@ test('Effektstufen und Save-Normalisierung bleiben deterministisch', () => {
   expect(State.normalize(state).settings.effects).toBe('full');
 });
 
-test('Einheitenatlas besitzt echte transparente Ränder und plausible Abdeckung', async () => {
-  const path = import.meta.dir + '/../assets/battle/jura-units.png';
+test('20-Linien-Einheitenatlas besitzt echte transparente Ränder und plausible Abdeckung', async () => {
+  const path = import.meta.dir + '/../assets/battle/board-units.png';
   const png = PNG.sync.read(Buffer.from(await Bun.file(path).arrayBuffer()));
   const cornerIndexes = [3, (png.width - 1) * 4 + 3, ((png.height - 1) * png.width) * 4 + 3, (png.width * png.height - 1) * 4 + 3];
   cornerIndexes.forEach(function (index) { expect(png.data[index]).toBe(0); });
   let visible = 0;
   for (let i = 3; i < png.data.length; i += 4) if (png.data[i] > 0) visible++;
   const coverage = visible / (png.width * png.height);
-  expect(coverage).toBeGreaterThan(0.18);
-  expect(coverage).toBeLessThan(0.4);
+  expect(coverage).toBeGreaterThan(0.22);
+  expect(coverage).toBeLessThan(0.48);
+});
+
+test('Biome und Effekte bleiben innerhalb des Laufzeit-Assetbudgets', async () => {
+  const names = ['biomes.png', 'board-units.png', 'effects.png'];
+  let total = 0;
+  for (const name of names) {
+    const file = Bun.file(import.meta.dir + '/../assets/battle/' + name); total += file.size;
+    expect(file.size).toBeLessThan(3 * 1024 * 1024);
+    const png = PNG.sync.read(Buffer.from(await file.arrayBuffer()));
+    expect(png.width).toBeGreaterThanOrEqual(1500); expect(png.width).toBeLessThanOrEqual(2048);
+    expect(png.height).toBeGreaterThanOrEqual(850); expect(png.height).toBeLessThanOrEqual(1024);
+  }
+  expect(total).toBeLessThan(25 * 1024 * 1024);
 });

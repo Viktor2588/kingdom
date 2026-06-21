@@ -1,7 +1,7 @@
 /* Service Worker — App-Shell-Cache für echtes Offline (Phase 32).
    Cache-first für die Shell; alle übrigen gleichartigen GETs (Assets)
    werden zur Laufzeit beim ersten Laden gecached. */
-var CACHE = 'tempest-shell-v6';
+var CACHE = 'tempest-shell-v7';
 var SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest', './icon.svg',
   './js/data-tables.js', './js/data.js', './js/art-data.js', './js/state.js',
@@ -9,6 +9,7 @@ var SHELL = [
   './js/render/canvas-core.js', './js/render/effects.js', './js/render/battle-scene.js', './js/render/adventure-scene.js',
   './js/ui.js', './js/ui-adventure.js', './js/ui-progress.js', './js/ui-action.js', './js/main.js',
   './assets/battle/jura-clearing.png', './assets/battle/jura-units.png',
+  './assets/battle/biomes.png', './assets/battle/board-units.png', './assets/battle/effects.png',
   './assets/tempest-adventure-map.png', './assets/world/adventure-locations.png', './assets/world/adventure-armies.png'
 ];
 

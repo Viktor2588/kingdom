@@ -432,14 +432,18 @@
         stack: Math.max(1, actor.stack || 1), hp: Math.max(0, actor.hp || 0), maxHp: Math.max(1, actor.maxHp || 1),
         hpFraction: Math.max(0, Math.min(1, (actor.hp || 0) / Math.max(1, actor.maxHp || 1))),
         mp: Math.max(0, actor.mp || 0), maxMp: Math.max(0, actor.maxMp || 0),
-        dead: !!actor.dead, pos: { x: actor.pos.x, y: actor.pos.y },
+        dead: !!actor.dead, defending: !!actor.defending, pos: { x: actor.pos.x, y: actor.pos.y },
         statuses: (actor.statuses || []).map(function (status) { return { id: status.id, turns: status.turns }; })
       };
     }
     var region = GD().region(combat.regionId);
+    var biomeByRegion = {
+      wald: 'jura', hoehlen: 'cave', sumpf: 'swamp', ruinen: 'ruins', grenze: 'ruins',
+      gebirge: 'mountain', schattenreich: 'shadow', himmelsfeste: 'sky', goetterthron: 'sky'
+    };
     return {
       width: BATTLE_W, height: BATTLE_H, round: combat.round, status: combat.status,
-      regionId: combat.regionId, element: region ? region.element : 'erde', biome: 'jura',
+      regionId: combat.regionId, element: region ? region.element : 'erde', biome: biomeByRegion[combat.regionId] || 'jura',
       currentKey: current ? current.side + ':' + String(current.key) : null,
       reachable: reachable.map(function (cell) { return { x: cell.x, y: cell.y, d: cell.d }; }),
       obstacles: (combat.obstacles || []).slice(),

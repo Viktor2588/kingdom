@@ -61,6 +61,9 @@ test('Canvas-Assets sind lokal und innerhalb des Phase-33-Budgets', async () => 
   const worker = await Bun.file(root + '/sw.js').text();
   expect(worker).toContain("'./assets/battle/jura-clearing.png'");
   expect(worker).toContain("'./assets/battle/jura-units.png'");
+  ['biomes.png', 'board-units.png', 'effects.png'].forEach(function (name) {
+    expect(worker).toContain("'./assets/battle/" + name + "'");
+  });
 });
 
 test('Abenteuerkarten-Assets sind lokal gecacht und im Gesamtbudget', async () => {

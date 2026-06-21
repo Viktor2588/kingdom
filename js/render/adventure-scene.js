@@ -28,6 +28,20 @@
     var out = {}; (view.nodes || []).forEach(function (node) { out[node.id] = node; }); return out;
   }
 
+  function drawBiomeMotes(ctx, size, nodes, Art, now) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    (nodes || []).filter(function (node) { return node.unlocked; }).slice(0, 14).forEach(function (node, index) {
+      var biome = Art.biomeFor(node.id), p = point(size, node); if (!biome) return;
+      var phase = now / (biome.key === 'mountain' ? 520 : 760) + index * 1.71;
+      var x = p.x + Math.cos(phase * 1.13) * (18 + index % 3 * 6);
+      var y = p.y - 22 + Math.sin(phase) * 9;
+      ctx.fillStyle = biome.particle; ctx.globalAlpha = 0.22 + (index % 3) * 0.08;
+      if (biome.key === 'jura') { ctx.save(); ctx.translate(x, y); ctx.rotate(phase); ctx.fillRect(-3, -1, 6, 2); ctx.restore(); }
+      else { ctx.beginPath(); ctx.arc(x, y, biome.key === 'mountain' ? 2.2 : 1.7, 0, Math.PI * 2); ctx.fill(); }
+    });
+    ctx.restore();
+  }
+
   function drawRoute(ctx, size, from, to, status, highlighted, now) {
     var a = point(size, from), b = point(size, to);
     ctx.save(); ctx.lineCap = 'round';
@@ -165,6 +179,7 @@
           ctx.fillStyle = 'rgba(113,234,192,.45)'; ctx.beginPath(); ctx.arc(p.x + Math.cos(angle) * 18, p.y - 22 + Math.sin(angle) * 8, 2, 0, Math.PI * 2); ctx.fill();
         });
         ctx.restore();
+        drawBiomeMotes(ctx, size, view.nodes, Art, now);
       }
       if (surface && sample.done && mode !== 'full') surface.setAnimated(false);
     }

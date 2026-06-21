@@ -287,6 +287,12 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Architektur/Save/Offline:** DOM-freies `systems-siege.js` (erzwingt das Ergebnis über `resolveActiveDefense` → dieselbe Beute-/Bruchlogik wie `resolveRaid`) und getrenntes `ui-siege.js`; nur minimale, additive Hooks in `systems.js`/`ui.js`. Save-Schema **v12** normalisiert laufende Belagerungen (verworfen ohne zugehörigen Raid), PWA-App-Shell **v10** cacht beide Module.
 - **Verifikation:** `bun test` → **78/78** grün (neu: `dev/siege.test.js` mit 7 Checks; DOM-Test um Belagerungskarte + Verteidigung erweitert; veraltete hartcodierte Versions-/Cache-Asserts dynamisch gemacht), 2× stabil; `bun run balance` unverändert; eigener End-to-End-Drive bestätigt das Schwierigkeits-/Agency-Gefälle (1,0×/1,5×/2,0×D).
 
+[x] **Bugfix – Zuschauer-Modus: hängende Quest & Über-Kapazität (2026-06-21)** — aus einem ~6 h-Zuschauer-Modus-Save gemeldet (Screenshot): Ziel hing bei „3/15 · Beschwöre eine weitere Kreatur" trotz Endgame, und die Bevölkerung war auf 3203/111 (29× über Wohn-Kapazität).
+  - **Ursache:** Der Berater rekrutierte Truppen (Stelle 4b) ohne Wohn-Kapazitätsprüfung (`canRecruitTroops` prüft nur das Kommandolimit) und füllte so die Kapazität dauerhaft; das Beschwören (Stelle 14, `usedCapacity < capacity`) lief nie → `metrics.summoned` blieb 0 → die sequenzielle Quest-Kette war an `q_summon` blockiert.
+  - **Fix A:** `q_summon` zählt jetzt jeden Kreaturen-Zuwachs (Beschwören **oder** Rekrutieren: `metrics.summoned ≥ 1 || totalCreatureCount > Start`) → entsperrt bestehende Saves beim Laden via `syncQuests`.
+  - **Fix B:** Der Auto-Modus rekrutiert nur noch mit freier Wohn-Kapazität (Auto-Modus-only, keine Kern-Regel-Änderung) → Bevölkerung bleibt nahe Kapazität (Drive: 43/38 statt 3203/111) und der Berater beschwört wieder (`metrics.summoned` wächst). „Missernte" war ein normales Zufalls-Event, kein Bug.
+  - **Verifikation:** `bun test` 78/78 grün; Simulations-Drive bestätigt Quest-Entsperrung und Kapazitäts-Begrenzung.
+
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
 

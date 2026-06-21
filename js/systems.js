@@ -2396,7 +2396,9 @@
     }
     for (var agi = 0; agi < (state.armyGroups || []).length; agi++) {
       var ag = state.armyGroups[agi], usedCmd = armyCommandUsed(ag), capCmd = armyCommandCapacity(state, ag);
-      if (usedCmd < capCmd * 0.6) {
+      // Nur mit freier Wohn-Kapazität rekrutieren – sonst wuchert die Bevölkerung
+      // weit über die Kapazität (Berater baut sonst Hungersnot-anfällige Heere auf).
+      if (usedCmd < capCmd * 0.6 && usedCapacity(state) < capacity(state)) {
         var lead = findCreature(state, ag.leaderUid), leadSp = lead ? GD().creature(lead.speciesId) : null;
         var pool = recruitableTroops(state).slice().sort(function (a, b) {
           var as = leadSp && a.line === leadSp.line ? 1 : 0, bs = leadSp && b.line === leadSp.line ? 1 : 0;
@@ -2577,8 +2579,8 @@
     { id: 'q_jobs', icon: '🛠️', title: 'Hände für die Arbeit', desc: 'Weise 2 Kreaturen eine Aufgabe zu (nicht „Frei").',
       check: function (s) { return s.creatures.filter(function (c) { return c.job && c.job !== 'frei'; }).length >= 2; },
       progress: function (s) { return Math.min(2, s.creatures.filter(function (c) { return c.job && c.job !== 'frei'; }).length) + '/2'; }, reward: { magie: 80 } },
-    { id: 'q_summon', icon: '✨', title: 'Verstärkung', desc: 'Beschwöre eine weitere Kreatur.',
-      check: function (s) { return (s.metrics.summoned || 0) >= 1; }, reward: { magie: 60, nahrung: 60 } },
+    { id: 'q_summon', icon: '✨', title: 'Verstärkung', desc: 'Verstärke dein Gefolge um eine weitere Kreatur (beschwören oder rekrutieren).',
+      check: function (s) { return (s.metrics.summoned || 0) >= 1 || totalCreatureCount(s) > 3; }, reward: { magie: 60, nahrung: 60 } },
     { id: 'q_name', icon: '🔤', title: 'Ein wahrer Name', desc: 'Benenne eine Kreatur – das weckt ihre Kräfte.',
       check: function (s) { return (s.metrics.named || 0) >= 1; }, reward: { seelen: 25 } },
     { id: 'q_expedition', icon: '🚩', title: 'Erste Eroberung', desc: 'Gewinne eine Expedition auf der Karte.',

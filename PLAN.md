@@ -230,7 +230,12 @@ Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas
 
 Phase 36 – Reichspanorama und Management-UI materialisieren
 
-[ ] **Phase 39 – Zentrale Einstellungen (in Bearbeitung)** — ein auffindbares Options-Modal bündelt Darstellung/Leistung (Effektstufe, bisher nur im Kampf erreichbar), Zuschauer-Modus und Spielstand-Verwaltung (Export/Import/Reset, bisher im Herrscher-Modal).
+[x] **Phase 39 – Zentrale Einstellungen (2026-06-21)** — ein auffindbares Options-Modal (`openSettingsModal` in `js/ui-progress.js`) bündelt erstmals verstreute Optionen:
+- **Darstellung & Leistung:** Effektstufe Aus/Reduziert/Voll war bisher **nur im Kampf-Modal** erreichbar — jetzt prominent umstellbar (wichtig für Akku/Leistung auf dem Handy; `prefers-reduced-motion` wird weiterhin respektiert).
+- **Zuschauer-Modus:** An/Aus und Einzelschritte bequem hier umschaltbar (zusätzlich zu Topbar/Übersicht).
+- **Spielstand:** Export/Import/Reset aus dem Herrscher-Modal hierher zentralisiert; das Herrscher-Modal verweist nur noch mit einem Knopf aufs Einstellungs-Modal (ui.js −34 Zeilen).
+- **Einstieg:** „⚙️ Einstellungen" in der Übersicht-Steuerleiste (neben „📖 Kompendium") und im Herrscher-Modal.
+- Keine Save-Schema-Änderung (Einstellungen sind bereits persistiert), kein neues Modul/Asset. **Verifikation:** `bun test` → 42/42 grün (domtest um Settings-Modal + Effektstufen-Umschaltung erweitert), Suite 3× ohne Flake; `bun run balance` unverändert.
 
 [x] **Phase 38 – Kreaturen-Kompendium / Bestiarium (2026-06-21)** — durchblätterbares Nachschlagewerk aller Kreaturen, aufbauend auf dem Kompendium-Modal aus Phase 37 (jetzt drei Unter-Tabs: 🏆 Erfolge · 📊 Statistik · 📖 Bestiarium).
 - **Bestiarium-UI (`js/ui-progress.js`):** Alle Spezies nach Linie gruppiert und je Linie nach Rang sortiert; pro Form Sprite/Emoji, Rang-Badge, Rolle, Basiswerte (LP/ANG/VER/MAG/TMP), Signatur-Skill, Beschreibung und Evolutionsziele inkl. Anforderungen (benannt/Level/Seelen/Herrscher-Stufe). „Entdeckt"-Meter gesamt und je Linie; noch nicht entdeckte Formen erscheinen als gesperrte „???"-Karten (Rang sichtbar, damit die Kettenstruktur lesbar bleibt). Reine Anzeige — kein Zustandseingriff, nutzt vorhandene `GameUIInternal`-Helfer (`creatureArt`, `rankBadge`, `statsLine`).

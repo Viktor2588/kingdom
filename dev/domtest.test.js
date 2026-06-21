@@ -117,6 +117,17 @@ tryRender('Kompendium-Modal (Erfolge/Statistik/Bestiarium)', function () {
   if (!document.querySelector('#modal-root .beast-card.locked')) throw new Error('keine gesperrten Formen markiert');
   document.querySelector('.modal-close').click();
 });
+tryRender('Einstellungs-Modal (Effektstufe umschaltbar)', function () {
+  window.GameUI.openSettingsModal();
+  if (!document.querySelector('.modal.settings-modal')) throw new Error('kein Einstellungs-Modal');
+  var prev = s.settings.effects;
+  var offBtn = Array.prototype.filter.call(document.querySelectorAll('#modal-root .opt-choice .btn'), function (b) { return b.textContent === 'Aus'; })[0];
+  if (!offBtn) throw new Error('keine Effektstufen-Knöpfe');
+  offBtn.click();
+  if (s.settings.effects !== 'off') throw new Error('Effektstufe nicht übernommen');
+  s.settings.effects = prev; // Zustand für Folgetests wiederherstellen
+  document.querySelector('.modal-close').click();
+});
 tryRender('Last-Epoch-artiger Herrscher-Talentbaum', function () {
   s.herrscher.level = Math.max(8, s.herrscher.level);
   window.GameUI.openTalentModal();

@@ -26,6 +26,9 @@
     if (!result || !result.reward) return 'Keine Beute';
     return costText(result.reward) + (result.xp ? '  +' + result.xp + ' EP' : '');
   }
+  function findById(list, id) {
+    return (list || []).filter(function (entry) { return entry.id === id; })[0] || null;
+  }
 
   Object.assign(UI, {
     buildSkirmishCard: function () {
@@ -36,7 +39,7 @@
           el('div', { class: 'card-emoji', text: active ? '🔥' : '⚡' }),
           el('div', { class: 'card-title' }, [
             el('div', { class: 'name' }, ['Sturmeinsätze', active ? el('span', { class: 'pill tag-bad', text: '● Gefecht läuft' }) : el('span', { class: 'pill', text: 'AKTIV' })]),
-            el('div', { class: 'meta', text: active ? (status.mission.name + ' · Runde ' + active.round + '/' + active.maxRounds) : 'Kurze Gefechte: Absicht lesen, richtig kontern, Kombo zünden.' })
+            el('div', { class: 'meta', text: active ? (status.mission.name + ' · ' + status.profile.name + ' · ' + status.phase.name + ' · Runde ' + active.round + '/' + active.maxRounds) : 'Gegnerprofile lesen, Bossphasen meistern und Optionalziele erfüllen.' })
           ])
         ]),
         el('div', { class: 'skirmish-card-stats' }, [
@@ -59,7 +62,8 @@
         el('div', { class: 'skirmish-summary' }, [
           el('span', { text: '🔥 Serie ' + status.streak }),
           el('span', { text: '⚡ Rekord ' + status.bestCombo }),
-          el('span', { text: '🎯 Eskalation ' + status.heat + '/' + SYS.SKIRMISH_MAX_HEAT })
+          el('span', { text: '🎯 Eskalation ' + status.heat + '/' + SYS.SKIRMISH_MAX_HEAT }),
+          el('span', { text: '🏅 Optionalziele ' + status.objectivesCompleted })
         ])
       ]);
 
@@ -84,13 +88,18 @@
       body.appendChild(el('div', { class: 'section-label', text: 'Einsatz wählen' }));
       var grid = el('div', { class: 'skirmish-missions' });
       SYS.SKIRMISH_MISSIONS.forEach(function (m) {
-        var unlocked = SYS.missionUnlocked(s, m);
+        var unlocked = SYS.missionUnlocked(s, m), preview = SYS.skirmishPreview(s, m.id);
         grid.appendChild(el('div', { class: 'skirmish-mission' + (unlocked ? '' : ' locked') }, [
           el('div', { class: 'skirmish-mission-icon', text: unlocked ? m.icon : '🔒' }),
           el('div', { class: 'skirmish-mission-copy' }, [
             el('b', { text: m.name }),
             el('p', { text: unlocked ? m.desc : m.hint }),
-            unlocked ? el('small', { text: 'Basisbeute: ' + costText(m.reward) }) : null
+            el('div', { class: 'skirmish-mission-tags' }, [
+              el('span', { text: preview.profile.icon + ' ' + preview.profile.name }),
+              el('span', { text: preview.modifier.icon + ' ' + preview.modifier.name })
+            ]),
+            unlocked ? el('small', { text: preview.objective.icon + ' Optionalziel: ' + preview.objective.desc }) : null,
+            unlocked ? el('small', { text: 'Basisbeute: ' + costText(m.reward) + ' · ' + preview.modifier.desc }) : null
           ]),
           btn(unlocked ? 'Start' : 'Gesperrt', function () {
             var res = SYS.startSkirmish(s, m.id, SYS.skirmishStatus(s).stanceId);
@@ -123,8 +132,17 @@
           el('small', { text: Math.ceil(active.enemyHp) + ' / ' + active.enemyMaxHp + ' LP' })
         ])
       ]));
+      body.appendChild(el('div', { class: 'skirmish-encounter' + (active.phase === 'boss' ? ' boss' : '') }, [
+        el('div', null, [el('small', { text: 'PROFIL' }), el('b', { text: status.profile.icon + ' ' + status.profile.name }), el('span', { text: status.profile.desc })]),
+        el('div', null, [el('small', { text: 'MODIFIKATOR' }), el('b', { text: status.modifier.icon + ' ' + status.modifier.name }), el('span', { text: status.modifier.desc })]),
+        el('div', null, [el('small', { text: 'OPTIONALZIEL' }), el('b', { text: status.objective.icon + ' ' + status.objective.name }), el('span', { text: status.objectiveProgress })])
+      ]));
+      body.appendChild(el('div', { class: 'skirmish-phase' + (active.phase === 'boss' ? ' boss' : '') }, [
+        el('b', { text: status.phase.icon + ' ' + status.phase.name }),
+        el('span', { text: status.phase.desc })
+      ]));
       body.appendChild(el('div', { class: 'skirmish-telegraph' }, [
-        el('small', { text: 'GEGNERABSICHT · RUNDE ' + active.round + '/' + active.maxRounds }),
+        el('small', { text: (active.phase === 'boss' ? 'BOSSPHASE' : 'GEGNERABSICHT') + ' · RUNDE ' + active.round + '/' + active.maxRounds }),
         el('div', { class: 'skirmish-intent-icon', text: intent.icon }),
         el('b', { text: intent.name }),
         el('span', { text: intent.hint })
@@ -137,13 +155,14 @@
 
       function actButton(id, hint) {
         var a = SYS.SKIRMISH_ACTIONS[id], available = SYS.skirmishActionAvailable(s, id);
+        var liveHint = intent.counter === id ? ('✓ kontert ' + intent.name) : hint;
         return btn(a.icon + ' ' + a.name, function () {
           var res = SYS.skirmishAction(s, id);
           if (!res.ok) { toast(res.reason, 'bad'); return; }
           self.persist(s); self.updateTopbar(); self.render();
           if (res.finished) self.openSkirmishResult(res.result);
           else self.openSkirmishBattle();
-        }, { cls: 'skirmish-action action-' + id, disabled: !available, cost: hint + (a.cost ? ' · ' + a.cost + ' Fokus' : '') });
+        }, { cls: 'skirmish-action action-' + id, disabled: !available, cost: liveHint + (a.cost ? ' · ' + a.cost + ' Fokus' : '') });
       }
       body.appendChild(el('div', { class: 'skirmish-actions' }, [
         actButton('angriff', 'kontert Ritual'),
@@ -165,11 +184,18 @@
 
     openSkirmishResult: function (result) {
       var self = this, status = SYS.skirmishStatus(this.state);
+      var objective = findById(SYS.SKIRMISH_OBJECTIVES, result.objectiveId);
+      var modifier = findById(SYS.SKIRMISH_MODIFIERS, result.modifierId);
       var body = el('div', { class: 'skirmish-result ' + (result.won ? 'won' : 'lost') }, [
         el('div', { class: 'skirmish-result-icon', text: result.won ? '🏆' : '💥' }),
         el('h4', { text: result.won ? 'Einsatz gewonnen!' : 'Linie durchbrochen' }),
         el('p', { text: result.won ? ('Kombo ' + result.combo + ' · ' + result.rounds + ' Runden') : 'Kein dauerhafter Verlust. Eskalation wurde gesenkt.' }),
         result.won ? el('div', { class: 'skirmish-loot', text: resultReward(result) }) : null,
+        objective ? el('div', { class: 'skirmish-objective-result ' + (result.objectiveMet ? 'complete' : 'missed') }, [
+          el('b', { text: (result.objectiveMet ? '✓ ' : '○ ') + objective.name }),
+          el('span', { text: result.objectiveMet ? ('Bonus: ' + costText(result.objectiveReward || {}) + ' +' + (result.objectiveXp || 0) + ' EP') : 'Optionalziel nicht erfüllt – der Einsatzfortschritt bleibt erhalten.' })
+        ]) : null,
+        modifier ? el('div', { class: 'skirmish-result-meta', text: modifier.icon + ' ' + modifier.name + ' war aktiv.' }) : null,
         el('div', { class: 'skirmish-result-meta', text: 'Eskalation ' + result.heatBefore + ' → ' + result.heatAfter + ' · Siegesserie ' + status.streak }),
         el('div', { class: 'card-actions' }, [
           btn('⚡ Nächster Einsatz', function () { self.openSkirmishHub(); }, { cls: 'btn-action' }),

@@ -139,6 +139,8 @@ tryRender('Sturmeinsatz-Karte und aktives Konter-Gefecht', function () {
   if (!document.querySelector('#screen .skirmish-card')) throw new Error('keine prominente Sturmeinsatz-Karte');
   window.GameUI.openSkirmishHub();
   if (document.querySelectorAll('#modal-root .skirmish-mission').length !== 3) throw new Error('Missionen fehlen');
+  if (document.querySelectorAll('#modal-root .skirmish-mission-tags').length !== 3) throw new Error('Gegnerprofile oder Modifikator-Vorschau fehlt');
+  if (document.querySelectorAll('#modal-root .skirmish-mission-copy small').length < 3) throw new Error('Optionalziel-Vorschau fehlt');
   if (document.querySelectorAll('#modal-root .skirmish-stance').length !== window.GameSystems.SKIRMISH_STANCES.length) throw new Error('Haltungs-Picker fehlt');
   var berserk = Array.prototype.filter.call(document.querySelectorAll('#modal-root .skirmish-stance'), function (b) { return b.textContent.indexOf('Berserker') >= 0; })[0];
   if (!berserk) throw new Error('Berserker-Haltung fehlt');
@@ -149,11 +151,18 @@ tryRender('Sturmeinsatz-Karte und aktives Konter-Gefecht', function () {
   startBtn.click();
   if (!s.skirmish.active || !document.querySelector('#modal-root .skirmish-battle')) throw new Error('Gefecht nicht gestartet');
   if (s.skirmish.active.stanceId !== 'berserker') throw new Error('Gefecht nutzt gewählte Haltung nicht');
+  if (document.querySelectorAll('#modal-root .skirmish-encounter > div').length !== 3) throw new Error('Profil, Modifikator und Optionalziel nicht sichtbar');
+  if (!document.querySelector('#modal-root .skirmish-phase')) throw new Error('Gegnerphase fehlt');
   var counter = window.GameSystems.skirmishStatus(s).intent.counter;
   var actionBtn = document.querySelector('#modal-root .action-' + counter);
   if (!actionBtn) throw new Error('Konteraktion fehlt');
+  if (actionBtn.textContent.indexOf('✓ kontert') < 0) throw new Error('aktueller Konter nicht direkt am Button markiert');
+  s.skirmish.active.enemyHp = Math.floor(s.skirmish.active.enemyMaxHp / 2) + 1;
+  s.skirmish.active.heroAttack = 1;
   actionBtn.click();
   if (!s.skirmish.active || s.skirmish.active.combo !== 1) throw new Error('Konter baut keine Kombo auf');
+  if (!document.querySelector('#modal-root .skirmish-phase.boss')) throw new Error('Bossphase wird nach Phasenwechsel nicht angezeigt');
+  if (document.querySelector('#modal-root .skirmish-telegraph').textContent.indexOf('BOSSPHASE') < 0) throw new Error('Bossphase nicht in der Absicht angekündigt');
   var retreat = Array.prototype.filter.call(document.querySelectorAll('#modal-root .btn'), function (b) { return b.textContent.indexOf('Rückzug') >= 0; })[0];
   if (!retreat) throw new Error('Rückzug fehlt');
   retreat.click();

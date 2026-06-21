@@ -1,7 +1,7 @@
 /* Service Worker — App-Shell-Cache für echtes Offline (Phase 32).
    Cache-first für die Shell; alle übrigen gleichartigen GETs (Assets)
    werden zur Laufzeit beim ersten Laden gecached. */
-var CACHE = 'tempest-shell-v8';
+var CACHE = 'tempest-shell-v9';
 var SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest', './icon.svg', './assets/ui-icons.svg',
   './js/data-tables.js', './js/data.js', './js/art-data.js', './js/state.js',

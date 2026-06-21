@@ -85,5 +85,5 @@ test('Materialisierte UI-Symbole sind lokal, kompakt und offline verfügbar', as
   expect(source).toContain('viewBox="0 0 144 96"');
   expect(source.match(/transform="translate\(/g)?.length).toBe(24);
   expect(worker).toContain("'./assets/ui-icons.svg'");
-  expect(worker).toContain("tempest-shell-v8");
+  expect(worker).toContain("tempest-shell-v9");
 });

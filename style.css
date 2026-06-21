@@ -1866,7 +1866,9 @@ select.btn { text-align: left; min-height: 40px; }
 .skirmish-mission-icon { font-size: 27px; text-align: center; }
 .skirmish-mission-copy { min-width: 0; }
 .skirmish-mission-copy p { margin: 2px 0; color: var(--text-dim); font-size: 11px; }
-.skirmish-mission-copy small { color: var(--accent-2); font-size: 10px; }
+.skirmish-mission-copy small { display: block; margin-top: 3px; color: var(--accent-2); font-size: 10px; }
+.skirmish-mission-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.skirmish-mission-tags span { padding: 2px 6px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-dim); background: rgba(7,8,15,.35); font-size: 9px; }
 .modal.skirmish-modal { max-width: 680px; border-color: #7a4334; }
 .skirmish-versus { display: grid; grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); align-items: center; gap: 8px; }
 .skirmish-fighter { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 10px; text-align: center; background: rgba(9,7,16,.42); }
@@ -1875,6 +1877,17 @@ select.btn { text-align: left; min-height: 40px; }
 .skirmish-fighter small { color: var(--text-dim); font-size: 10px; }
 .skirmish-avatar { font-size: 34px; line-height: 1.1; }
 .skirmish-vs { color: var(--accent-2); font-family: Georgia, serif; font-weight: 700; text-align: center; }
+.skirmish-encounter { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 9px 0 6px; }
+.skirmish-encounter > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: rgba(9,7,16,.42); }
+.skirmish-encounter small { color: var(--text-mut); font-size: 8px; letter-spacing: .7px; }
+.skirmish-encounter b { overflow: hidden; color: var(--text); font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+.skirmish-encounter span { color: var(--text-dim); font-size: 8.5px; line-height: 1.25; }
+.skirmish-encounter.boss > div:first-child { border-color: #d06c3e; box-shadow: inset 0 0 14px rgba(204,70,31,.12); }
+.skirmish-phase { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid #4e6175; border-radius: 8px; background: rgba(21,37,53,.45); }
+.skirmish-phase b { flex: 0 0 auto; font-size: 10px; }
+.skirmish-phase span { color: var(--text-dim); font-size: 9px; }
+.skirmish-phase.boss { border-color: #d06c3e; background: rgba(116,39,23,.25); animation: skirmish-boss-pulse 1.6s ease-in-out infinite alternate; }
+@keyframes skirmish-boss-pulse { to { box-shadow: inset 0 0 18px rgba(235,91,40,.16), 0 0 9px rgba(235,91,40,.12); } }
 .skirmish-telegraph { display: grid; place-items: center; gap: 3px; margin: 11px 0 8px; padding: 10px; border: 1px solid #9e4e35; border-radius: 11px; background: radial-gradient(circle at center, rgba(173,56,30,.22), rgba(16,9,16,.62)); }
 .skirmish-telegraph small { color: #d9a28d; font-size: 9px; letter-spacing: .8px; }
 .skirmish-telegraph span { color: var(--text-dim); font-size: 11px; }
@@ -1900,6 +1913,11 @@ select.btn { text-align: left; min-height: 40px; }
 .skirmish-result h4, .skirmish-result p { margin: 0; }
 .skirmish-loot { padding: 9px 12px; border: 1px solid var(--accent-2); border-radius: 9px; color: var(--accent-2); background: rgba(197,139,63,.1); font-weight: 600; }
 .skirmish-result-meta { color: var(--text-mut); font-size: 11px; }
+.skirmish-objective-result { display: flex; flex-direction: column; gap: 3px; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: rgba(7,8,15,.4); }
+.skirmish-objective-result b { font-size: 12px; }
+.skirmish-objective-result span { color: var(--text-dim); font-size: 10px; }
+.skirmish-objective-result.complete { border-color: #4d9b68; background: rgba(42,116,69,.16); }
+.skirmish-objective-result.missed { opacity: .72; }
 
 @media (max-width: 460px) {
   .realm-summary { grid-template-columns: auto auto 1fr; }
@@ -1908,6 +1926,10 @@ select.btn { text-align: left; min-height: 40px; }
   .skirmish-card-stats > div:first-child { grid-column: 1 / -1; }
   .skirmish-mission { grid-template-columns: 36px minmax(0, 1fr); }
   .skirmish-mission .btn { grid-column: 1 / -1; }
+  .skirmish-encounter { grid-template-columns: 1fr; }
+  .skirmish-encounter > div { padding: 6px 8px; }
+  .skirmish-encounter span { font-size: 9px; }
+  .skirmish-phase { align-items: flex-start; flex-direction: column; gap: 2px; }
   .skirmish-actions .btn { min-height: 52px; padding-left: 5px; padding-right: 5px; }
 }
 

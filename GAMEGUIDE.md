@@ -203,6 +203,12 @@ Feldzügen: Ein Gefecht dauert nur wenige Entscheidungen und verursacht keine da
 Truppenverluste.
 
 - **Absicht lesen:** Der Gegner kündigt seinen nächsten Zug deutlich an.
+- **Haltung wählen:** Ausgewogen bleibt neutral; Berserker verursacht mehr Schaden, ist aber
+  verwundbarer; Wächter hält mehr aus; Arkanist startet mit zusätzlichem Fokus und stärkerer
+  Magie. Die Wahl gilt für genau den gestarteten Lauf und bleibt als Voreinstellung erhalten.
+- **Gegnerprofil erkennen:** Grenzwächter bereiten Block und Konterschlag vor, Alpha-Bestien
+  wechseln zwischen Doppelhieb und Raserei, Kettenhexer bauen Ritualketten auf. Die Muster
+  sind deterministisch; die aktuell nötige Gegenaktion steht immer direkt am Aktionsknopf.
 - **Richtig kontern:** 🛡️ Block stoppt den wilden Hieb, ✨ Magie bricht die gepanzerte
   Haltung und ⚔️ Angriff unterbricht das dunkle Ritual. Ein richtiger Konter verhindert
   Gegenschaden und erhöht die Kombo.
@@ -210,6 +216,12 @@ Truppenverluste.
   Fokus. Bei 5 Fokus wird **💥 Verschlingen** frei – ein massiver Treffer mit Heilung.
 - **Eskalation:** Jeder Sieg erhöht die Eskalationsstufe. Gegner werden stärker, die Beute
   steigt aber ebenfalls. Eine Niederlage senkt die Eskalation und beendet die Siegesserie.
+- **Bossphase:** Unter 50 % LP wechselt jedes Profil sichtbar in sein stärkeres Schlussmuster.
+  Name, Wirkung und die nächste Absicht werden vor deiner Reaktion vollständig angezeigt.
+- **Modifikator & Optionalziel:** Jeder Start dreht deterministisch zum nächsten Modifikator
+  (Sturmfront, Eiserne Reserve oder Zeitbruch) und Bonusziel. „Ohne Verschlingen",
+  „3 perfekte Konter in Folge" oder „Sieg vor Runde 8" geben Zusatzbeute, blockieren aber
+  weder Sieg noch Fortschritt, wenn sie verfehlt werden.
 - **Missionen:** Grenzalarm ist sofort offen; Bestienjagd und Dämonenvorstoß werden durch
   Reichs- bzw. Herrscherfortschritt freigeschaltet.
 - **Speicherbar:** Ein laufender Einsatz bleibt beim Schließen des Modals und nach dem

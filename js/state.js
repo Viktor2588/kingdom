@@ -116,7 +116,7 @@
       nextEventTick: 0,
       activeEvent: null,
       affinity: null,
-      skirmish: { active: null, heat: 0, streak: 0, bestCombo: 0, lastResult: null },
+      skirmish: { active: null, heat: 0, streak: 0, bestCombo: 0, rotation: 0, objectivesCompleted: 0, lastResult: null },
       uidCounter: 0,
       seenUnlocks: [],
       questProgress: 0,
@@ -124,7 +124,7 @@
       seenSpecies: [],
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
       log: [],
-      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, seelenGesamt: 0 }
+      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, seelenGesamt: 0 }
     };
     var slime = newCreature(s, 'schleim');
     var goblins = newCreature(s, 'goblin');
@@ -255,6 +255,8 @@
     s.skirmish.heat = Math.max(0, Math.min(8, Math.floor(Number(s.skirmish.heat) || 0)));
     s.skirmish.streak = Math.max(0, Math.floor(Number(s.skirmish.streak) || 0));
     s.skirmish.bestCombo = Math.max(0, Math.floor(Number(s.skirmish.bestCombo) || 0));
+    s.skirmish.rotation = Math.max(0, Math.floor(Number(s.skirmish.rotation) || 0));
+    s.skirmish.objectivesCompleted = Math.max(0, Math.floor(Number(s.skirmish.objectivesCompleted) || 0));
     if (!s.skirmish.lastResult || typeof s.skirmish.lastResult !== 'object' || Array.isArray(s.skirmish.lastResult)) s.skirmish.lastResult = null;
     if (s.skirmish.active && typeof s.skirmish.active === 'object') {
       var sa = s.skirmish.active;
@@ -273,6 +275,11 @@
         sa.focus = Math.max(0, Math.min(5, Math.floor(sa.focus || 0)));
         sa.combo = Math.max(0, Math.floor(sa.combo || 0));
         sa.bestCombo = Math.max(sa.combo, Math.floor(sa.bestCombo || 0));
+        ['intentStep', 'perfectStreak', 'maxPerfectStreak', 'finishersUsed'].forEach(function (key) {
+          sa[key] = Math.max(0, Math.floor(Number(sa[key]) || 0));
+        });
+        sa.maxPerfectStreak = Math.max(sa.perfectStreak, sa.maxPerfectStreak);
+        sa.objectiveComplete = !!sa.objectiveComplete;
         if (!Array.isArray(sa.log)) sa.log = [];
         sa.log = sa.log.slice(0, 7).map(function (line) { return String(line); });
       }

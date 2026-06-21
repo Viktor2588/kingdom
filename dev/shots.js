@@ -191,6 +191,42 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
     S.creatures = window.__PHASE23_CREATURES__; delete window.__PHASE23_CREATURES__;
   });
 
+  // Phase 42: Gegnerprofile/Modifikatoren/Ziele im Hub und sichtbare Bossphase.
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close'); if (close) close.click();
+    var T = window.__TEMPEST__; T.SYS.retreatSkirmish(T.state);
+    window.GameUI.openSkirmishHub();
+  });
+  await page.waitForTimeout(150);
+  var phase42Hub = await page.evaluate(function () {
+    return {
+      missions: document.querySelectorAll('.skirmish-mission').length,
+      tags: document.querySelectorAll('.skirmish-mission-tags').length,
+      objectives: Array.from(document.querySelectorAll('.skirmish-mission-copy small')).filter(function (n) { return n.textContent.indexOf('Optionalziel') >= 0; }).length
+    };
+  });
+  if (phase42Hub.missions !== 3 || phase42Hub.tags !== 3 || phase42Hub.objectives < 1) errors.push('phase42-hub: Profil-/Modifikator-/Zielvorschau unvollständig ' + JSON.stringify(phase42Hub));
+  await page.screenshot({ path: path.join(out, '12d-phase42-hub-mobile.png') });
+  console.log('  📸 12d-phase42-hub-mobile.png');
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close'); if (close) close.click();
+    var T = window.__TEMPEST__, S = T.state, SYS = T.SYS;
+    SYS.startSkirmish(S, 'grenzalarm', 'waechter');
+    S.skirmish.active.enemyHp = Math.floor(S.skirmish.active.enemyMaxHp / 2) + 1;
+    S.skirmish.active.heroAttack = 1;
+    SYS.skirmishAction(S, SYS.skirmishStatus(S).intent.counter);
+    window.GameUI.openSkirmishBattle();
+  });
+  await page.waitForTimeout(150);
+  var phase42Boss = await page.evaluate(function () {
+    var status = window.GameSystems.skirmishStatus(window.__TEMPEST__.state);
+    return status.active && status.active.phase === 'boss' && !!document.querySelector('.skirmish-phase.boss') && document.querySelector('.skirmish-telegraph').textContent.indexOf('BOSSPHASE') >= 0;
+  });
+  if (!phase42Boss) errors.push('phase42-boss: Bossphase oder Telegraphiestatus fehlt');
+  await page.screenshot({ path: path.join(out, '12e-phase42-boss-mobile.png') });
+  console.log('  📸 12e-phase42-boss-mobile.png');
+  await page.evaluate(function () { window.GameSystems.retreatSkirmish(window.__TEMPEST__.state); var close = document.querySelector('.modal-close'); if (close) close.click(); });
+
   // Desktop-Abnahme: dieselbe Sitzung bei 1440×900 in der neuen Spiel-Shell.
   await page.evaluate(function () {
     var close = document.querySelector('.modal-close');
@@ -224,6 +260,25 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.screenshot({ path: path.join(out, '15-desktop-kampf.png') });
   console.log('  📸 15-desktop-kampf.png');
 
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close'); if (close) close.click();
+    var T = window.__TEMPEST__, S = T.state, SYS = T.SYS;
+    SYS.closeCombat(S); SYS.startSkirmish(S, 'daemonenvorstoss', 'arkanist');
+    S.skirmish.active.enemyHp = Math.floor(S.skirmish.active.enemyMaxHp / 2) + 1;
+    S.skirmish.active.heroAttack = 1;
+    SYS.skirmishAction(S, SYS.skirmishStatus(S).intent.counter);
+    window.GameUI.openSkirmishBattle();
+  });
+  await page.waitForTimeout(180);
+  var phase42Desktop = await page.evaluate(function () {
+    var modal = document.querySelector('.skirmish-modal.battle');
+    return !!modal && !!modal.querySelector('.skirmish-phase.boss') && modal.scrollWidth <= modal.clientWidth;
+  });
+  if (!phase42Desktop) errors.push('phase42-desktop: Bossmodal fehlt oder besitzt horizontale Überbreite');
+  await page.screenshot({ path: path.join(out, '20-phase42-boss-desktop.png') });
+  console.log('  📸 20-phase42-boss-desktop.png');
+  await page.evaluate(function () { window.GameSystems.retreatSkirmish(window.__TEMPEST__.state); var close = document.querySelector('.modal-close'); if (close) close.click(); });
+
   // Zweite typische Desktopgröße: keine horizontale Seitenüberbreite.
   await page.evaluate(function () { var close = document.querySelector('.modal-close'); if (close) close.click(); });
   await page.setViewportSize({ width: 1366, height: 768 });
@@ -252,5 +307,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 27 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 30 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

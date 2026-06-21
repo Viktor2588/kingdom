@@ -15,7 +15,10 @@ skalierenden Zyklen. Ein gespeicherter Seed hält jeden laufenden Pfad reproduzi
 
 Für direkte Action zwischen den langen Aufbau- und Feldzugsphasen gibt es **Sturmeinsätze**:
 kurze, sofort wiederholbare Gefechte mit angekündigten Gegneraktionen, drei direkten Kontern,
-Fokus-/Komboaufbau und dem Finisher „Verschlingen". Siege erhöhen Eskalation, Gefahr und Beute.
+Fokus-/Komboaufbau und dem Finisher „Verschlingen". Grenzwächter, Alpha-Bestie und
+Kettenhexer besitzen eigene deterministische Angriffsmuster und wechseln unter 50 % LP in
+eine angekündigte Bossphase. Rotierende Einsatzmodifikatoren und freiwillige Bonusziele
+verändern Gefahr und Beute; Siege erhöhen weiterhin Eskalation, Gefahr und Belohnung.
 
 Die strategische Abenteuerkarte besitzt ein echtes verzweigtes Wegenetz, eroberbare und
 ausbaubare Ressourcenanlagen sowie optionale Fundorte mit einmaliger Beute.
@@ -91,7 +94,7 @@ js/
                     Affinität, Fusion, Runenschmiede, Echo-Generator/-Kämpfe, Herrscher-Talente,
                     Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
   systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
-  systems-skirmish.js Kurze Sturmeinsätze: Konter, Fokus, Kombo, Eskalation und Belohnungen
+  systems-skirmish.js Sturmeinsätze: Profile/Bossphasen, Konter, Haltungen, Ziele und Belohnungen
   art-data.js       Reine Atlas-/Asset-Metadaten für die Canvas-Szenen
   render/           Begrenzter DPR-/FPS-Canvas-Core, Animationstimeline, isometrische Kampf- und Abenteuerkartenszene
   ui.js             UI-Kern: Views, Management-Modals und gemeinsame DOM-Helfer
@@ -198,7 +201,7 @@ devDependencies), danach:
 ```bash
 bun install                  # einmalig: devDependencies installieren
 
-bun test                     # alle Tests (sim, domtest, playthrough)
+bun test                     # alle Tests inklusive Kampf-/Save-/UI-Matrizen
 bun test dev/sim.test.js     # nur die reinen Logiktests (ohne DOM)
 
 bun run balance              # Balance-Analyse (Kraftkurven je Rang, Regions-Monotonie)
@@ -209,8 +212,9 @@ Erwartete Ausgabe (Soll-Stand):
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
 | `bun test dev/sim.test.js`         | `1 pass` · `238 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `68 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/domtest.test.js`     | `1 pass` · `75 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/skirmish-profiles.test.js` | `7 pass` · Profile/Haltungen/Ziele/Save grün |
 | `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
 
 ### Screenshots (optional, Linux/WSL)
@@ -233,7 +237,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
-# → 27 PNGs in dev/screenshots/, darunter Kreaturenportraits, Canvas-Abenteuerkarte und Echo-Netz
+# → 30 PNGs in dev/screenshots/, darunter Kreaturenportraits, Canvas-Karten und Phase-42-Bossphase
 ```
 
 ---

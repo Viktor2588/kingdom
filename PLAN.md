@@ -280,6 +280,8 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Wiederspielbarkeit:** rotierende Einsatzmodifikatoren und optionale Ziele (z. B. „kein Finisher", „3 perfekte Konter in Folge", „Sieg vor Runde 8") geben zusätzliche Beute, ohne Pflichtfortschritt zu blockieren.
 - **Abnahme:** jede Profil-/Haltungs-Kombination ist gewinnbar; Intents bleiben vor der Aktion vollständig erkennbar; laufende v11-Spielstände normalisieren abwärtskompatibel; eine Szenariomatrix prüft Profile, Phasenwechsel, Ziele, Sieg/Niederlage und deterministische Seeds.
 
+[~] **Phase 43 – Aktive Belagerungsabwehr: Rivalen-Raids interaktiv (in Bearbeitung, Worktree `/worktree/phase-43`)** — Rivalen-Raids werden bisher vollautomatisch (passiv) aufgelöst (Verteidigung ≥ Kraft → abgewehrt). Diese Phase ergänzt eine **optionale aktive Verteidigung**: bei drohendem Angriff kann der Spieler eine Belagerung interaktiv führen (Mauer-/Bresche-Management: Verstärken/Ausfall/Bannschild über mehrere Runden), wodurch geschicktes Spiel auch einen stärkeren Raid abwehren kann. Bewusst **anderes Mechanik-Genre** als das Sturmeinsatz-Konterdreieck (Ressourcen-/Bresche-Management statt Telegraph-Konter). Auto-Auflösung bleibt unverändert als Fallback (Offline/Zuschauer); isoliert in `systems-siege.js`/`ui-siege.js`.
+
 ## Nicht-UI-Verbesserungen (Technik-Backlog, Analyse 2026-06-20, Worktree `/worktree/improvements`)
 Vorschläge aus einer Code-/Infrastruktur-Durchsicht; bewusst **keine UI-Themen**. Reihenfolge ≈ Priorität/Nutzen für den aktuellen Parallel-Phasen-Workflow.
 

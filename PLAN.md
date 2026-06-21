@@ -274,7 +274,7 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Isoliert & abwärtskompatibel:** nur `systems-skirmish.js` + `ui-action.js` + CSS berührt. Die neutrale Default-Haltung reproduziert exakt das alte Verhalten (Aufrufe ohne Haltung unverändert), daher keine Save-Schema-Änderung nötig — `active.stanceId`/`skirmish.stance` überstehen den v11-Roundtrip, `ensureState` defaultet korrupte Werte.
 - **Verifikation:** `bun test` → **56/56** grün (neu: 6 Haltungs-Tests in `dev/skirmish-stance.test.js`; bestehende 8 Sturmeinsatz-Tests unverändert grün; DOM-Test um Picker erweitert), 3× ohne Flake; `bun run balance` unverändert; eigener End-to-End-Drive aller 4 Haltungen durchgespielt.
 
-[ ] **Phase 42 – Gegnerprofile & Bossphasen für Sturmeinsätze (vorgeschlagen 2026-06-21)**
+[~] **Phase 42 – Gegnerprofile & Bossphasen für Sturmeinsätze (in Arbeit, Worktree `/worktree/phase-42`)**
 - **Befund:** Die drei Missionen skalieren derzeit vor allem Zahlen, verwenden aber denselben Intent-Pool. Nach Beherrschung des Konterdreiecks unterscheiden sich Läufe zu wenig; Haltungen verändern die eigene Rechnung, nicht das Gegnerverhalten.
 - **Vorschlag:** drei deterministische Gegnerprofile mit lesbaren Intent-Grammatiken (Bestie: Doppelhieb/Raserei, Wächter: Block-Konterschlag, Hexer: Ritualketten) sowie je eine klar angekündigte Bossphase unter 50 % LP. Keine versteckte Reaktions-RNG.
 - **Wiederspielbarkeit:** rotierende Einsatzmodifikatoren und optionale Ziele (z. B. „kein Finisher", „3 perfekte Konter in Folge", „Sieg vor Runde 8") geben zusätzliche Beute, ohne Pflichtfortschritt zu blockieren.

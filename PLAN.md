@@ -226,7 +226,7 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 - **Renderer-Vertrag & Performance:** `adventureRenderState()` liefert ausschließlich Kopien an `adventure-scene.js`; die Canvas-Szene verändert keine Regeln oder Zustände. Maximal 20 FPS, DPR-Limit 1,25, gecachte Nebelmaske, sauberer Renderloop-Abbau und die vorhandenen Effektstufen begrenzen Mobilkosten.
 - **Offline & Verifikation:** PWA-Cache v4 enthält Renderer, Weltkarte und finale Atlanten. `bun test` → 28/28 Testfälle grün (238 Logik-, 68 DOM- und 61 Durchspiel-Checks plus Karten-/Canvas-/Assettests); 27 echte Chromium-Aufnahmen bei 390×844 und 1440×900 ohne Browserfehler oder Seitenüberbreite.
 
-Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas
+[~] **Phase 35 – Vollständige Biome, Board-Sprites für 20 Linien & Effektatlas (in Arbeit, Worktree `/worktree/phase-35`)**
 
 Phase 36 – Reichspanorama und Management-UI materialisieren
 

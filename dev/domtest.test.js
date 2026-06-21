@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/achievements.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/achievements.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -181,6 +181,24 @@ tryRender('Aktive Belagerungsabwehr (Karte + Verteidigung)', function () {
   // Aufräumen für Folgetests
   if (s.siege.active) { window.GameSystems.abortSiege(s); }
   s.raid = null; window.GameUI.activeTab = 'uebersicht'; window.GameUI.render();
+});
+tryRender('Tactical-RPG-Schlacht (Gitter + Aktionen)', function () {
+  s.claimedRegions = s.claimedRegions.length ? s.claimedRegions : ['wald'];
+  var uids = s.creatures.slice(0, 3).map(function (c) { return c.uid; });
+  var start = window.GameBattle.startBattle(s, 'wald', uids, true, 99);
+  if (!start.ok) throw new Error('Schlacht nicht gestartet: ' + start.reason);
+  window.GameUI.openTacticalBattle();
+  if (!document.querySelector('.modal.tb-modal')) throw new Error('kein Schlacht-Modal');
+  if (document.querySelectorAll('#modal-root .tb-cell').length !== 8 * 6) throw new Error('Gitter unvollständig');
+  if (!document.querySelector('#modal-root .tb-token.party')) throw new Error('keine Party-Einheit');
+  if (window.GameBattle.isPlayerTurn(s)) {
+    var waitBtn = Array.prototype.filter.call(document.querySelectorAll('#modal-root .tb-actions .btn'), function (b) { return b.textContent.indexOf('Warten') >= 0; })[0];
+    if (!waitBtn) throw new Error('keine Aktionsknöpfe');
+    waitBtn.click(); // führt eine Aktion aus + Gegnerzüge
+  }
+  window.GameBattle.abortBattle(s); s.tacticalBattle = null;
+  var close = document.querySelector('.modal-close'); if (close) close.click();
+  window.GameUI.activeTab = 'uebersicht'; window.GameUI.render();
 });
 tryRender('Last-Epoch-artiger Herrscher-Talentbaum', function () {
   s.herrscher.level = Math.max(8, s.herrscher.level);

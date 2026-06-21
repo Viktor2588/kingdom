@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 12;
+  var VERSION = 13;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -118,6 +118,7 @@
       affinity: null,
       skirmish: { active: null, heat: 0, streak: 0, bestCombo: 0, rotation: 0, objectivesCompleted: 0, lastResult: null },
       siege: { active: null, lastResult: null },
+      tacticalBattle: null,
       uidCounter: 0,
       seenUnlocks: [],
       questProgress: 0,
@@ -302,6 +303,12 @@
         s.siege.active.log = s.siege.active.log.slice(0, 7).map(function (l) { return String(l); });
       }
     } else s.siege.active = null;
+    // Taktische Schlacht (Phase 44): laufenden Kampf nur behalten, wenn die Struktur
+    // intakt ist (Gitter + beide Seiten). Der deterministische RNG wird beim Laden
+    // aus dem Seed rekonstruiert (GameBattle.rehydrate), nicht serialisiert.
+    if (s.tacticalBattle && (typeof s.tacticalBattle !== 'object' || Array.isArray(s.tacticalBattle) ||
+        !Array.isArray(s.tacticalBattle.party) || !Array.isArray(s.tacticalBattle.enemies) || !Array.isArray(s.tacticalBattle.grid) ||
+        !GD().region(s.tacticalBattle.regionId))) s.tacticalBattle = null;
     // Alle bekannten Diablo-artigen Positionen ergänzen, ohne alte Ausrüstung zu verlieren.
     [s.herrscher].concat(s.creatures || []).forEach(function (holder) {
       if (!holder.equipment) holder.equipment = {};

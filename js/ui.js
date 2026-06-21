@@ -444,6 +444,8 @@
 
         // Aktive Belagerungsabwehr bei drohendem Raid (Phase 43, aus ui-siege.js).
         if (self.buildSiegeCard) { var siegeCard = self.buildSiegeCard(); if (siegeCard) box.appendChild(siegeCard); }
+        // Neues rundenbasiertes Tactical-RPG (Phase 44, aus ui-battle.js).
+        if (self.buildTacticalCard) { var tacticalCard = self.buildTacticalCard(); if (tacticalCard) box.appendChild(tacticalCard); }
         // Schnelle aktive Gefechtsschleife (Phase 40, aus ui-action.js).
         if (self.buildSkirmishCard) box.appendChild(self.buildSkirmishCard());
 

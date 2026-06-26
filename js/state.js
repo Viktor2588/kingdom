@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 13;
+  var VERSION = 14;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -124,6 +124,13 @@
       questProgress: 0,
       achievements: [],
       seenSpecies: [],
+      completion: {
+        enabled: false,
+        target: 'all',
+        lastProgressTick: 0,
+        lastSignature: '',
+        diagnostic: null
+      },
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
       log: [],
       metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, seelenGesamt: 0 }
@@ -221,6 +228,15 @@
     if (!Array.isArray(s.seenSpecies)) s.seenSpecies = [];
     (s.creatures || []).forEach(function (c) { if (c && c.speciesId && s.seenSpecies.indexOf(c.speciesId) < 0) s.seenSpecies.push(c.speciesId); });
     s.seenSpecies = s.seenSpecies.filter(function (id, i, a) { return !!GD().creature(id) && a.indexOf(id) === i; });
+    if (!s.completion || typeof s.completion !== 'object' || Array.isArray(s.completion)) {
+      s.completion = JSON.parse(JSON.stringify(def.completion));
+    }
+    fill(s.completion, def.completion);
+    s.completion.enabled = !!s.completion.enabled;
+    if (['all', 'achievements', 'bestiary'].indexOf(s.completion.target) < 0) s.completion.target = 'all';
+    s.completion.lastProgressTick = Math.max(0, Math.floor(Number(s.completion.lastProgressTick) || 0));
+    if (typeof s.completion.lastSignature !== 'string') s.completion.lastSignature = '';
+    if (s.completion.diagnostic != null && typeof s.completion.diagnostic !== 'string') s.completion.diagnostic = null;
     if (!Array.isArray(s.learnedFieldMagic)) s.learnedFieldMagic = [];
     s.learnedFieldMagic = s.learnedFieldMagic.filter(function (id, i, a) { return !!GD().fieldSpell(id) && a.indexOf(id) === i; });
     if (!s.adventureMagicCooldowns || typeof s.adventureMagicCooldowns !== 'object') s.adventureMagicCooldowns = {};

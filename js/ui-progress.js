@@ -8,7 +8,7 @@
   'use strict';
   var UI = window.GameUI, H = window.GameUIInternal;
   if (!UI || !H) throw new Error('ui-progress.js muss nach ui.js geladen werden');
-  var GD = window.GameData, GST = window.GameState;
+  var GD = window.GameData, GST = window.GameState, SYS = window.GameSystems;
   var el = H.el, fmt = H.fmt, bar = H.bar, btn = H.btn;
   var openModal = H.openModal, toast = H.toast, costText = H.costText, creatureArt = H.creatureArt, rankBadge = H.rankBadge, statsLine = H.statsLine;
 
@@ -231,6 +231,31 @@
       openModal('Kompendium', body, '📖', 'codex-modal');
     },
 
+    fastForwardCompletion: function (kind) {
+      var s = this.state, planner = window.GameCompletionPlanner;
+      if (!planner) return;
+      planner.ensure(s);
+      s.completion.enabled = true;
+      s.completion.target = kind;
+      var before = planner.snapshot(s), advanced = 0, reached = false;
+      for (var i = 0; i < 1200; i++) {
+        SYS.autoPlayStep(s);
+        SYS.tick(s);
+        advanced++;
+        var current = planner.snapshot(s);
+        reached = kind === 'achievements'
+          ? current.achievements.done > before.achievements.done
+          : current.bestiary.done > before.bestiary.done;
+        if (reached) break;
+      }
+      var status = planner.status(s);
+      toast(reached
+        ? ('⏩ Nächster ' + (kind === 'achievements' ? 'Erfolg' : 'Bestiarium-Eintrag') + ' nach ' + advanced + ' Ticks.')
+        : ('⏸ Kein Fortschritt nach ' + advanced + ' Ticks' + (status.diagnostic ? ': ' + status.diagnostic : '.')),
+      reached ? 'gold' : 'bad');
+      this.commit();
+    },
+
     // ---------- Zentrale Einstellungen (Phase 39) ----------
     openSettingsModal: function () {
       var self = this, s = this.state;
@@ -265,6 +290,56 @@
           self.persist(s); self.openSettingsModal();
         }, { small: true, cls: watchDetailed ? 'btn-gold' : '' })
       ]));
+
+      // Completion-Autopilot (Phase 46): Zielmodus, Fortschritt und Diagnose.
+      var planner = window.GameCompletionPlanner;
+      if (planner) {
+        var completion = planner.ensure(s), completionStatus = planner.status(s);
+        var cp = completionStatus.progress, focus = completionStatus.focus;
+        content.appendChild(el('div', { class: 'section-label', text: 'Completion-Autopilot' }));
+        content.appendChild(el('div', { class: 'stat-grid' }, [
+          el('div', { class: 'stat-cell' }, [
+            el('span', { class: 'stat-ico', text: '🏆' }),
+            el('div', { class: 'stat-body' }, [
+              el('div', { class: 'stat-k', text: 'Erfolge' }),
+              el('div', { class: 'stat-v', text: cp.achievements.done + ' / ' + cp.achievements.total })
+            ])
+          ]),
+          el('div', { class: 'stat-cell' }, [
+            el('span', { class: 'stat-ico', text: '📖' }),
+            el('div', { class: 'stat-body' }, [
+              el('div', { class: 'stat-k', text: 'Bestiarium' }),
+              el('div', { class: 'stat-v', text: cp.bestiary.done + ' / ' + cp.bestiary.total })
+            ])
+          ])
+        ]));
+        content.appendChild(el('div', { class: 'opt-choice' }, [
+          btn(completion.enabled ? '🎯 100%-Run: an' : '🎯 100%-Run: aus', function () {
+            completion.enabled = !completion.enabled;
+            if (completion.enabled) s.settings.watch = true;
+            toast(completion.enabled ? '🎯 Completion-Autopilot gestartet.' : '⏸ Completion-Autopilot gestoppt.', completion.enabled ? 'gold' : '');
+            self.persist(s); self.openSettingsModal();
+          }, { small: true, cls: completion.enabled ? 'btn-gold' : '' })
+        ]));
+        var targetRow = el('div', { class: 'opt-choice' });
+        [['all', 'Alles'], ['achievements', 'Erfolge'], ['bestiary', 'Bestiarium']].forEach(function (entry) {
+          targetRow.appendChild(btn(entry[1], function () {
+            completion.target = entry[0];
+            self.persist(s); self.openSettingsModal();
+          }, { small: true, cls: completion.target === entry[0] ? 'btn-gold' : '' }));
+        });
+        content.appendChild(targetRow);
+        content.appendChild(el('div', { class: 'opt-choice' }, [
+          btn('⏩ Bis nächster Erfolg', function () { self.fastForwardCompletion('achievements'); }, { small: true }),
+          btn('⏩ Bis nächste Form', function () { self.fastForwardCompletion('bestiary'); }, { small: true })
+        ]));
+        if (focus) {
+          content.appendChild(el('p', { class: 'muted', text: 'Aktueller Plan: ' + (focus.kind === 'bestiary' ? 'Bestiarium · ' : 'Erfolg · ') + focus.title + (focus.reason ? ' — ' + focus.reason : '') }));
+        }
+        if (completionStatus.diagnostic) {
+          content.appendChild(el('p', { class: 'notice bad', text: 'Blockade: ' + completionStatus.diagnostic }));
+        }
+      }
 
       // Spielstand-Verwaltung (Export/Import) — aus dem Herrscher-Modal hierher zentralisiert.
       content.appendChild(el('hr', { class: 'sep' }));

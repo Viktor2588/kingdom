@@ -335,13 +335,16 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 ## Neue Spielspaß-Phasen (Vorschlag gegen Langeweile)
 Diese Phasen sind bewusst als **offene, nicht begonnene** Arbeitspakete formuliert. Sie sollen zuerst die vorhandenen Systeme besser ausnutzen, bevor neue Großsysteme gebaut werden.
 
-[ ] **Phase 46 – Completion-Autopilot: Zuschauer-Modus spielt auf 100 % Erfolge & Bestiarium** — der Auto-/Watch-/Simulationsmodus soll nicht mehr nur "vernünftig irgendetwas" tun, sondern gezielt alle Langzeitziele abschließen.
+[x] **Phase 46 – Completion-Autopilot: Zuschauer-Modus spielt auf 100 % Erfolge & Bestiarium (2026-06-26)** — der Auto-/Watch-/Simulationsmodus spielt gezielt alle Langzeitziele ab.
 - **Zielgraph statt Greedy-Berater:** `autoPlayStep` bekommt eine priorisierte Zielplanung über offene Erfolge, ungesehene Bestiarium-Formen, fehlende Regionen, Herrscherstufen, Baupläne, Talente und Echo-Fortschritt. Jede Aktion nennt ihr Ziel: "für Erfolg X", "für Bestiarium-Form Y", "für Voraussetzung Z".
 - **Bestiarium-Planer:** Für jede nicht entdeckte Spezies wird eine Route berechnet: benötigte Grundlinie beschwören/rekrutieren, Namenssiegel sichern, Level/Seelen farmen, Herrscherstufe/Forschung freischalten, Evolution auslösen, `seenSpecies` verifizieren.
 - **Erfolgs-Planer:** Für jede Achievement-Kategorie gibt es Strategien statt Zufall: Bau-/Upgrade-Ziele, Kampf-/Raid-/Echo-Ziele, Schmiedequalität, Skill-Meisterschaft, Talente, Kartenabschluss. Erfolge mit dynamischen Zielen lesen ihre Vorgaben direkt aus `GameAchievements`.
 - **Simulations-UI:** neue Schalter "100%-Run starten", "bis zum nächsten Erfolg vorspulen", "bis zur nächsten Bestiarium-Entdeckung vorspulen" und "Auto-Plan anzeigen". Der Verlauf zeigt Fortschrittsbalken: Erfolge, Bestiarium, Regionen, Baupläne, Talente.
 - **Stuck-Detection:** Wenn der Auto-Modus 300 Ticks kein messbares Ziel voranbringt, schreibt er einen Diagnoseeintrag: blockierende Ressource, fehlende Kapazität, fehlender Rang, fehlende Forschung oder fehlerhafte Strategie. Keine still hängenden Saves mehr.
 - **Headless-Abnahme:** deterministische 100%-Simulation ab frischem Save; Test bricht bei Stalls ab und beweist, dass alle aktuellen Erfolge freigeschaltet und alle Bestiarium-Spezies entdeckt werden können. Zusätzlich Regression: kein Wohnkapazitäts-Overflow, keine `NaN`/`Infinity`, Save-Roundtrip während Langlauf.
+- **Umgesetzt:** DOM-freier Zielgraph in `js/completion-planner.js`, Save-Schema v14, Ziel-/Vorspulsteuerung in den Einstellungen, 300-Tick-Diagnose sowie spezielle Strategien für Evolutionszweige, Taktikkämpfe, Armeegruppen, Echo-Zyklen, Rivalenbelagerungen, Namenssiegel und Level 100.
+- **Regelfehler behoben:** Evolutionsanforderungen liegen nicht mehr über dem erreichbaren Level-Cap; besiegte Rivalen werden bei neuen Angriffen übersprungen; Rekrutierung überschreitet die Wohnkapazität nicht.
+- **Abnahme:** `bun dev/completion-acceptance.js` erreicht mit Seed 42 bei Tick **7.810** exakt **42/42 Erfolge** und **78/78 Bestiarium-Formen**, ohne Kapazitäts-Overflow oder Restdiagnose. Gesamtsuite: **115 Tests, 0 Fehler**.
 
 [ ] **Phase 47 – Zuschauer-Modus als gute Show: Director, Highlights & Zeitraffer** — Watchmode soll unterhaltsam sein, nicht nur ein schneller Bot.
 - **Director-Feed:** Entscheidungen werden gruppiert und erklärt ("Aufbau", "Jagd auf Phönixlinie", "Raid-Vorbereitung", "Schmiede-Ziel"). Der Feed fasst belanglose Wiederholungen zusammen und hebt nur relevante Wendepunkte hervor.

@@ -96,6 +96,7 @@ js/
   systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
   systems-skirmish.js Sturmeinsätze: Profile/Bossphasen, Konter, Haltungen, Ziele und Belohnungen
   systems-action.js Echtzeit-Action-Kampf: 30-Hz-Fixed-Step-Sim, Telegraf/Ausweichrolle, Hotbar, Gegnertypen + Boss, Combo (GameActionCombat)
+  completion-planner.js Zielgraph für 100%-Autopilot, Bestiarium-/Erfolgsstrategien und Stuck-Diagnose
   art-data.js       Reine Atlas-/Asset-Metadaten für die Canvas-Szenen
   render/           Begrenzter DPR-/FPS-Canvas-Core, Animationstimeline, isometrische Kampf-, Abenteuerkarten- und Echtzeit-Action-Szene
   ui.js             UI-Kern: Views, Management-Modals und gemeinsame DOM-Helfer
@@ -133,7 +134,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v11 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt und Freischaltungen bleiben erhalten).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v14 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt und Freischaltungen bleiben erhalten).
 - **Zurücksetzen:** im Spiel über **⚙️ Einstellungen** → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
   ```js
@@ -166,6 +167,11 @@ Seelen opfern und freie Talentpunkte verteilen).
 *Übersicht* → Karte **„Zuschauer-Modus"** → **▶ Starten**.
 Mit **🎬 Sichtbar** erscheint jede Berater-Aktion als kurzer Dialog mit Pause und Verlauf.
 Zusätzlich **⏩ Vorspulen 5 min** springt mehrere Minuten Spielzeit auf einmal.
+
+Unter **⚙️ Einstellungen → Completion-Autopilot** lässt sich ein 100%-Run für alle Ziele,
+nur Erfolge oder nur das Bestiarium starten. Dort stehen auch Vorspulen bis zum nächsten
+Erfolg beziehungsweise zur nächsten Form, der aktuelle Zielplan und eine Blockade-Diagnose
+nach 300 Ticks ohne messbaren Fortschritt bereit.
 
 **Per Konsole:**
 ```js
@@ -205,6 +211,7 @@ bun install                  # einmalig: devDependencies installieren
 
 bun test                     # alle Tests inklusive Kampf-/Save-/UI-Matrizen
 bun test dev/sim.test.js     # nur die reinen Logiktests (ohne DOM)
+bun dev/completion-acceptance.js # Seed-42-Abnahme: 42/42 Erfolge und 78/78 Formen
 
 bun run balance              # Balance-Analyse (Kraftkurven je Rang, Regions-Monotonie)
 ```
@@ -214,9 +221,10 @@ Erwartete Ausgabe (Soll-Stand):
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
 | `bun test dev/sim.test.js`         | `1 pass` · `238 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `75 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/domtest.test.js`     | `1 pass` · `78 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/skirmish-profiles.test.js` | `7 pass` · Profile/Haltungen/Ziele/Save grün |
+| `bun dev/completion-acceptance.js` | Tick `7810` · `42/42` Erfolge · `78/78` Formen |
 | `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
 
 ### Screenshots (optional, Linux/WSL)

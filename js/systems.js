@@ -2018,13 +2018,12 @@
     return (0.05 + 0.03 * claimed) * (1 - ruhe);
   }
   function pickRival(state) {
-    var def = Math.max(50, defenseValue(state));
-    var list = GD().rivals, chosen = list[0];
-    list.forEach(function (r) { if (r.basePower <= def * 1.6) chosen = r; });
-    return chosen;
+    var list = GD().rivals.filter(function (rival) { return !isRivalDefeated(state, rival.id); });
+    return list[0] || null;
   }
   function scheduleRaid(state) {
     var rv = pickRival(state);
+    if (!rv) return null;
     var prog = (state.rivalProgress && state.rivalProgress[rv.id]) || 0;
     var basePower = rv.basePower * Math.pow(rv.growth, prog);
     // an die Spielerstärke koppeln, damit es eine echte Bedrohung bleibt
@@ -2350,8 +2349,9 @@
     GD().affinities.forEach(function (a) { var n = count[a.school] || 0; if (n > bestN) { bestN = n; bestSchool = a.id; } });
     return bestSchool || 'tod';
   }
-  // Führt EINE sinnvolle Aktion aus und beschreibt sie (oder null, wenn nichts ansteht).
-  function autoPlayStep(state) {
+  // Führt EINE allgemeine Berater-Aktion aus. Der Completion-Planer aus
+  // completion-planner.js kann diese Routine gezielt als Fallback verwenden.
+  function autoPlayGreedyStep(state) {
     // 0) offenes Wahl-Event automatisch entscheiden
     if (state.activeEvent) {
       var ev = GD().event(state.activeEvent);
@@ -2377,17 +2377,35 @@
     if ((prod.hunger || prod.rates.nahrung < 0) && canBuild(state, 'farm')) { build(state, 'farm'); return { text: '🌾 Farm ausgebaut.' }; }
     // 2) Kapazität voll → Wohnbezirk
     if (usedCapacity(state) >= capacity(state) && canBuild(state, 'wohnbezirk')) { build(state, 'wohnbezirk'); return { text: '🏘️ Wohnbezirk ausgebaut.' }; }
-    // 3) unbenannte Kreatur benennen
-    var unnamed = state.creatures.filter(function (c) { return !c.named && !creatureBusy(state, c.uid); });
-    for (var u = 0; u < unnamed.length; u++) { if (canName(state, unnamed[u]).ok) { var r3 = nameCreature(state, unnamed[u].uid, null, pickAspectFor(unnamed[u])); if (r3.ok) return { text: '✨ „' + r3.creature.name + '" benannt.' }; } }
-    // 4) bereite Evolution durchführen
-    for (var e = 0; e < state.creatures.length; e++) {
-      var c = state.creatures[e]; if (creatureBusy(state, c.uid)) continue;
-      var ready = evolveOptions(state, c).filter(function (o) { return o.ok; });
-      if (ready.length) { var r4 = evolve(state, c.uid, ready[0].to); if (r4.ok) return { text: '🧬 Evolution zu ' + GD().creature(ready[0].to).name + '.' }; }
+    var completionBestiaryOpen = !!(state.completion && state.completion.enabled
+      && (state.seenSpecies || []).length < GD().creatures.length);
+    var completionEnabled = !!(state.completion && state.completion.enabled);
+    function completionAchievementOpen(id) {
+      return completionEnabled && root.GameAchievements && !root.GameAchievements.isUnlocked(state, id);
+    }
+    var completionNeedsNamed = completionAchievementOpen('k_named20');
+    var completionNeedsSummons = completionAchievementOpen('k_summon25');
+    var completionNeedsFusion = completionAchievementOpen('k_fusion5');
+    var completionNeedsLevel100 = completionAchievementOpen('k_level100');
+    var completionNeedsArmyWins = completionAchievementOpen('c_army10');
+    // 3) unbenannte Kreatur benennen. Im Completion-Modus entscheidet der
+    // Zielplaner, welche Linie/Verzweigung den knappen Namensslot erhält.
+    if (!completionBestiaryOpen) {
+      var unnamed = state.creatures.filter(function (c) { return !c.named && !creatureBusy(state, c.uid); });
+      for (var u = 0; u < unnamed.length; u++) { if (canName(state, unnamed[u]).ok) { var r3 = nameCreature(state, unnamed[u].uid, null, pickAspectFor(unnamed[u])); if (r3.ok) return { text: '✨ „' + r3.creature.name + '" benannt.' }; } }
+      // 4) bereite Evolution durchführen
+      for (var e = 0; e < state.creatures.length; e++) {
+        var c = state.creatures[e]; if (creatureBusy(state, c.uid)) continue;
+        var ready = evolveOptions(state, c).filter(function (o) { return o.ok; });
+        if (ready.length) { var r4 = evolve(state, c.uid, ready[0].to); if (r4.ok) return { text: '🧬 Evolution zu ' + GD().creature(ready[0].to).name + '.' }; }
+      }
     }
     // 4b) Benannte Elite als strategische Armee aufstellen und auf der Karte führen.
-    if ((state.armyGroups || []).length < maxArmyGroups(state)) {
+    var completionLeaderGroups = (state.armyGroups || []).filter(function (group) {
+      return !group.rulerLed && !!findCreature(state, group.leaderUid);
+    }).length;
+    if (!completionBestiaryOpen && (!completionEnabled || (completionNeedsArmyWins && completionLeaderGroups < 1))
+      && (state.armyGroups || []).length < maxArmyGroups(state)) {
       var leaders = eligibleArmyLeaders(state);
       if (leaders.length && canCreateArmyGroup(state, leaders[0].uid).ok) {
         var agr = createArmyGroup(state, leaders[0].uid);
@@ -2396,18 +2414,24 @@
     }
     for (var agi = 0; agi < (state.armyGroups || []).length; agi++) {
       var ag = state.armyGroups[agi], usedCmd = armyCommandUsed(ag), capCmd = armyCommandCapacity(state, ag);
+      // Die Herrscherarmee hält im Completion-Modus die noch benötigten
+      // Grundformen. Strategische Feldzüge mit permanenten Truppenverlusten
+      // übernimmt solange eine benannte Anführerarmee.
+      if (completionBestiaryOpen && ag.rulerLed) continue;
       // Nur mit freier Wohn-Kapazität rekrutieren – sonst wuchert die Bevölkerung
       // weit über die Kapazität (Berater baut sonst Hungersnot-anfällige Heere auf).
-      if (usedCmd < capCmd * 0.6 && usedCapacity(state) < capacity(state)) {
+      if (!completionBestiaryOpen && usedCmd < capCmd * 0.6 && usedCapacity(state) < capacity(state)) {
+        var freePopulation = Math.max(0, Math.floor(capacity(state) - usedCapacity(state)));
         var lead = findCreature(state, ag.leaderUid), leadSp = lead ? GD().creature(lead.speciesId) : null;
         var pool = recruitableTroops(state).slice().sort(function (a, b) {
           var as = leadSp && a.line === leadSp.line ? 1 : 0, bs = leadSp && b.line === leadSp.line ? 1 : 0;
           return bs - as || troopCommandCost(a.id) - troopCommandCost(b.id);
         });
         for (var api = 0; api < pool.length; api++) {
-          if (canRecruitTroops(state, ag.id, pool[api].id, 10).ok) {
-            recruitTroops(state, ag.id, pool[api].id, 10);
-            return { text: '🛡️ 10× ' + pool[api].name + ' für ' + ag.name + ' rekrutiert.' };
+          var recruitAmount = Math.min(10, freePopulation);
+          if (recruitAmount > 0 && canRecruitTroops(state, ag.id, pool[api].id, recruitAmount).ok) {
+            recruitTroops(state, ag.id, pool[api].id, recruitAmount);
+            return { text: '🛡️ ' + recruitAmount + '× ' + pool[api].name + ' für ' + ag.name + ' rekrutiert.' };
           }
         }
       }
@@ -2473,7 +2497,7 @@
     // 7) Affinität wählen (einmalig, ab Stufe 2)
     if (canChooseAffinity(state).ok) { var aff = pickAffinityFor(state); if (chooseAffinity(state, aff).ok) return { text: '🌟 Affinität: ' + GD().affinity(aff).name + '.' }; }
     // 8) Klaren Seelen-Überschuss opfern → Herrscher-EP (Reserve für Evolutionen lassen)
-    if ((state.resources.seelen || 0) > 1500) { var amt = Math.floor(state.resources.seelen - 800); if (amt > 0 && sacrificeSouls(state, amt).ok) return { text: '🩸 ' + amt + ' Seelen geopfert.' }; }
+    if (!completionNeedsNamed && (state.resources.seelen || 0) > 1500) { var amt = Math.floor(state.resources.seelen - 800); if (amt > 0 && sacrificeSouls(state, amt).ok) return { text: '🩸 ' + amt + ' Seelen geopfert.' }; }
     // 9) freie Kreatur einem Job zuweisen
     var frei = state.creatures.filter(function (cc) { return cc.job === 'frei' && !creatureBusy(state, cc.uid); });
     if (frei.length) { var job = pickJobFor(state, frei[0]); if (assignJob(state, frei[0].uid, job).ok) return { text: (frei[0].named ? frei[0].name : GD().creature(frei[0].speciesId).name) + ' → ' + (JOB_BY[job] ? JOB_BY[job].name : job) + '.' }; }
@@ -2491,9 +2515,13 @@
     var mlist = GD().magic.slice().sort(function (a, b) { return a.tier - b.tier; });
     for (var mi = 0; mi < mlist.length; mi++) { if (canLearn(state, mlist[mi].id).ok && affordReserve(state, mlist[mi].cost, 1.2)) { if (learnMagic(state, mlist[mi].id).ok) return { text: '🔮 Zauber: ' + mlist[mi].name + '.' }; } }
     // 13) Fusion im Endgame (überzählige Kreaturen verschmelzen)
-    if (featureUnlocked(state, 'fusion') && state.creatures.length >= 8) {
+    if (!completionBestiaryOpen && (!completionEnabled || (completionNeedsFusion && !completionNeedsNamed))
+      && featureUnlocked(state, 'fusion') && state.creatures.length >= 8) {
       var named = state.creatures.filter(function (cc) { return cc.named && !creatureBusy(state, cc.uid) && (cc.fusionLevel || 0) < FUSION_MAX; }).sort(function (a, b) { return (a.fusionLevel || 0) - (b.fusionLevel || 0); });
-      var fodder = state.creatures.filter(function (cc) { return cc.named && !creatureBusy(state, cc.uid); }).sort(function (a, b) { return creaturePower(state, a) - creaturePower(state, b); });
+      var fodder = state.creatures.filter(function (cc) {
+        return cc.named && !creatureBusy(state, cc.uid)
+          && (!completionNeedsLevel100 || creatureLevelCap(cc) < 100);
+      }).sort(function (a, b) { return creaturePower(state, a) - creaturePower(state, b); });
       if (named.length && fodder.length) {
         var baseC = named[0];
         var catC = fodder.filter(function (cc) { return cc.uid !== baseC.uid; })[0];
@@ -2501,7 +2529,9 @@
       }
     }
     // 14) beschwören (wenn Kapazität frei)
-    if (usedCapacity(state) < capacity(state)) { var sp = bestSummon(state); if (sp) { var r13 = summon(state, sp.id); if (r13.ok) return { text: '✨ ' + sp.name + ' beschworen.' }; } }
+    if (!completionBestiaryOpen && (!completionEnabled || completionNeedsSummons) && usedCapacity(state) < capacity(state)) {
+      var sp = bestSummon(state); if (sp) { var r13 = summon(state, sp.id); if (r13.ok) return { text: '✨ ' + sp.name + ' beschworen.' }; }
+    }
     // 15) In regelmäßigen Abständen einen erreichbaren Echo-Knoten räumen.
     // Der Abstand verhindert, dass das Endlos-System alle Aufbauaktionen verdrängt.
     if (echoUnlocked(state) && state.tick - ((state.echoes && state.echoes.lastAutoTick) || -999) >= 15) {
@@ -2511,7 +2541,9 @@
         if (nextEcho.ok) { state.echoes.lastAutoTick = state.tick; return { text: '🌀 Echo-Zyklus ' + nextEcho.cycle + ' geöffnet.' }; }
       }
       var echoTargets = availableEchoNodes(state).sort(function (a, b) { return a.power - b.power; });
-      var echoArmies = (state.armyGroups || []).slice().sort(function (a, b) { return armyGroupPower(state, b) - armyGroupPower(state, a); });
+      var echoArmies = (state.armyGroups || []).filter(function (group) {
+        return !completionBestiaryOpen || !group.rulerLed;
+      }).sort(function (a, b) { return armyGroupPower(state, b) - armyGroupPower(state, a); });
       for (var eti = 0; eti < echoTargets.length; eti++) {
         for (var eai = 0; eai < echoArmies.length; eai++) {
           var echoCheck = canChallengeEcho(state, echoArmies[eai].id, echoTargets[eti].id);
@@ -2553,6 +2585,17 @@
       }
     }
     return null;
+  }
+
+  // Öffentliche Auto-Routine. Das zusätzliche Modul wird nach achievements.js
+  // geladen; ohne Modul oder ohne aktivierten Completion-Modus bleibt das
+  // bisherige Verhalten unverändert.
+  function autoPlayStep(state) {
+    if (state.completion && state.completion.enabled && root.GameCompletionPlanner) {
+      var planned = root.GameCompletionPlanner.step(state);
+      if (planned) return planned;
+    }
+    return autoPlayGreedyStep(state);
   }
   // Auto-Ausrüsten: legt ein Item dem ersten Träger mit freiem passenden Slot an (Herrscher bevorzugt).
   function autoEquip(state, item) {
@@ -2653,7 +2696,7 @@
     tabUnlocked: tabUnlocked, currentUnlockSet: currentUnlockSet, syncUnlocks: syncUnlocks, collectNewUnlocks: collectNewUnlocks,
     visibleRegions: visibleRegions, summonTeasers: summonTeasers,
     FUSION_MAX: FUSION_MAX, fusionCost: fusionCost, canFuse: canFuse, fuse: fuse,
-    autoPlayStep: autoPlayStep,
+    autoPlayStep: autoPlayStep, autoPlayGreedyStep: autoPlayGreedyStep,
     isWounded: isWounded, woundRemaining: woundRemaining,
     applyEventEffect: applyEventEffect, pickEvent: pickEvent, stepEvents: stepEvents, resolveEvent: resolveEvent, scheduleNextEvent: scheduleNextEvent,
     canChooseAffinity: canChooseAffinity, chooseAffinity: chooseAffinity,

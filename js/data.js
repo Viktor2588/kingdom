@@ -217,7 +217,13 @@
   var byId = {};
   creatures.forEach(function (sp) {
     sp.base = baseStatsFor(sp);
-    sp.levelCap = RANK_LEVELCAP[sp.rank] || 40;
+    var evolutionLevel = (sp.evolvesTo || []).reduce(function (max, evolution) {
+      return Math.max(max, Number(evolution.req && evolution.req.level) || 0);
+    }, 0);
+    // Eine Evolutionsanforderung darf nie oberhalb des erreichbaren Levels
+    // ihrer Ausgangsform liegen. Einzelne C-Rang-Linien benötigen bewusst
+    // Level 46–50 und erweitern deshalb ihren normalen Rang-Cap.
+    sp.levelCap = Math.max(RANK_LEVELCAP[sp.rank] || 40, evolutionLevel);
     sp.power = combatPower(sp.base, 1, 1);
     byId[sp.id] = sp;
   });

@@ -110,9 +110,12 @@
   };
   function kindParams(kind) { return ENEMY_KINDS[kind] || ENEMY_KINDS.verfolger; }
 
-  function buildEnemies(state, region, rng) {
-    var count = clamp(2 + Math.floor(region.power / 55), 2, 7);
-    var per = Math.max(8, Math.round(region.power / count));
+  function waveScale(wave) { return 1 + (wave - 1) * 0.35; }   // spätere Wellen sind stärker
+
+  function buildEnemies(region, rng, wave, withBoss) {
+    var power = region.power * waveScale(wave);
+    var count = clamp(2 + Math.floor(power / 55), 2, 7);
+    var per = Math.max(8, Math.round(power / count));
     var order = ['verfolger', 'werfer', 'brecher'], enemies = [];
     for (var i = 0; i < count; i++) {
       var kind = order[i % order.length], k = kindParams(kind);
@@ -121,7 +124,7 @@
       var ex = AW * (0.58 + rng() * 0.38);
       var ey = AH * (0.12 + (i + 0.5) / count * 0.76);
       enemies.push({
-        side: 'enemy', kind: kind, key: 'e' + i,
+        side: 'enemy', kind: kind, key: 'w' + wave + 'e' + i,
         name: region.icon + ' ' + k.label + ' ' + (i + 1), icon: k.icons[i % k.icons.length],
         x: ex, y: ey, r: k.r,
         hp: hp, maxHp: hp, atk: atk, def: Math.round(per * 0.28),
@@ -131,8 +134,8 @@
         weakness: ['feuer', 'wasser', 'wind', null][i % 4], element: 'physisch', boss: false, enraged: false
       });
     }
-    // Boss in stärkeren Regionen: verstärkt den letzten Gegner (eigene Phase < 50 % LP).
-    if (region.power >= 200 && enemies.length) {
+    // Boss nur in der Schlusswelle starker Regionen: verstärkt den letzten Gegner (Phase < 50 % LP).
+    if (withBoss && region.power >= 200 && enemies.length) {
       var bo = enemies[enemies.length - 1], bk = kindParams('brecher');
       bo.boss = true; bo.kind = 'brecher'; bo.name = region.icon + ' ' + region.name + '-Fürst'; bo.icon = '👑';
       bo.r = 3.4; bo.hp = Math.round(bo.maxHp * 2.4); bo.maxHp = bo.hp; bo.atk = Math.round(bo.atk * 1.4);
@@ -292,9 +295,19 @@
     // Aufräumen der toten Gegner aus der Liste (klein halten).
     b.enemies = b.enemies.filter(function (e) { return !e.dead; });
 
-    // Terminierung.
+    // Terminierung / Wellenwechsel.
     if (hero.dead) { b.status = 'lost'; alog(b, '💥 Niederlage.'); return; }
-    if (!b.enemies.length) { b.status = 'won'; alog(b, '🏆 Welle bezwungen!'); return; }
+    if (!b.enemies.length) {
+      if (b.wave < b.totalWaves) {
+        b.wave++;
+        var region = GD().region(b.regionId);
+        hero.hp = Math.min(hero.maxHp, hero.hp + Math.round(hero.maxHp * 0.15));   // kurze Atempause
+        b.enemies = buildEnemies(region, b.rng, b.wave, b.wave === b.totalWaves);
+        alog(b, '🌊 Welle ' + b.wave + '/' + b.totalWaves + ' rückt an! (+15 % LP)');
+        return;
+      }
+      b.status = 'won'; alog(b, '🏆 Alle Wellen bezwungen!'); return;
+    }
     if (b.elapsed >= MAX_SECONDS) { resolveTimeout(b); }
   }
 
@@ -337,11 +350,13 @@
     var hero = buildHero(state, creatureUids, rulerJoin); if (!hero) return { ok: false, reason: 'Keine Einheiten für das Gefecht.' };
     seed = Math.max(1, Math.floor(seed || (Number(state.tick) || 1) * 2654435761 % 2147483647 || 1));
     var rng = makeRng(seed);
-    var enemies = buildEnemies(state, region, rng);
+    var totalWaves = clamp(2 + Math.floor(region.power / 260), 2, 3);
+    var enemies = buildEnemies(region, rng, 1, totalWaves === 1);
     var b = {
       regionId: regionId, seed: seed, status: 'active', elapsed: 0, acc: 0, combo: 0, comboBest: 0,
+      wave: 1, totalWaves: totalWaves,
       hero: hero, enemies: enemies, intent: { moveX: 0, moveY: 0, attack: true, dodge: false, skills: [] },
-      rulerJoined: !!rulerJoin, log: ['⚔️ Echtzeit-Gefecht um ' + region.name + ' beginnt!']
+      rulerJoined: !!rulerJoin, log: ['⚔️ Echtzeit-Gefecht um ' + region.name + ' beginnt! (Welle 1/' + totalWaves + ')']
     };
     b.rng = rng;
     state.actionBattle = b;
@@ -353,7 +368,7 @@
     var region = GD().region(b.regionId), won = b.status === 'won';
     var result = { won: won, regionId: b.regionId, reward: null, xp: 0 };
     if (won) {
-      var bonus = 0.15 + clamp(b.hero.hp / Math.max(1, b.hero.maxHp), 0, 1) * 0.3;   // mehr Rest-LP → mehr Beute
+      var bonus = 0.15 + clamp(b.hero.hp / Math.max(1, b.hero.maxHp), 0, 1) * 0.3 + ((b.totalWaves || 1) - 1) * 0.12;   // mehr Rest-LP & mehr Wellen → mehr Beute
       var reward = {}; for (var k in region.rewards) reward[k] = round(region.rewards[k] * (1 + bonus));
       I.addResources(state, reward); I.addRulerXp(state, round(region.xp * (1 + bonus)));
       if ((state.claimedRegions || []).indexOf(region.id) < 0 && SYS.regionUnlocked && SYS.regionUnlocked(state, region.id)) state.claimedRegions.push(region.id);
@@ -391,7 +406,7 @@
     var b = rehydrate(state); if (!b) return null;
     var h = b.hero;
     return {
-      w: AW, h: AH, status: b.status, regionId: b.regionId, elapsed: round(b.elapsed * 10) / 10, combo: b.combo || 0, comboBest: b.comboBest || 0,
+      w: AW, h: AH, status: b.status, regionId: b.regionId, elapsed: round(b.elapsed * 10) / 10, combo: b.combo || 0, comboBest: b.comboBest || 0, wave: b.wave || 1, totalWaves: b.totalWaves || 1,
       hero: { name: h.name, icon: h.icon, role: h.role, x: round(h.x * 100) / 100, y: round(h.y * 100) / 100, r: h.r, hp: h.hp, maxHp: h.maxHp, facing: h.facing, atkRange: h.atkRange, atkCd: round(h.atkCd * 100) / 100, invuln: round(h.invuln * 100) / 100, dodgeCd: round(h.dodgeCd * 100) / 100, dashing: h.dashT > 0,
         cooldowns: h.hotbar.map(function (s) { return { id: s.id, name: s.name, icon: s.icon, kind: s.kind, cdLeft: round(s.cdLeft * 100) / 100, cd: s.cd, ready: s.cdLeft <= 0 }; }) },
       enemies: b.enemies.map(function (e) {

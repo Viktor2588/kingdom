@@ -239,11 +239,20 @@ test("Gegnervielfalt: mehrere Verhaltenstypen erscheinen", () => {
   expect(Object.keys(kinds).length).toBeGreaterThanOrEqual(2);   // nicht nur ein Typ
 });
 
-test("Boss in starker Region hat eine Wut-Phase unter 50 % LP", () => {
-  // stärkste Region → garantiert Boss
-  const s = setup(20, 3);
-  A.start(s, GD.regions[GD.regions.length - 1].id, s.creatures.map((c) => c.uid), true, 21);
-  const boss = A.renderView(s).enemies.find((e) => e.boss);
+test("Boss erscheint in der Schlusswelle und hat eine Wut-Phase unter 50 % LP", () => {
+  // schwächste Region mit Boss (Macht ≥200) + sehr starker Held → erreicht die Schlusswelle zügig
+  const region = GD.regions.filter((r) => r.power >= 200).sort((a, b) => a.power - b.power)[0];
+  expect(region).toBeTruthy();
+  const s = setup(60, GD.rulerStages.length - 1);
+  A.start(s, region.id, s.creatures.map((c) => c.uid), true, 21);
+  let boss = null;
+  for (let i = 0; i < 8000 && A.renderView(s).status === 'active'; i++) {
+    const v = A.renderView(s);
+    if (v.wave === v.totalWaves) { boss = v.enemies.find((e) => e.boss); if (boss) break; }
+    const e = nearest(v);
+    A.setIntent(s, e ? { moveX: e.x - v.hero.x, moveY: e.y - v.hero.y, attack: true } : { moveX: 0, moveY: 0, attack: true });
+    A.step(s, A.STEP_MS);
+  }
   expect(boss).toBeTruthy();
   expect(boss.enraged).toBe(false);
   // Boss unter 50 % bringen → Enrage schaltet sich beim nächsten Tick ein
@@ -252,6 +261,21 @@ test("Boss in starker Region hat eine Wut-Phase unter 50 % LP", () => {
   A.setIntent(s, { moveX: 0, moveY: 0, attack: false }); A.step(s, A.STEP_MS);
   const after = s.actionBattle.enemies.find((e) => e.boss);
   if (after) expect(after.enraged).toBe(true);
+});
+
+test("Mehrere Wellen: das Gefecht eskaliert und endet erst nach der Schlusswelle", () => {
+  const s = setup(30, 4);
+  A.start(s, 'wald', s.creatures.map((c) => c.uid), true, 5);
+  expect(A.renderView(s).totalWaves).toBeGreaterThanOrEqual(2);
+  let maxWave = 1;
+  for (let i = 0; i < 20000 && A.renderView(s).status === 'active'; i++) {
+    const v = A.renderView(s); maxWave = Math.max(maxWave, v.wave);
+    const e = nearest(v);
+    A.setIntent(s, e ? { moveX: e.x - v.hero.x, moveY: e.y - v.hero.y, attack: true } : { moveX: 0, moveY: 0, attack: true });
+    A.step(s, A.STEP_MS);
+  }
+  expect(A.renderView(s).status).toBe('won');
+  expect(maxWave).toBeGreaterThanOrEqual(2);   // mindestens eine Folge-Welle durchgespielt
 });
 
 test("Combo/Schwung steigt mit Treffern und bricht beim Schaden", () => {

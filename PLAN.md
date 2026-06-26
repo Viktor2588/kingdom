@@ -330,6 +330,8 @@ Bestätigt: **Browser (HTML/JS)**, **auf dem Handy spielbar**. Ausdrückliche Au
 
   **Abnahmekriterien:** spürbar schneller (durchgehende Eingabe, kein Rundenwarten); jedes Gefecht in < 90 s gewinnbar mit Skill; Gegnerangriffe vor dem Treffer erkennbar & ausweichbar; mobil mit Daumen spielbar (44-px-Ziele, kein Hover); deterministisch über Seed (Test); kein Bruch von Phase-44-Dateien, Saves, Offline-/`file://`-Betrieb; `bun test` grün inkl. neuer `dev/action.test.js`; echter Chromium-Smoke-Test ohne Browserfehler/Überbreite.
 
+  **Nachschliff (2026-06-26): Eskalierende Wellen.** Statt einer einzelnen Welle laufen Echtzeit-Gefechte über **2–3 Wellen** (`totalWaves` nach Regionsmacht), die je Welle ~35 % stärker werden (`waveScale`). Zwischen Wellen erhält der Held **+15 % LP** Atempause; die Combo bleibt erhalten. Der **Boss erscheint erst in der Schlusswelle** (Climax). Mehr Wellen = mehr Beute (+12 % je Zusatzwelle). HUD/Log zeigen „🌊 Welle x/y". `dev/action.test.js` +1 Check (Eskalation bis Schlusswelle, Boss-Test auf Schlusswelle umgestellt). `bun test` → **106/106** grün, `bun run balance` unverändert.
+
 ## Neue Spielspaß-Phasen (Vorschlag gegen Langeweile)
 Diese Phasen sind bewusst als **offene, nicht begonnene** Arbeitspakete formuliert. Sie sollen zuerst die vorhandenen Systeme besser ausnutzen, bevor neue Großsysteme gebaut werden.
 

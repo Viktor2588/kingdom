@@ -245,8 +245,11 @@ Echtzeit gegen anstürmende Gegnerwellen. Ein Gefecht dauert höchstens 90 Sekun
   Nahkampfwirbel, Fernschuss, Feuer (Brand), Frost (Verlangsamung) oder Selbstheilung. Tasten
   **1–3** oder die Steuertasten; die Bühne zeigt den Cooldown als Ring.
 - **Gegnertypen:** **Stürmer** rücken vor, **Werfer** halten Abstand, **Brecher** schlagen
-  langsam, aber wuchtig zu. In starken Regionen wartet ein **Boss**, der unter 50 % LP in eine
-  schnellere **Wut-Phase** wechselt.
+  langsam, aber wuchtig zu.
+- **Eskalierende Wellen:** Ein Gefecht läuft über 2–3 Wellen, die jeweils stärker anrücken
+  (🌊 Welle x/y im HUD). Zwischen den Wellen bekommst du etwas LP zurück, deine Combo bleibt.
+  In starken Regionen wartet in der **Schlusswelle** ein **Boss**, der unter 50 % LP in eine
+  schnellere **Wut-Phase** wechselt. Mehr Wellen = mehr Beute.
 - **Combo/Schwung:** Treffer ohne selbst Schaden zu nehmen steigern deinen Schaden; ein
   kassierter Treffer setzt die Combo zurück.
 - **Beute:** Sieg vergibt dieselbe Regionsbeute + Herrscher-EP wie der taktische Kampf (mehr

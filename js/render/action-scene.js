@@ -127,9 +127,9 @@
       ctx.fillStyle = '#53d98b'; ctx.fillRect(12, 12, (w - 4) * Math.max(0, h.hp / h.maxHp), 12);
       ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText('❤ ' + Math.ceil(h.hp) + '/' + h.maxHp, 16, 18);
-      // Timer + Gegnerzahl rechts
+      // Timer + Welle + Gegnerzahl rechts
       ctx.textAlign = 'right'; ctx.fillStyle = '#e9d8a8';
-      ctx.fillText('⏱ ' + Math.max(0, Math.round(A.MAX_SECONDS - v.elapsed)) + 's   👹 ' + v.enemies.length, size.width - 12, 18);
+      ctx.fillText('⏱ ' + Math.max(0, Math.round(A.MAX_SECONDS - v.elapsed)) + 's   🌊 ' + v.wave + '/' + v.totalWaves + '   👹 ' + v.enemies.length, size.width - 12, 18);
       // Dodge-Bereitschaft
       ctx.textAlign = 'left'; ctx.fillStyle = h.dodgeCd > 0 ? '#7c8aa0' : '#9fe8ff';
       ctx.fillText(h.dodgeCd > 0 ? '⟳ Ausweichen ' + h.dodgeCd.toFixed(1) + 's' : '⟳ Ausweichen bereit', 12, 36);

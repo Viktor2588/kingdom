@@ -102,7 +102,7 @@ test("Watchmode wählt eine Doktrin, bildet Eliten aus und baut passende Bezirke
   expect(state.questProgress).toBeGreaterThanOrEqual(3);
 });
 
-test("Save-v17 normalisiert beschädigte Spezialisierungen und unbekannte Schulen", () => {
+test("Save-v17 migriert beschädigte Spezialisierungen und unbekannte Schulen auf das aktuelle Schema", () => {
   const state = GST.createDefault();
   state.version = 16;
   state.specializations = {
@@ -114,7 +114,7 @@ test("Save-v17 normalisiert beschädigte Spezialisierungen und unbekannte Schule
   state.creatures[0].named = true;
   state.creatures[0].schoolId = "erfunden";
   const clean = GST.normalize(state);
-  expect(clean.version).toBe(17);
+  expect(clean.version).toBe(18);
   expect(clean.specializations.doctrineId).toBeNull();
   expect(clean.specializations.autoDoctrine).toBe("adaptive");
   expect(clean.specializations.districts).toEqual(["archive", null, "bazaar"]);

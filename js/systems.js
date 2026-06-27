@@ -932,7 +932,7 @@
     return { resources: resources, materials: materials };
   }
   function canUnlockRecipe(state, recipeId) {
-    var recipe = GD().recipe(recipeId); if (!recipe) return { ok: false, reason: 'Unbekannter Bauplan' };
+    var recipe = GD().recipe(recipeId); if (!recipe || recipe.bossOnly) return { ok: false, reason: recipe ? 'Nur durch den zugehörigen Boss freischaltbar' : 'Unbekannter Bauplan' };
     if (isRecipeUnlocked(state, recipeId)) return { ok: false, reason: 'Bauplan bereits bekannt' };
     var req = recipeRequirementStatus(state, recipe); if (!req.ok) return { ok: false, reason: req.missing.join(', ') };
     var cost = recipeBlueprintCost(state, recipeId), missing = missingForgeCost(state, cost);

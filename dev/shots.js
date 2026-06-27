@@ -117,6 +117,41 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
     if (close) close.click();
     T.state.contracts.crisis = null;
   });
+  await page.evaluate(function () {
+    var T = window.__TEMPEST__, S = T.state, SYS = T.SYS;
+    S.bosses.defeated = ['jura_koloss'];
+    S.bosses.hardDefeated = ['jura_koloss'];
+    S.bosses.banners = 1;
+    S.bosses.components.herzholz = 2;
+    SYS.bestiaryLineSpecies('Goblin').forEach(function (species) {
+      if (S.seenSpecies.indexOf(species.id) < 0) S.seenSpecies.push(species.id);
+    });
+    window.GameUI.activeTab = 'uebersicht'; window.GameUI.render();
+    var board = document.querySelector('.boss-board'); if (board) board.scrollIntoView({ block: 'start' });
+  });
+  await page.waitForTimeout(150);
+  var phase51BossBoard = await page.evaluate(function () {
+    return document.querySelectorAll('.boss-entry').length === 4 &&
+      !!document.querySelector('.boss-entry.done') &&
+      document.querySelectorAll('.boss-entry.done .boss-actions .btn').length === 3;
+  });
+  if (!phase51BossBoard) errors.push('phase51-boss-board: Profile, Meisterschaft oder Kampfvarianten fehlen');
+  await page.screenshot({ path: path.join(out, 'phase51-boss-ladder-mobile.png') });
+  console.log('  📸 phase51-boss-ladder-mobile.png');
+  await page.evaluate(function () {
+    window.GameUI.openCodexModal('bestiarium');
+    var elite = document.querySelector('.hunt-card.elite-ready'); if (elite) elite.scrollIntoView({ block: 'center' });
+  });
+  await page.waitForTimeout(150);
+  var phase51Elite = await page.evaluate(function () {
+    var elite = document.querySelector('.hunt-card.elite-ready');
+    return !!elite && !!elite.querySelector('.elite-portrait') &&
+      Array.from(elite.querySelectorAll('.btn')).some(function (button) { return button.textContent.indexOf('Elite jagen') >= 0; });
+  });
+  if (!phase51Elite) errors.push('phase51-elite: Jagdziel, Portrait oder Aktion fehlt');
+  await page.screenshot({ path: path.join(out, 'phase51-elite-mobile.png') });
+  console.log('  📸 phase51-elite-mobile.png');
+  await page.evaluate(function () { var close = document.querySelector('.modal-close'); if (close) close.click(); });
   await shot('reich', '2-reich');
   await page.evaluate(function () { var board = document.querySelector('.special-board'); if (board) board.scrollIntoView({ block: 'start' }); });
   await page.waitForTimeout(150);
@@ -282,6 +317,16 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.screenshot({ path: path.join(out, '14a-desktop-echo-map.png') });
   console.log('  📸 14a-desktop-echo-map.png');
   await shot('reich', '16-desktop-reich');
+  await page.evaluate(function () { var room = document.querySelector('.trophy-room'); if (room) room.scrollIntoView({ block: 'start' }); });
+  await page.waitForTimeout(150);
+  var phase51Trophies = await page.evaluate(function () {
+    var room = document.querySelector('.trophy-room');
+    return !!room && room.querySelectorAll('.trophy-plaque').length >= 2 &&
+      !!room.querySelector('.trophy-components') && room.scrollWidth <= room.clientWidth;
+  });
+  if (!phase51Trophies) errors.push('phase51-trophies: Plaketten, Komponenten oder Breitenbegrenzung fehlen');
+  await page.screenshot({ path: path.join(out, 'phase51-trophies-desktop.png') });
+  console.log('  📸 phase51-trophies-desktop.png');
   await page.evaluate(function () { var board = document.querySelector('.special-board'); if (board) board.scrollIntoView({ block: 'start' }); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(out, 'phase50-specializations-desktop.png') });
@@ -347,5 +392,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 36 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 39 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

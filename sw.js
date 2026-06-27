@@ -1,13 +1,13 @@
 /* Service Worker — App-Shell-Cache für echtes Offline (Phase 32).
    Cache-first für die Shell; alle übrigen gleichartigen GETs (Assets)
    werden zur Laufzeit beim ersten Laden gecached. */
-var CACHE = 'tempest-shell-v16';
+var CACHE = 'tempest-shell-v17';
 var SHELL = [
   './', './index.html', './style.css', './manifest.webmanifest', './icon.svg', './assets/ui-icons.svg',
   './js/data-tables.js', './js/data.js', './js/art-data.js', './js/state.js',
-  './js/systems.js', './js/systems-bestiary.js', './js/systems-combat.js', './js/systems-skirmish.js', './js/systems-siege.js', './js/systems-battle.js', './js/systems-action.js', './js/systems-contracts.js', './js/systems-specializations.js', './js/achievements.js', './js/completion-planner.js',
+  './js/systems.js', './js/systems-bestiary.js', './js/systems-combat.js', './js/systems-skirmish.js', './js/systems-siege.js', './js/systems-battle.js', './js/systems-action.js', './js/systems-contracts.js', './js/systems-specializations.js', './js/systems-bosses.js', './js/achievements.js', './js/completion-planner.js',
   './js/render/canvas-core.js', './js/render/effects.js', './js/render/battle-scene.js', './js/render/adventure-scene.js', './js/render/action-scene.js',
-  './js/ui.js', './js/ui-adventure.js', './js/ui-progress.js', './js/ui-contracts.js', './js/ui-specializations.js', './js/ui-action.js', './js/ui-siege.js', './js/ui-battle.js', './js/ui-action-combat.js', './js/main.js',
+  './js/ui.js', './js/ui-adventure.js', './js/ui-progress.js', './js/ui-contracts.js', './js/ui-specializations.js', './js/ui-bosses.js', './js/ui-action.js', './js/ui-siege.js', './js/ui-battle.js', './js/ui-action-combat.js', './js/main.js',
   './assets/battle/jura-clearing.png', './assets/battle/jura-units.png',
   './assets/battle/biomes.png', './assets/battle/board-units.png', './assets/battle/effects.png',
   './assets/tempest-adventure-map.png', './assets/world/adventure-locations.png', './assets/world/adventure-armies.png'

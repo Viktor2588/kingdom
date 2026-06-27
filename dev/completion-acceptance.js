@@ -10,6 +10,7 @@ import "../js/systems-siege.js";
 import "../js/systems-battle.js";
 import "../js/systems-contracts.js";
 import "../js/systems-specializations.js";
+import "../js/systems-bosses.js";
 import "../js/achievements.js";
 import "../js/completion-planner.js";
 

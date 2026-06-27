@@ -408,6 +408,7 @@
     function viewUnit(u) {
       return { key: u.key, side: u.side, name: u.name, icon: u.icon, role: u.role, pos: { x: u.pos.x, y: u.pos.y },
         hp: u.hp, maxHp: u.maxHp, mp: u.mp, maxMp: u.maxMp, facing: u.facing, dead: !!u.dead, moved: !!u.moved,
+        boss: !!u.boss, mechanic: u.mechanic || '',
         abilities: (u.abilities || []).slice(), statuses: (u.statuses || []).map(function (s) { return s.id; }) };
     }
     var cur = currentUnit(b);

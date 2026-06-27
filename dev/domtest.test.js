@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/achievements.js', 'js/completion-planner.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -37,6 +37,8 @@ ok(document.querySelectorAll('#screen .scene-ambience > span').length === 7, 'Re
 ok(document.querySelectorAll('#screen .scene-status .ui-icon').length === 3, 'Panorama-Status nutzt die lokale Symbolfamilie');
 ok(document.querySelectorAll('#screen .contract-card').length === 3, 'Auftragsbrett zeigt drei rotierende Ziele');
 ok(document.querySelectorAll('#screen .profile-segment').length === 4, 'Auftragsbrett zeigt vier Auto-Profile');
+ok(document.querySelectorAll('#screen .boss-entry').length === 4, 'Boss-Leiter zeigt vier feste Gegnerprofile');
+ok(!!document.querySelector('#screen .boss-board'), 'Übersicht besitzt ein Boss-Leiter-Brett');
 var wtBtn = document.getElementById('watch-toggle');
 ok(!!wtBtn, 'Top-Bar hat einen Zuschauer-Modus-Toggle');
 wtBtn.click();
@@ -86,6 +88,7 @@ tryRender('Reich rendern & "Bauen"-Button klicken', function () {
   window.GameUI.activeTab = 'reich'; window.GameUI.render();
   if (!document.querySelector('#screen .district-ledger')) throw new Error('kein materialisiertes Bezirksbrett');
   if (!document.querySelector('#screen .special-board')) throw new Error('strategische Ausrichtung fehlt');
+  if (!document.querySelector('#screen .trophy-room')) throw new Error('Trophäenraum fehlt');
   if (document.querySelectorAll('#screen .special-auto .profile-segment').length !== 6) throw new Error('Auto-Doktrinprofile fehlen');
   if (document.querySelectorAll('#screen .special-slot').length !== 2) throw new Error('frühe Bezirks-Slots fehlen');
   if (!document.querySelector('#screen .district-card .district-icon .ui-icon')) throw new Error('Gebäudesymbole fehlen');
@@ -105,6 +108,19 @@ tryRender('Doktrin- und Anführerschul-Modals', function () {
   if (document.querySelectorAll('#modal-root .doctrine-choice').length !== 5) throw new Error('Anführerschulen unvollständig');
   document.querySelector('.modal-close').click();
   s.creatures = s.creatures.filter(function (creature) { return creature.uid !== leader.uid; });
+});
+
+tryRender('Boss-Trophäen erscheinen im Reich und im Panorama', function () {
+  s.bosses.defeated = ['jura_koloss'];
+  s.bosses.hardDefeated = ['jura_koloss'];
+  s.bosses.banners = 1;
+  s.bosses.components.herzholz = 2;
+  window.GameUI.activeTab = 'uebersicht'; window.GameUI.render();
+  if (!document.querySelector('#screen .scene-trophies')) throw new Error('Panorama-Trophäe fehlt');
+  window.GameUI.activeTab = 'reich'; window.GameUI.render();
+  if (!document.querySelector('#screen .trophy-plaque')) throw new Error('Trophäenplakette fehlt');
+  if (!document.querySelector('#screen .trophy-components')) throw new Error('Bosskomponente fehlt');
+  s.bosses.defeated = []; s.bosses.hardDefeated = []; s.bosses.banners = 0; s.bosses.components = {};
 });
 
 tryRender('Kreatur beschwören über UI', function () {
@@ -141,6 +157,12 @@ tryRender('Kompendium-Modal (Erfolge/Statistik/Bestiarium)', function () {
   if (!document.querySelector('#modal-root .hunt-board')) throw new Error('Bestiarium-Jagdboard fehlt');
   if (!document.querySelector('#modal-root .beast-hint')) throw new Error('Bestiarium-Hinweise fehlen');
   if (!document.querySelector('#modal-root .hunt-card .btn')) throw new Error('Köder-Aktion fehlt');
+  var previousSeen = s.seenSpecies.slice();
+  s.seenSpecies = Array.from(new Set(s.seenSpecies.concat(SYS.bestiaryLineSpecies('Goblin').map(function (sp) { return sp.id; }))));
+  window.GameUI.openCodexModal('bestiarium');
+  if (!document.querySelector('#modal-root .hunt-card.elite-ready')) throw new Error('Elite-Jagdziel fehlt');
+  if (!document.querySelector('#modal-root .hunt-card.elite-ready .elite-portrait')) throw new Error('Elite-Portrait-Rahmen fehlt');
+  s.seenSpecies = previousSeen;
   document.querySelector('.modal-close').click();
 });
 tryRender('Reichskrise mit mehrstufiger Entscheidungs-UI', function () {

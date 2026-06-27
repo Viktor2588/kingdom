@@ -22,6 +22,11 @@
     var avail = (SYS.armyAvailable ? SYS.armyAvailable(state) : state.creatures.filter(function (c) { return !SYS.creatureBusy(state, c.uid) && !SYS.isWounded(state, c); }));
     return avail.slice(0, 5).map(function (c) { return c.uid; });
   }
+  function battleTitle(state, view) {
+    var challenge = state.tacticalBattle && state.tacticalBattle.bossChallenge;
+    var boss = challenge && window.GameBosses ? window.GameBosses.boss(challenge.bossId) : null;
+    return boss ? (boss.name + (challenge.hard ? ' · Meisterschaft' : '')) : (GD.region(view.regionId) ? GD.region(view.regionId).name : '');
+  }
 
   UI = window.GameUI;
   Object.assign(UI, {
@@ -97,7 +102,7 @@
             var children = [];
             if (!u) children.push(el('span', { class: 'tb-terrain', text: t.icon === '·' ? '' : t.icon }));
             if (u) {
-              children.push(el('span', { class: 'tb-token ' + u.side + (u.dead ? ' dead' : '') }, [
+              children.push(el('span', { class: 'tb-token ' + u.side + (u.boss ? ' boss' : '') + (u.dead ? ' dead' : '') }, [
                 el('span', { class: 'tb-ico', text: u.icon }),
                 el('span', { class: 'tb-face face-' + u.facing }),
                 el('span', { class: 'tb-hp' }, el('i', { style: 'width:' + Math.round(100 * u.hp / u.maxHp) + '%' }))
@@ -143,7 +148,7 @@
         btn('🏳️ Rückzug', function () { B().abortBattle(s); self._battleMode = null; self.persist(s); closeModal(); self.refresh(); }, { small: true, cls: 'btn-ghost' }),
         el('span', { class: 'muted', text: 'Flankieren & Höhe erhöhen den Schaden.' })
       ]));
-      openModal('Taktische Schlacht · ' + (GD.region(view.regionId) ? GD.region(view.regionId).name : ''), body, '♟️', 'tb-modal');
+      openModal('Taktische Schlacht · ' + battleTitle(s, view), body, '♟️', 'tb-modal');
     },
 
     _battleCellClick: function (x, y) {
@@ -171,10 +176,13 @@
       var view = B().renderView(s), won = view && view.status === 'won';
       var result = B().applyResult(s);
       this._battleMode = null; this.persist(s);
+      var bossResult = result && result.bossResult;
       var body = el('div', { class: 'tb-result ' + (won ? 'won' : 'lost') }, [
         el('div', { class: 'tb-result-icon', text: won ? '🏆' : '💀' }),
-        el('h4', { text: won ? 'Schlacht gewonnen!' : 'Schlacht verloren' }),
+        el('h4', { text: bossResult ? (won ? bossResult.boss.name + ' bezwungen!' : bossResult.boss.name + ' widersteht') : (won ? 'Schlacht gewonnen!' : 'Schlacht verloren') }),
         (won && result && result.reward) ? el('p', { text: 'Beute: ' + costText(result.reward) + (result.xp ? '  +' + result.xp + ' EP' : '') }) : el('p', { text: 'Deine Truppen ziehen sich zurück.' }),
+        bossResult && bossResult.reward ? el('p', { text: 'Bossbeute: ' + costText(bossResult.reward) + (bossResult.recipe ? ' · Bauplan ' + bossResult.recipe.name : '') }) : null,
+        bossResult && !won ? el('p', { class: 'notice bad', text: 'Lernhinweis: ' + bossResult.hint }) : null,
         el('div', { class: 'card-actions' }, [btn('Zur Übersicht', function () { closeModal(); self.refresh(); }, { cls: 'btn-action' })])
       ]);
       openModal(won ? 'Sieg' : 'Niederlage', body, won ? '🏆' : '💀', 'tb-modal result');

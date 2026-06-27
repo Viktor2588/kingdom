@@ -20,6 +20,11 @@
     var avail = SYS.armyAvailable ? SYS.armyAvailable(state) : state.creatures.filter(function (c) { return !SYS.creatureBusy(state, c.uid) && !SYS.isWounded(state, c); });
     return avail.slice(0, 5).map(function (c) { return c.uid; });
   }
+  function combatTitle(state, view) {
+    var challenge = state.actionBattle && state.actionBattle.bossChallenge;
+    var boss = challenge && window.GameBosses ? window.GameBosses.boss(challenge.bossId) : null;
+    return boss ? (boss.name + (challenge.hard ? ' · Meisterschaft' : '')) : (GD.region(view.regionId) ? GD.region(view.regionId).name : '');
+  }
 
   Object.assign(UI, {
     buildActionCombatCard: function () {
@@ -67,7 +72,7 @@
         ])
       ]);
 
-      openModal('Echtzeit-Gefecht · ' + (GD.region(view.regionId) ? GD.region(view.regionId).name : ''), body, '⚔️', 'ac-modal');
+      openModal('Echtzeit-Gefecht · ' + combatTitle(s, view), body, '⚔️', 'ac-modal');
 
       // Steuertasten: Ausweichen + Fähigkeiten-Slots (Cooldown-Status zeigt die Canvas-Bühne).
       var scene = window.GameActionScene.mount(canvas, {
@@ -92,10 +97,13 @@
       var view = A().renderView(s), won = view && view.status === 'won';
       var result = A().applyResult(s);
       this.persist(s);
+      var bossResult = result && result.bossResult;
       var body = el('div', { class: 'tb-result ' + (won ? 'won' : 'lost') }, [
         el('div', { class: 'tb-result-icon', text: won ? '🏆' : '💀' }),
-        el('h4', { text: won ? 'Gefecht gewonnen!' : 'Gefecht verloren' }),
+        el('h4', { text: bossResult ? (won ? bossResult.boss.name + ' bezwungen!' : bossResult.boss.name + ' widersteht') : (won ? 'Gefecht gewonnen!' : 'Gefecht verloren') }),
         (won && result && result.reward) ? el('p', { text: 'Beute: ' + costText(result.reward) + (result.xp ? '  +' + result.xp + ' EP' : '') }) : el('p', { text: 'Du ziehst dich aus dem Getümmel zurück.' }),
+        bossResult && bossResult.reward ? el('p', { text: 'Bossbeute: ' + costText(bossResult.reward) + (bossResult.recipe ? ' · Bauplan ' + bossResult.recipe.name : '') }) : null,
+        bossResult && !won ? el('p', { class: 'notice bad', text: 'Lernhinweis: ' + bossResult.hint }) : null,
         el('div', { class: 'card-actions' }, [btn('Zur Übersicht', function () { closeModal(); self.refresh(); }, { cls: 'btn-action' })])
       ]);
       openModal(won ? 'Sieg' : 'Niederlage', body, won ? '🏆' : '💀', 'ac-modal result');

@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 17;
+  var VERSION = 18;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -152,6 +152,16 @@
         districtChanges: 0,
         schoolsAssigned: 0
       },
+      bosses: {
+        defeated: [],
+        hardDefeated: [],
+        attempts: {},
+        eliteDefeated: [],
+        components: {},
+        banners: 0,
+        lastResult: null,
+        lastAutoTick: -999
+      },
       completion: {
         enabled: false,
         target: 'all',
@@ -161,7 +171,7 @@
       },
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
       log: [],
-      metrics: { summoned: 0, named: 0, evolutions: 0, rankCEvolutions: 0, expeditions: 0, expeditionsWon: 0, riskyWins: 0, crafted: 0, tempered: 0, epicForged: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, activeSiegesWon: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, contractsCompleted: 0, contractsFailed: 0, crisesResolved: 0, seelenGesamt: 0 }
+      metrics: { summoned: 0, named: 0, evolutions: 0, rankCEvolutions: 0, expeditions: 0, expeditionsWon: 0, riskyWins: 0, crafted: 0, tempered: 0, epicForged: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, activeSiegesWon: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, bossesDefeated: 0, eliteHunts: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, contractsCompleted: 0, contractsFailed: 0, crisesResolved: 0, seelenGesamt: 0 }
     };
     var slime = newCreature(s, 'schleim');
     var goblins = newCreature(s, 'goblin');
@@ -201,7 +211,7 @@
     if (sourceVersion < 7) {
       GD().recipes.forEach(function (recipe) {
         var researchOk = !recipe.req || !recipe.req.research || (s.research || []).indexOf(recipe.req.research) >= 0;
-        if ((recipe.starter || ((s.buildings && s.buildings.schmiede) || 0) >= recipe.schmiede) && researchOk) s.unlockedRecipes.push(recipe.id);
+        if (!recipe.bossOnly && (recipe.starter || ((s.buildings && s.buildings.schmiede) || 0) >= recipe.schmiede) && researchOk) s.unlockedRecipes.push(recipe.id);
       });
     }
     GD().recipes.forEach(function (recipe) { if (recipe.starter) s.unlockedRecipes.push(recipe.id); });
@@ -328,6 +338,31 @@
         rebuild.readyTick = Math.max(s.tick || 0, Math.floor(Number(rebuild.readyTick) || 0));
       }
     }
+    // Boss-Leiter v18: Siege, Meisterschaft, Elite-Exemplare und
+    // einmalige Trophäenkomponenten.
+    if (!s.bosses || typeof s.bosses !== 'object' || Array.isArray(s.bosses)) {
+      s.bosses = JSON.parse(JSON.stringify(def.bosses));
+    }
+    fill(s.bosses, def.bosses);
+    var bossIds = ['jura_koloss', 'echo_hydra', 'chimera_alpha', 'himmelsrichter'];
+    if (!Array.isArray(s.bosses.defeated)) s.bosses.defeated = [];
+    if (!Array.isArray(s.bosses.hardDefeated)) s.bosses.hardDefeated = [];
+    s.bosses.defeated = s.bosses.defeated.filter(function (id, i, all) { return bossIds.indexOf(id) >= 0 && all.indexOf(id) === i; });
+    s.bosses.hardDefeated = s.bosses.hardDefeated.filter(function (id, i, all) {
+      return bossIds.indexOf(id) >= 0 && s.bosses.defeated.indexOf(id) >= 0 && all.indexOf(id) === i;
+    });
+    if (!s.bosses.attempts || typeof s.bosses.attempts !== 'object' || Array.isArray(s.bosses.attempts)) s.bosses.attempts = {};
+    bossIds.forEach(function (id) { s.bosses.attempts[id] = Math.max(0, Math.floor(Number(s.bosses.attempts[id]) || 0)); });
+    if (!Array.isArray(s.bosses.eliteDefeated)) s.bosses.eliteDefeated = [];
+    s.bosses.eliteDefeated = s.bosses.eliteDefeated.filter(function (line, i, all) { return !!validLines[line] && all.indexOf(line) === i; });
+    if (!s.bosses.components || typeof s.bosses.components !== 'object' || Array.isArray(s.bosses.components)) s.bosses.components = {};
+    for (var componentId in s.bosses.components) {
+      s.bosses.components[componentId] = Math.max(0, Math.floor(Number(s.bosses.components[componentId]) || 0));
+      if (!s.bosses.components[componentId]) delete s.bosses.components[componentId];
+    }
+    s.bosses.banners = Math.max(0, Math.floor(Number(s.bosses.banners) || 0));
+    s.bosses.lastAutoTick = isFinite(Number(s.bosses.lastAutoTick)) ? Math.floor(Number(s.bosses.lastAutoTick)) : -999;
+    if (s.bosses.lastResult != null && (typeof s.bosses.lastResult !== 'object' || Array.isArray(s.bosses.lastResult))) s.bosses.lastResult = null;
     if (!s.completion || typeof s.completion !== 'object' || Array.isArray(s.completion)) {
       s.completion = JSON.parse(JSON.stringify(def.completion));
     }

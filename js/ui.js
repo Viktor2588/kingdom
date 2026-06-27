@@ -424,6 +424,7 @@
           sceneLink('magie', 'Arkane Akademie', 'Zauber & Forschung', [29, 41], [108, 92]),
           sceneLink('schmiede', 'Große Schmiede', 'Ausrüstung fertigen', [62, 32], [104, 88]),
           sceneLink('karte', 'Abenteuertor', 'Armeen befehligen', [19, 78], [120, 92]),
+          self.buildSceneTrophies ? self.buildSceneTrophies() : null,
           el('div', { class: 'scene-status' }, [
             el('span', null, [uiIcon('crown', 'Herrscher'), el('b', { text: stage.name })]),
             el('span', null, [uiIcon('combat', 'Kampfkraft'), el('b', { text: fmt(rp) + ' Kampfkraft' })]),
@@ -457,6 +458,8 @@
         if (self.buildSkirmishCard) box.appendChild(self.buildSkirmishCard());
         // Rotierende Aufträge und mehrstufige Reichskrisen (Phase 49).
         if (self.buildContractBoard) box.appendChild(self.buildContractBoard());
+        // Boss-Leiter und Trophäen (Phase 51).
+        if (self.buildBossBoard) box.appendChild(self.buildBossBoard());
 
         // Aktuelles Ziel (geführte Aufgabenkette)
         var aq = SYS.activeQuest(s);
@@ -605,6 +608,7 @@
           el('small', { text: 'Höhere Gebäudestufen steigern Produktion, Kapazität und Reichsboni.' })
         ]));
         if (self.buildSpecializationBoard) box.appendChild(self.buildSpecializationBoard());
+        if (self.buildTrophyRoom) box.appendChild(self.buildTrophyRoom());
 
         function buildCard(bd) {
           var lvl = s.buildings[bd.id] || 0;

@@ -160,10 +160,16 @@
   }
 
   function seenSpecies(s, id) { return (s.seenSpecies || []).indexOf(id) >= 0; }
+  function eliteParty(s) {
+    return (s.creatures || []).filter(function (creature) {
+      return !SYS.creatureBusy(s, creature.uid) && !SYS.isWounded(s, creature);
+    }).slice(0, 6).map(function (creature) { return creature.uid; });
+  }
 
   function huntLineCard(s, line, ui) {
     var status = SYS.bestiaryLineStatus ? SYS.bestiaryLineStatus(s, line) : null;
     if (!status) return null;
+    var elite = window.GameBosses ? window.GameBosses.eliteForLine(s, line) : null;
     var canBind = SYS.canPrepareBestiaryLure ? SYS.canPrepareBestiaryLure(s, line) : { ok: false, reason: '' };
     var actions = [];
     if (!status.complete) {
@@ -173,14 +179,23 @@
         ui.commit(); ui.openCodexModal('bestiarium');
       }, { small: true, cls: canBind.ok ? 'btn-gold' : '', disabled: !canBind.ok, cost: canBind.ok ? (status.tracks + '/' + status.tracksNeeded + ' Fährten') : canBind.reason }));
     }
-    return el('div', { class: 'hunt-card' + (status.complete ? ' complete' : '') }, [
+    if (elite && !elite.defeated) {
+      actions.push(btn('⚔️ Elite jagen', function () {
+        var uids = eliteParty(s);
+        var res = window.GameBosses.resolveEliteHunt(s, line, uids, true);
+        toast(res.ok && res.won ? (elite.icon + ' ' + elite.name + ' als Trophäe gesichert.') : (res.result ? res.result.hint : res.reason), res.ok && res.won ? 'gold' : 'bad');
+        ui.commit(); ui.openCodexModal('bestiarium');
+      }, { small: true, cls: 'btn-gold', cost: 'Kraft ' + elite.power }));
+    }
+    var apex = elite && SYS.bestiaryLineSpecies ? SYS.bestiaryLineSpecies(line).slice(-1)[0] : null;
+    return el('div', { class: 'hunt-card' + (status.complete ? ' complete' : '') + (elite ? (elite.defeated ? ' elite-defeated' : ' elite-ready') : '') }, [
       el('div', { class: 'hunt-head' }, [
-        el('span', { class: 'hunt-icon', text: status.icon }),
+        apex ? creatureArt(apex, 'elite-portrait') : el('span', { class: 'hunt-icon', text: status.icon }),
         el('div', { class: 'hunt-title' }, [
           el('div', { class: 'beast-name', text: line }),
-          el('div', { class: 'beast-desc', text: status.source })
+          el('div', { class: 'beast-desc', text: elite ? (elite.name + ' · ' + (elite.defeated ? 'Trophäe gesichert' : 'Elite-Exemplar entdeckt')) : status.source })
         ]),
-        el('span', { class: 'pill', text: status.seen + '/' + status.total })
+        el('span', { class: 'pill', text: elite && elite.defeated ? '🏆' : (status.seen + '/' + status.total) })
       ]),
       el('div', { class: 'hunt-track' }, [
         bar(Math.min(1, status.tracks / status.tracksNeeded), status.complete ? 'good' : 'gold'),

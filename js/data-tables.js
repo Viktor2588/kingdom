@@ -539,7 +539,16 @@
       cost: { material: 130, magie: 110, seelen: 30 }, stats: { mag: 30, lp: 50 }, desc: 'Eine Krone aus ewiger Flamme.' },
     // Unikat (Phönixschmiede)
     { id: 'flamme_der_wiedergeburt', name: 'Flamme der Wiedergeburt', icon: '🔥', slot: 'kern', schmiede: 3, unique: true, fixedRarity: 'goettlich', req: { research: 'r_phoenixschmiede' },
-      cost: { material: 400, magie: 700, seelen: 300 }, stats: { mag: 90, lp: 120, tmp: 40 }, desc: 'Ein gebundener Phönixfunke – Tod ist nur ein neuer Anfang.' }
+      cost: { material: 400, magie: 700, seelen: 300 }, stats: { mag: 90, lp: 120, tmp: 40 }, desc: 'Ein gebundener Phönixfunke – Tod ist nur ein neuer Anfang.' },
+    // Boss-Trophäen (Phase 51): ausschließlich durch den zugehörigen Sieg freigeschaltet.
+    { id: 'wurzelbrecher', name: 'Wurzelbrecher', icon: '🪓', slot: 'waffe', schmiede: 2, unique: true, bossOnly: true, fixedRarity: 'legendaer',
+      cost: { material: 180, magie: 120, seelen: 45 }, stats: { ang: 54, ver: 18 }, desc: 'Aus dem Herzholz des Jura-Kolosses geschmiedet.' },
+    { id: 'echoherz', name: 'Echoherz', icon: '👁️', slot: 'kern', schmiede: 3, unique: true, bossOnly: true, fixedRarity: 'legendaer',
+      cost: { material: 260, magie: 340, seelen: 110 }, stats: { mag: 58, lp: 80, tmp: 18 }, desc: 'Ein stabilisierter Kern aus der Leere zwischen den Echos.' },
+    { id: 'chimarenhaut', name: 'Mantel der Ur-Chimäre', icon: '🧥', slot: 'ruestung', schmiede: 3, unique: true, bossOnly: true, fixedRarity: 'legendaer',
+      cost: { material: 320, magie: 220, seelen: 140 }, stats: { ver: 42, lp: 130, ang: 24 }, desc: 'Wechselt seine Struktur mit jedem gegnerischen Angriff.' },
+    { id: 'richterkrone', name: 'Krone des Himmelsrichters', icon: '👑', slot: 'kopf', schmiede: 3, unique: true, bossOnly: true, fixedRarity: 'goettlich',
+      cost: { material: 520, magie: 620, seelen: 280 }, stats: { mag: 70, ver: 52, lp: 150 }, desc: 'Zeichen eines Sieges über das letzte Urteil.' }
   ];
 
   T.equipSlots = [

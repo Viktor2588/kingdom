@@ -168,6 +168,31 @@ Vollständig entdeckte Linien geben kleine **Ökologie-Boni** wie mehr Produktio
 Armeestärke oder Beute. Die Boni sind bewusst niedrig, machen Sammeln aber nützlich und geben
 jedem vollständigen Volk eine mechanische Spur im Reich.
 
+### Boss-Leiter, Elite-Exemplare & Trophäen
+
+Auf der *Übersicht* erscheinen vier feste Höhepunkte, sobald ihre Quelle erschlossen ist:
+**Jura-Koloss** nach zwei Regionen, **Echo-Hydra** nach einem Echo-Kern,
+**Ur-Chimäre** nach fünf vollständigen Bestiarium-Linien und **Himmelsrichter** nach
+Hauptkampagne plus 25 Erfolgen. Jede Karte nennt Mechanik, benötigte Kraft und exklusive
+Belohnung.
+
+- **Drei Kampfarten:** Starte den Boss als taktische Rasterschlacht, als Echtzeit-Actionkampf
+  oder löse ihn direkt über den Kraftvergleich auf. Passende Anführerschulen und Doktrinen
+  geben beim Auto-Ausgang einen kleinen Konterbonus.
+- **Lernhinweis:** Eine Niederlage verbraucht keine einzigartige Belohnung. Das Ergebnis
+  nennt die konkrete Mechanik, die beim nächsten Versuch gekontert werden sollte.
+- **Einzigartige Beute:** Der erste Sieg gibt genau einen Sonderkomponenten-Fund und schaltet
+  Wurzelbrecher, Echoherz, Mantel der Ur-Chimäre beziehungsweise Krone des Himmelsrichters
+  als exklusiven Schmiedebauplan frei.
+- **Meisterschaft:** Nach dem normalen Sieg öffnet sich eine stärkere Variante mit einem
+  boss-eigenen Modifikator. Der erste Meisterschaftssieg gibt ein Banner und eine weitere
+  Sonderkomponente; Wiederholungen liefern nur reduzierte Ressourcen.
+- **Elite-Exemplare:** Jede vollständig dokumentierte Kreaturenlinie zeigt im Bestiarium
+  ein gerahmtes Alpha-Jagdziel. Der erste Sieg sichert dessen Komponente und Trophäe.
+- **Trophäenraum:** Boss- und Meisterschaftssiege, vollständige Linien, fehlerfreie
+  Auftragsserien und die vollständige Chronik erscheinen im Reich. Das Panorama zeigt
+  repräsentative Zeichen und die Gesamtzahl.
+
 ### Anführerschulen
 
 Benannte, gerade nicht eingesetzte Eliten können eine von fünf Schulen besuchen:
@@ -214,6 +239,8 @@ Im Tab *Schmiede* (frei nach Bau der **Schmiede**).
 - **Baupläne:** Drei Starterrezepte sind sofort bekannt. Weitere Baupläne werden mit Wissen
   und Schmiedekomponenten entschlüsselt oder in gewonnenen Kämpfen entdeckt. Schmiedestufe
   und Forschung bleiben Voraussetzung für fortgeschrittene und einzigartige Rezepte.
+  Die vier Boss-Artefakte lassen sich nicht entschlüsseln oder zufällig finden: Nur der
+  zugehörige erste Boss-Sieg öffnet ihren Bauplan.
 - **Begrenztes Arsenal:** Jeder Bauplan erzeugt höchstens **ein Exemplar**. Kämpfe werfen
   deshalb keine endlosen Zufallsduplikate mehr ab, sondern Baupläne oder Komponenten.
 - **Gezielte Qualität:** Ein bestehendes Stück wird stufenweise verbessert:
@@ -494,7 +521,8 @@ Im Reichs-Tab lässt sich die Auto-Doktrin fest auf eine Strategie setzen oder *
 lassen. Adaptiv folgt dem Auftragsprofil; im Completion-Autopilot wechselt sie begründet
 zwischen Monsterzucht, Eroberung, Forschung und Handel. Der Berater bildet dazu passende
 Anführerschulen aus und baut die empfohlenen Spezialbezirke, ohne den eigentlichen Zielplan
-zu verdrängen.
+zu verdrängen. Außerhalb eines aktiven Completion-Laufs bezwingt er außerdem machbare offene
+Bosse und jagt Elite-Exemplare, ohne Krisenentscheidungen zu übergehen.
 
 ---
 

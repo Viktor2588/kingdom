@@ -8,7 +8,7 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 15;
+  var VERSION = 16;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -125,6 +125,21 @@
       achievements: [],
       seenSpecies: [],
       bestiaryHunts: { tracks: {}, lures: {} },
+      contracts: {
+        board: [],
+        serial: 0,
+        nextRefreshTick: 0,
+        lastProgressTick: 0,
+        lastPacingTick: 0,
+        progressSignature: '',
+        completed: 0,
+        failed: 0,
+        autoProfile: 'progress',
+        crisis: null,
+        crisisSerial: 0,
+        nextCrisisTick: 0,
+        lastCrisisId: null
+      },
       completion: {
         enabled: false,
         target: 'all',
@@ -134,7 +149,7 @@
       },
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
       log: [],
-      metrics: { summoned: 0, named: 0, evolutions: 0, expeditions: 0, expeditionsWon: 0, crafted: 0, tempered: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, seelenGesamt: 0 }
+      metrics: { summoned: 0, named: 0, evolutions: 0, rankCEvolutions: 0, expeditions: 0, expeditionsWon: 0, riskyWins: 0, crafted: 0, tempered: 0, epicForged: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, activeSiegesWon: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, contractsCompleted: 0, contractsFailed: 0, crisesResolved: 0, seelenGesamt: 0 }
     };
     var slime = newCreature(s, 'schleim');
     var goblins = newCreature(s, 'goblin');
@@ -244,6 +259,27 @@
         else s.bestiaryHunts[bucket][line] = Math.max(0, Math.floor(Number(s.bestiaryHunts[bucket][line]) || 0));
       }
     });
+    // Dynamische Aufträge und Krisen v16. Detailvalidierung übernimmt das
+    // nachgeladene DOM-freie Vertragsmodul; hier bleibt die Save-Struktur heil.
+    if (!s.contracts || typeof s.contracts !== 'object' || Array.isArray(s.contracts)) {
+      s.contracts = JSON.parse(JSON.stringify(def.contracts));
+    }
+    fill(s.contracts, def.contracts);
+    if (!Array.isArray(s.contracts.board)) s.contracts.board = [];
+    s.contracts.serial = Math.max(0, Math.floor(Number(s.contracts.serial) || 0));
+    s.contracts.nextRefreshTick = Math.max(0, Math.floor(Number(s.contracts.nextRefreshTick) || 0));
+    s.contracts.lastProgressTick = Math.max(0, Math.floor(Number(s.contracts.lastProgressTick) || 0));
+    s.contracts.lastPacingTick = Math.max(0, Math.floor(Number(s.contracts.lastPacingTick) || 0));
+    s.contracts.completed = Math.max(0, Math.floor(Number(s.contracts.completed) || 0));
+    s.contracts.failed = Math.max(0, Math.floor(Number(s.contracts.failed) || 0));
+    s.contracts.crisisSerial = Math.max(0, Math.floor(Number(s.contracts.crisisSerial) || 0));
+    s.contracts.nextCrisisTick = Math.max(0, Math.floor(Number(s.contracts.nextCrisisTick) || 0));
+    if (['safe', 'aggressive', 'collector', 'progress'].indexOf(s.contracts.autoProfile) < 0) s.contracts.autoProfile = 'progress';
+    if (typeof s.contracts.progressSignature !== 'string') s.contracts.progressSignature = '';
+    if (s.contracts.lastCrisisId != null && typeof s.contracts.lastCrisisId !== 'string') s.contracts.lastCrisisId = null;
+    if (s.contracts.crisis != null && (typeof s.contracts.crisis !== 'object' || Array.isArray(s.contracts.crisis) ||
+        typeof s.contracts.crisis.id !== 'string' || !isFinite(Number(s.contracts.crisis.stage)) ||
+        (root.GameContracts && !root.GameContracts.CRISES.some(function (crisis) { return crisis.id === s.contracts.crisis.id; })))) s.contracts.crisis = null;
     if (!s.completion || typeof s.completion !== 'object' || Array.isArray(s.completion)) {
       s.completion = JSON.parse(JSON.stringify(def.completion));
     }

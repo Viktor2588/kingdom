@@ -8,6 +8,7 @@ import "../js/systems-combat.js";
 import "../js/systems-skirmish.js";
 import "../js/systems-siege.js";
 import "../js/systems-battle.js";
+import "../js/systems-contracts.js";
 import "../js/achievements.js";
 import "../js/completion-planner.js";
 

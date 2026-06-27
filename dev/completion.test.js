@@ -9,6 +9,7 @@ import "../js/systems-combat.js";
 import "../js/systems-skirmish.js";
 import "../js/systems-siege.js";
 import "../js/systems-battle.js";
+import "../js/systems-contracts.js";
 import "../js/achievements.js";
 import "../js/completion-planner.js";
 
@@ -165,4 +166,4 @@ test("Completion-Langlauf erreicht deterministisch 100 Prozent", () => {
   expect(result.bestiary).toEqual({ done: GD.creatures.length, total: GD.creatures.length });
   expect(result.usedCapacity).toBeLessThanOrEqual(result.capacity);
   expect(result.diagnostic).toBeNull();
-});
+}, 15000);

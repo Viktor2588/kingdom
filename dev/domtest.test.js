@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/achievements.js', 'js/completion-planner.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/achievements.js', 'js/completion-planner.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -35,6 +35,8 @@ ok(document.querySelectorAll('#resources .ui-icon').length === 6, 'Topbar nutzt 
 ok(document.querySelectorAll('#tabbar .ui-icon').length === 3, 'sichtbare Tabs nutzen die lokale Symbolfamilie');
 ok(document.querySelectorAll('#screen .scene-ambience > span').length === 7, 'Reichspanorama besitzt Wasser-, Rauch-, Banner- und Magieakzente');
 ok(document.querySelectorAll('#screen .scene-status .ui-icon').length === 3, 'Panorama-Status nutzt die lokale Symbolfamilie');
+ok(document.querySelectorAll('#screen .contract-card').length === 3, 'Auftragsbrett zeigt drei rotierende Ziele');
+ok(document.querySelectorAll('#screen .profile-segment').length === 4, 'Auftragsbrett zeigt vier Auto-Profile');
 var wtBtn = document.getElementById('watch-toggle');
 ok(!!wtBtn, 'Top-Bar hat einen Zuschauer-Modus-Toggle');
 wtBtn.click();
@@ -125,6 +127,16 @@ tryRender('Kompendium-Modal (Erfolge/Statistik/Bestiarium)', function () {
   if (!document.querySelector('#modal-root .beast-hint')) throw new Error('Bestiarium-Hinweise fehlen');
   if (!document.querySelector('#modal-root .hunt-card .btn')) throw new Error('Köder-Aktion fehlt');
   document.querySelector('.modal-close').click();
+});
+tryRender('Reichskrise mit mehrstufiger Entscheidungs-UI', function () {
+  window.GameContracts.startCrisis(s, 'nahrung');
+  window.GameUI.activeTab = 'uebersicht'; window.GameUI.render();
+  if (!document.querySelector('#screen .crisis-banner')) throw new Error('Krisenhinweis fehlt');
+  window.GameUI.openCrisisModal();
+  if (!document.querySelector('.modal.crisis-modal')) throw new Error('kein Krisen-Modal');
+  if (document.querySelectorAll('#modal-root .crisis-choice').length < 2) throw new Error('Krisenentscheidungen fehlen');
+  document.querySelector('.modal-close').click();
+  s.contracts.crisis = null;
 });
 tryRender('Einstellungs-Modal (Effektstufe umschaltbar)', function () {
   window.GameUI.openSettingsModal();

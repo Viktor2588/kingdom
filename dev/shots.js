@@ -94,6 +94,25 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   });
 
   await shot('uebersicht', '1-uebersicht');
+  await page.evaluate(function () { var board = document.querySelector('.contract-board'); if (board) board.scrollIntoView({ block: 'start' }); });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, 'phase49-contracts-mobile.png') });
+  console.log('  📸 phase49-contracts-mobile.png');
+  await page.evaluate(function () {
+    var T = window.__TEMPEST__;
+    window.GameContracts.startCrisis(T.state, 'nahrung');
+    window.GameUI.activeTab = 'uebersicht';
+    window.GameUI.render();
+    window.GameUI.openCrisisModal();
+  });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, 'phase49-crisis-mobile.png') });
+  console.log('  📸 phase49-crisis-mobile.png');
+  await page.evaluate(function () {
+    var T = window.__TEMPEST__, close = document.querySelector('.modal-close');
+    if (close) close.click();
+    T.state.contracts.crisis = null;
+  });
   await shot('reich', '2-reich');
   await shot('kreaturen', '3-kreaturen');
   await shot('magie', '4-magie');
@@ -234,6 +253,10 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await shot('uebersicht', '13-desktop-uebersicht');
+  await page.evaluate(function () { var board = document.querySelector('.contract-board'); if (board) board.scrollIntoView({ block: 'start' }); });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, 'phase49-contracts-desktop.png') });
+  console.log('  📸 phase49-contracts-desktop.png');
   await shot('karte', '14-desktop-karte');
   await page.screenshot({ path: path.join(out, 'phase34-adventure-desktop.png') });
   console.log('  📸 phase34-adventure-desktop.png');
@@ -307,5 +330,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 30 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 33 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

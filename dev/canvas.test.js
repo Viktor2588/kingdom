@@ -8,6 +8,7 @@ import '../js/state.js';
 import '../js/systems.js';
 import '../js/systems-bestiary.js';
 import '../js/systems-combat.js';
+import '../js/systems-contracts.js';
 import '../js/render/canvas-core.js';
 import '../js/render/effects.js';
 import '../js/render/battle-scene.js';

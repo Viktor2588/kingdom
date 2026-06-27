@@ -237,6 +237,11 @@
         if (events.event.auto) toast(ed.icon + ' ' + ed.title, 'gold');
         else if (!watch && this.state.activeEvent) this.openEventModal(events.event.id);  // Wahl-Event anbieten (im Auto-Modus übernimmt der Berater)
       }
+      if (events && events.contracts) {
+        events.contracts.completed.forEach(function (contract) { toast(contract.icon + ' Auftrag erfüllt: ' + contract.title, 'gold'); });
+        events.contracts.expired.forEach(function (contract) { toast('⌛ Auftrag abgelaufen: ' + contract.title, 'bad'); });
+        if (events.contracts.crisisStarted && (!watch || detailed) && this.openCrisisModal) this.openCrisisModal();
+      }
       if (events && events.questsCompleted && events.questsCompleted.length) {
         events.questsCompleted.forEach(function (q) { toast('🎯 Ziel erfüllt: ' + q.title, 'gold'); });
       }
@@ -450,6 +455,8 @@
         if (self.buildActionCombatCard) { var acCard = self.buildActionCombatCard(); if (acCard) box.appendChild(acCard); }
         // Schnelle aktive Gefechtsschleife (Phase 40, aus ui-action.js).
         if (self.buildSkirmishCard) box.appendChild(self.buildSkirmishCard());
+        // Rotierende Aufträge und mehrstufige Reichskrisen (Phase 49).
+        if (self.buildContractBoard) box.appendChild(self.buildContractBoard());
 
         // Aktuelles Ziel (geführte Aufgabenkette)
         var aq = SYS.activeQuest(s);

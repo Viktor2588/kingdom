@@ -249,6 +249,7 @@
       state.metrics.expeditions = (state.metrics.expeditions || 0) + 1;
       state.metrics.expeditionsWon = (state.metrics.expeditionsWon || 0) + 1;
       state.metrics.tacticalWins = (state.metrics.tacticalWins || 0) + 1;
+      if (cbt.risk === 'riskant') state.metrics.riskyWins = (state.metrics.riskyWins || 0) + 1;
       // Gefallene im gewonnenen Gefecht überleben schwer verwundet.
       cbt.party.forEach(function (a) { if (a.dead && a.key !== 'herrscher') { var pc = findCreature(state, a.key); if (pc) { pc.woundedUntil = state.tick + Math.max(8, region.dauer); wounded.push(pc); } } });
     } else if (!fled && cbt.risk === 'riskant') {

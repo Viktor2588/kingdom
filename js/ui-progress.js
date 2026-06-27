@@ -52,7 +52,9 @@
         ['🏰', 'Gebäudestufen', fmt(buildingsTotal(s))],
         ['🏳️', 'Regionen', arrLen(s, 'claimedRegions') + ' / ' + GD.regions.length],
         ['⛏️', 'Anlagen gesichert', '' + arrLen(s, 'claimedMapSites')],
-        ['📚', 'Forschungen', '' + arrLen(s, 'research')]
+        ['📚', 'Forschungen', '' + arrLen(s, 'research')],
+        ['📌', 'Aufträge', m(s, 'contractsCompleted') + ' erfüllt · ' + m(s, 'contractsFailed') + ' verpasst'],
+        ['⚠️', 'Krisen gelöst', '' + m(s, 'crisesResolved')]
       ] },
       { label: 'Kreaturen', rows: [
         ['✨', 'Beschworen', fmt(m(s, 'summoned'))],

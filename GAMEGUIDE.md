@@ -381,6 +381,33 @@ In Abständen treten **Zufalls-Ereignisse** auf: manche wirken sofort (Schätze,
 Missernten, ein Weiser, ein Naturgeist), andere bieten dir eine **Entscheidung** (z. B. ein
 fahrender Händler oder eine Monsterflut). Sie können temporäre **Buffs oder Debuffs** geben.
 
+### Auftragsbrett
+
+Auf der *Übersicht* stehen immer bis zu **drei zeitlich begrenzte Aufträge**. Sie greifen nur
+Ziele auf, die dein Reich bereits erreichen kann: etwa bauen, beschwören, forschen, eine Anlage
+sichern, riskant gewinnen, eine C-Rang-Kreatur entwickeln, episch schmieden oder eine
+Belagerung aktiv überstehen. Falls gerade kaum Systeme verfügbar sind, hält eine kurze
+Wachschicht den dritten Platz lösbar. Die Belohnungen wachsen mit dem Reichsfortschritt und
+können nach Abschluss genau einmal abgeholt werden.
+
+Bleibt das Reich ungefähr drei Minuten ohne messbaren Fortschritt, bietet das Brett bevorzugt
+eine passende, erreichbare Aufgabe an. Verpasste Aufträge laufen aus und werden ersetzt; sie
+blockieren weder normalen noch Offline-Fortschritt.
+
+### Reichskrisen
+
+Fünf Krisen können zwischen den normalen Ereignissen auftreten: **Nahrungsknappheit**,
+**magische Seuche**, **Rivalen-Ultimatum**, **Flüchtlingsstrom** und **Gildenstreit**. Jede
+Krise besteht aus zwei Entscheidungen. Frühe Maßnahmen verändern die Kosten und Möglichkeiten
+des Reichs; die Folgen wirken als Ressourcenverlust, temporärer Bonus oder veränderte
+Bedrohung. Selbst ohne Vorräte bleibt in jeder Stufe mindestens ein Ausweg offen.
+
+Der Zuschauer-Modus kann Aufträge und Krisen nach vier Profilen behandeln: **Sicher** schützt
+Vorräte und Bevölkerung, **Aggressiv** bevorzugt Risiko und Kampfertrag, **Sammler** sucht
+Material und Kreaturenfortschritt, **Fortschritt** priorisiert Ausbau und Forschung.
+Bei **🎬 Sichtbar** pausiert der Berater an einer neuen Krise und öffnet die Entscheidung,
+statt sie automatisch zu treffen.
+
 ---
 
 ## Herrscher-Progression
@@ -438,7 +465,7 @@ Keine Lust, selbst zu klicken? Im Tab *Übersicht* den **👁️ Zuschauer-Modus
 einschalten – ein Berater spielt dein Reich von selbst (baut, beschwört, benennt, entwickelt,
 erforscht, schmiedet, zieht auf Expedition, kontert Rivalen, fusioniert …). Mit
 **🎬 Sichtbar** zeigt er jeden Einzelschritt in einem kurzen Dialog, pausiert dazwischen und
-führt einen Verlauf der letzten Aktionen. Mit **⏩ Vorspulen 30 s** springst du Spielzeit nach
+führt einen Verlauf der letzten Aktionen. Mit **⏩ Vorspulen 5 min** springst du Spielzeit nach
 vorn. Du kannst jederzeit eingreifen oder den Modus wieder ausschalten.
 
 ---

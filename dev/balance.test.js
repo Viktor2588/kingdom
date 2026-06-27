@@ -9,6 +9,7 @@ import "../js/state.js";
 import "../js/systems.js";
 import "../js/systems-bestiary.js";
 import "../js/systems-combat.js";
+import "../js/systems-contracts.js";
 
 const GD = globalThis.GameData, SYS = globalThis.GameSystems;
 

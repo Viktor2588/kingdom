@@ -95,6 +95,7 @@ js/
                     Affinität, Fusion, Runenschmiede, Echo-Generator/-Kämpfe, Herrscher-Talente,
                     Skill-Meisterschaft, Auto-Modus, Freischaltungen/Gating
   systems-bestiary.js Bestiarium-Jagden, Linienhinweise, Fährten/Köder und Ökologie-Boni
+  systems-contracts.js Rotierende Aufträge, mehrstufige Reichskrisen, Pacing und Auto-Profile
   systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
   systems-skirmish.js Sturmeinsätze: Profile/Bossphasen, Konter, Haltungen, Ziele und Belohnungen
   systems-action.js Echtzeit-Action-Kampf: 30-Hz-Fixed-Step-Sim, Telegraf/Ausweichrolle, Hotbar, Gegnertypen + Boss, Combo (GameActionCombat)
@@ -104,6 +105,7 @@ js/
   ui.js             UI-Kern: Views, Management-Modals und gemeinsame DOM-Helfer
   ui-adventure.js   Karten-, Armee-, Echo-, Expeditions- und Kampf-UI; erweitert GameUI
   ui-progress.js    Kompendium, Erfolge, Statistik und Bestiarium
+  ui-contracts.js   Auftragsbrett, Profilwahl und Krisenentscheidungen
   ui-action.js      Sturmeinsatz-Karte, Missionswahl und kompaktes Action-Gefechtsmodal
   ui-action-combat.js Echtzeit-Gefecht-Karte + Canvas-Modal mit Touch-/Tastatursteuerung
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
@@ -111,6 +113,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
   sim.test.js       Headless-Logiktest (Bun, ohne DOM)
   domtest.test.js   DOM-Rendertest (jsdom)
   playthrough.test.js Komplettes Headless-Durchspiel (jsdom)
+  contracts.test.js Auftrags-, Krisen-, Pacing-, Save- und Auto-Langlaufregressionen
   canvas.test.js    Renderer-Vertrag, Hit-Test, Effektstufen und transparente Assets
   adventure-canvas.test.js Karten-View-Modell, Orts-/Armeeatlanten, Hit-Test und Blickrichtungen
   balance.js        Balance-Analyse der Kraftkurven (Bun)
@@ -136,7 +139,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v15 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt, Bestiarium-Fortschritt und Freischaltungen bleiben erhalten).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v16 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt, Bestiarium-, Auftrags- und Krisenfortschritt sowie Freischaltungen bleiben erhalten).
 - **Zurücksetzen:** im Spiel über **⚙️ Einstellungen** → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
   ```js
@@ -163,7 +166,9 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 Das Reich kann sich **selbst spielen** – ein Berater (`SYS.autoPlayStep`) führt pro Tick
 eine sinnvolle Aktion aus (bauen, beschwören, benennen, entwickeln, Jobs zuweisen,
 forschen, Magie lernen, schmieden, Expeditionen, Gegenangriffe, Affinität, Fusion,
-Seelen opfern und freie Talentpunkte verteilen).
+Seelen opfern und freie Talentpunkte verteilen). Aufträge werden verfolgt und abgeholt;
+mehrstufige Krisen löst der Berater nach dem gewählten Profil **Sicher**, **Aggressiv**,
+**Sammler** oder **Fortschritt**.
 
 **Im Spiel:** Zuschauer-Modus per **👁️-Schalter oben in der Top-Bar** ein/aus, oder Tab
 *Übersicht* → Karte **„Zuschauer-Modus"** → **▶ Starten**.
@@ -222,11 +227,12 @@ Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test`                         | `119 pass` · gesamte Suite grün              |
+| `bun test`                         | `128 pass` · gesamte Suite grün              |
 | `bun test dev/sim.test.js`         | `1 pass` · `238 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `78 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/domtest.test.js`     | `1 pass` · `81 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/skirmish-profiles.test.js` | `7 pass` · Profile/Haltungen/Ziele/Save grün |
+| `bun test dev/contracts.test.js`   | `9 pass` · Aufträge/Krisen/Pacing/Auto grün  |
 | `bun dev/completion-acceptance.js` | Tick `6077` · `42/42` Erfolge · `78/78` Formen |
 | `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
 
@@ -250,7 +256,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
-# → 30 PNGs in dev/screenshots/, darunter Kreaturenportraits, Canvas-Karten und Phase-42-Bossphase
+# → 33 PNGs in dev/screenshots/, darunter Auftragsbrett, Krisenmodal und Phase-42-Bossphase
 ```
 
 ---

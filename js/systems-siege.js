@@ -56,6 +56,7 @@
     if (won) {
       bonus = { seelen: 5 + round(active.rivalPower * 0.03), magie: round(active.rivalPower * 0.04) };
       I.addResources(state, bonus);
+      state.metrics.activeSiegesWon = (state.metrics.activeSiegesWon || 0) + 1;
       I.log(state, '🏰 Belagerung abgewehrt – die Mauern halten! Aktiv-Bonus erbeutet.', 'gold');
     } else {
       I.log(state, '🏰 Die Mauern sind gebrochen.', 'bad');

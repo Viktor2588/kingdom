@@ -786,6 +786,7 @@
       skillProgress(inst, target.skill);
     }
     state.metrics.evolutions = (state.metrics.evolutions || 0) + 1;
+    if (GD().rankIndex(target.rank) >= GD().rankIndex('C')) state.metrics.rankCEvolutions = (state.metrics.rankCEvolutions || 0) + 1;
     log(state, '🧬 ' + fromName + ' entwickelt sich zu ' + target.icon + ' ' + target.name + '!', 'gold');
     return { ok: true, creature: inst };
   }
@@ -1056,6 +1057,7 @@
     item.forgeHistory = item.forgeHistory || [];
     item.forgeHistory.push({ tick: state.tick, from: before, to: item.quality });
     state.metrics.tempered = (state.metrics.tempered || 0) + 1;
+    if (item.quality >= 2 && before < 2) state.metrics.epicForged = (state.metrics.epicForged || 0) + 1;
     log(state, '🔥 ' + item.name + ' auf ' + GD().rarities[item.quality].name + ' aufgewertet.', 'gold');
     return { ok: true, item: item, quality: item.quality, rarity: GD().rarities[item.quality], cost: check.cost };
   }
@@ -1596,6 +1598,7 @@
       if (state.claimedRegions.indexOf(region.id) < 0) state.claimedRegions.push(region.id);
       group.battlesWon = (group.battlesWon || 0) + 1;
       state.metrics.armyVictories = (state.metrics.armyVictories || 0) + 1;
+      if (risk === 'riskant') state.metrics.riskyWins = (state.metrics.riskyWins || 0) + 1;
       if (leader) { addCreatureXp(state, leader, round(region.xp * 1.15)); addSkillXp(state, leader, round(region.xp * 0.5)); }
       if (rng() < Math.min(0.9, region.dropChance * rk.drop)) drop = makeDropItem(state, region, risk);
       var armyTrack = awardBestiaryTracks(state, region.id, risk === 'riskant' ? 2 : 1);
@@ -1792,6 +1795,7 @@
       state.echoes.stability = (state.echoes.stability || 0) + (node.boss ? 4 : 1);
       state.echoes.mapsCompleted = (state.echoes.mapsCompleted || 0) + 1;
       state.metrics.echoesCleared = (state.metrics.echoesCleared || 0) + 1;
+      if (risk === 'riskant') state.metrics.riskyWins = (state.metrics.riskyWins || 0) + 1;
       if (node.boss) state.metrics.echoBosses = (state.metrics.echoBosses || 0) + 1;
       group.battlesWon = (group.battlesWon || 0) + 1;
       if (leader) { addCreatureXp(state, leader, Math.max(20, round(node.power * 0.1))); addSkillXp(state, leader, Math.max(10, round(node.power * 0.04))); }
@@ -2002,6 +2006,7 @@
     if (won) track = awardBestiaryTracks(state, r.id, exp.risk === 'riskant' ? 2 : 1);
     state.metrics.expeditions = (state.metrics.expeditions || 0) + 1;
     if (won) state.metrics.expeditionsWon = (state.metrics.expeditionsWon || 0) + 1;
+    if (won && exp.risk === 'riskant') state.metrics.riskyWins = (state.metrics.riskyWins || 0) + 1;
     // Log
     var kind = won ? 'good' : (partial ? '' : 'bad');
     var msg = won ? ('🏆 ' + r.name + ' erobert!' + (claimed ? ' (Territorium gesichert)' : ''))
@@ -2157,7 +2162,7 @@
     if (state.tempBuffs && state.tempBuffs.length) {
       state.tempBuffs = state.tempBuffs.filter(function (tb) { return tb.untilTick > state.tick; });
     }
-    if (state.activeEvent) return null;                 // wartet auf Spielerwahl
+    if (state.activeEvent || (root.GameContracts && root.GameContracts.hasActiveCrisis(state))) return null; // wartet auf Spielerwahl
     if (!state.nextEventTick) { scheduleNextEvent(state); return null; }
     if (state.tick < state.nextEventTick) return null;
     var ev = pickEvent(state);

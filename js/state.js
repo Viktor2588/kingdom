@@ -9,7 +9,7 @@
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
   var CHRONICLE_KEY = 'tempest_kingdom_chronicles_v1';
-  var VERSION = 20;
+  var VERSION = 21;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -200,6 +200,15 @@
         progressCurve: [],
         stall: { kind: 'warming_up', sinceTick: 0, detail: '' }
       },
+      director: {
+        feed: [],
+        milestones: [],
+        currentGroup: null,
+        snapshot: null,
+        cameraTab: null,
+        stopReason: null,
+        seen: []
+      },
       completion: {
         enabled: false,
         target: 'all',
@@ -207,7 +216,7 @@
         lastSignature: '',
         diagnostic: null
       },
-      settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
+      settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], watchPauseDecision: true, effects: 'full' },
       log: [],
       metrics: { summoned: 0, named: 0, evolutions: 0, rankCEvolutions: 0, expeditions: 0, expeditionsWon: 0, riskyWins: 0, creaturesLost: 0, crafted: 0, tempered: 0, epicForged: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, activeSiegesWon: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, bossesDefeated: 0, eliteHunts: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, contractsCompleted: 0, contractsFailed: 0, crisesResolved: 0, seelenGesamt: 0 }
     };
@@ -470,6 +479,20 @@
     if (typeof s.pacing.stall.kind !== 'string') s.pacing.stall.kind = 'warming_up';
     s.pacing.stall.sinceTick = Math.max(0, Math.floor(Number(s.pacing.stall.sinceTick) || 0));
     if (typeof s.pacing.stall.detail !== 'string') s.pacing.stall.detail = '';
+    if (!s.director || typeof s.director !== 'object' || Array.isArray(s.director)) {
+      s.director = JSON.parse(JSON.stringify(def.director));
+    }
+    fill(s.director, def.director);
+    if (!Array.isArray(s.director.feed)) s.director.feed = [];
+    s.director.feed = s.director.feed.filter(function (entry) { return entry && typeof entry === 'object'; }).slice(0, 30);
+    if (!Array.isArray(s.director.milestones)) s.director.milestones = [];
+    s.director.milestones = s.director.milestones.filter(function (entry) { return entry && typeof entry === 'object'; }).slice(0, 20);
+    if (s.director.currentGroup != null && (typeof s.director.currentGroup !== 'object' || Array.isArray(s.director.currentGroup))) s.director.currentGroup = null;
+    if (s.director.snapshot != null && (typeof s.director.snapshot !== 'object' || Array.isArray(s.director.snapshot))) s.director.snapshot = null;
+    if (s.director.cameraTab != null && typeof s.director.cameraTab !== 'string') s.director.cameraTab = null;
+    if (s.director.stopReason != null && typeof s.director.stopReason !== 'string') s.director.stopReason = null;
+    if (!Array.isArray(s.director.seen)) s.director.seen = [];
+    s.director.seen = s.director.seen.filter(function (id, index, all) { return typeof id === 'string' && all.indexOf(id) === index; }).slice(-200);
     if (!s.completion || typeof s.completion !== 'object' || Array.isArray(s.completion)) {
       s.completion = JSON.parse(JSON.stringify(def.completion));
     }
@@ -507,6 +530,7 @@
     if (!s.settings || typeof s.settings !== 'object') s.settings = { watch: false };
     fill(s.settings, def.settings);
     if (!Array.isArray(s.settings.watchHistory)) s.settings.watchHistory = [];
+    s.settings.watchPauseDecision = s.settings.watchPauseDecision !== false;
     if (['off', 'reduced', 'full'].indexOf(s.settings.effects) < 0) s.settings.effects = 'full';
     // Sturmeinsätze v11: laufende Gefechte bleiben speicherbar, beschädigte
     // Werte werden defensiv begrenzt. Die Systemlogik validiert Missions-IDs.

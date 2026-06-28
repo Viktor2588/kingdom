@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js', 'js/systems-chronicle.js', 'js/systems-pacing.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-chronicle.js', 'js/ui-pacing.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js', 'js/systems-chronicle.js', 'js/systems-pacing.js', 'js/systems-director.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-chronicle.js', 'js/ui-pacing.js', 'js/ui-director.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -53,6 +53,18 @@ ok(!!pacingBtn, 'Übersicht bietet den Pacing-Debugschalter');
 pacingBtn.click();
 ok(document.querySelectorAll('#screen .pacing-event').length === 7, 'Pacing-Dashboard zeigt sieben Auslöser');
 document.querySelector('#screen .pacing-overlay .btn').click();
+window.GameDirector.observe(T.state, { text: '🏘️ Wohnbezirk Stufe 2.' });
+window.GameUI.render();
+var directorButtons = Array.prototype.map.call(document.querySelectorAll('#screen .watch-card .btn'), function (button) { return button.textContent; });
+ok(directorButtons.some(function (text) { return text.indexOf('Meilenstein') >= 0; }) &&
+  directorButtons.some(function (text) { return text.indexOf('Risiko') >= 0; }), 'Watch-Karte bietet ereignisbasierte Zeitraffer');
+ok(document.querySelectorAll('#screen .director-entry').length === 1, 'Director-Feed gruppiert Auto-Aktionen');
+var decisionBtn = Array.prototype.filter.call(document.querySelectorAll('#screen .watch-card .btn'), function (button) {
+  return button.textContent.indexOf('Entscheidung') >= 0;
+})[0];
+decisionBtn.click();
+ok(T.state.settings.watchPauseDecision === false, 'Entscheidungspause ist direkt umschaltbar');
+T.state.settings.watchPauseDecision = true; window.GameUI.render();
 
 console.log('--- Alle Views rendern ---');
 ['uebersicht', 'reich', 'kreaturen', 'magie', 'schmiede', 'karte'].forEach(function (tab) {

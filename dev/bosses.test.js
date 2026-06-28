@@ -198,7 +198,7 @@ test("Save-v18 migriert beschädigte Bossdaten und schützt Meisterschaftskonsis
     lastResult: "kaputt"
   };
   const clean = GST.normalize(state);
-  expect(clean.version).toBe(20);
+  expect(clean.version).toBe(21);
   expect(clean.bosses.defeated).toEqual(["jura_koloss"]);
   expect(clean.bosses.hardDefeated).toEqual(["jura_koloss"]);
   expect(clean.bosses.attempts.jura_koloss).toBe(3);

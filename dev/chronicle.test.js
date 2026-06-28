@@ -61,7 +61,7 @@ test("Chronikdefinitionen und frischer Standardlauf bleiben neutral", () => {
   const state = GST.createDefault();
   expect(CHR.CHALLENGES).toHaveLength(6);
   expect(CHR.VARIANTS).toHaveLength(4);
-  expect(state.version).toBe(20);
+  expect(state.version).toBe(21);
   expect(state.chronicle.generation).toBe(0);
   expect(state.chronicle.challengeId).toBe("standard");
   expect(state.chronicle.simSpeed).toBe(1);
@@ -96,7 +96,7 @@ test("Save-v19 repariert beschädigte Meta-Daten ohne fremde Freischaltungen", (
     }
   };
   const clean = GST.normalize(state);
-  expect(clean.version).toBe(20);
+  expect(clean.version).toBe(21);
   expect(clean.chronicle.generation).toBe(2);
   expect(clean.chronicle.challengeId).toBe("standard");
   expect(clean.chronicle.startVariantId).toBe("slime");

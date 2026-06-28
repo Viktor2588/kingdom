@@ -568,6 +568,23 @@ Alle Profile können mit einem frei gewählten Seed und sofort aktivem Zuschauer
 
 ---
 
+## Pacing-Dashboard
+
+Auf der *Übersicht* öffnet **📊 Pacing** ein Entwickler-Dashboard. Für Bau, Kampf, Erfolg,
+Bestiarium-Fund, Boss, Auftrag und Entscheidung zeigt es den letzten Abstand sowie
+Durchschnitt und Maximum. Die häufigsten Auto-Aktionen und aktuelle Blocker stehen darunter.
+
+Die Diagnose unterscheidet normalen Spielfluss, bewusstes Sparen, offene Entscheidungen,
+fehlende Ressourcen, zu hohe Kosten, falsche Auto-Priorität, gesperrte UI-Pfade,
+Completion-Blockaden und Content-Lücken. Hängende Tutorialziele und Bevölkerung über
+Wohnkapazität werden als harte Regressionen gemeldet.
+
+`bun run pacing` simuliert Seeds 42, 1337 und 2026 jeweils 3.600 Ticks mit verschiedenen
+Auto-Profilen. Das Gate schlägt bei langen Fortschrittspausen, harten Blockern, fehlender
+100%-Erreichbarkeit oder deutlicher Strategiedominanz fehl.
+
+---
+
 ## Speichern & Tipps
 
 - **Automatisches Speichern** (alle 10 s und beim Verlassen) im Browser-Speicher; bei

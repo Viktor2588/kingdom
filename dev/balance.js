@@ -14,6 +14,7 @@ import "../js/systems-bosses.js";
 import "../js/achievements.js";
 import "../js/completion-planner.js";
 import "../js/systems-chronicle.js";
+import "../js/systems-pacing.js";
 var GD = globalThis.GameData, GST = globalThis.GameState, SYS = globalThis.GameSystems;
 
 function pad(s, n) { s = '' + s; while (s.length < n) s += ' '; return s; }

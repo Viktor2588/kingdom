@@ -98,6 +98,29 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   });
 
   await shot('uebersicht', '1-uebersicht');
+  await page.evaluate(function () {
+    var T = window.__TEMPEST__, S = T.state, pacing = window.GamePacing.ensure(S);
+    S.tick = 720;
+    pacing.overlay = true;
+    pacing.lastMeaningfulTick = 710;
+    pacing.lastQuestTick = 680;
+    pacing.actionCounts = { build: 14, combat: 9, research: 6, contract: 5, creature: 4, decision: 2 };
+    window.GamePacing.EVENT_IDS.forEach(function (id, index) {
+      pacing.events[id] = { count: 3 + index, lastTick: 706 - index * 9, totalGap: 120 + index * 12, maxGap: 62 + index * 8 };
+    });
+    pacing.snapshot = window.GamePacing.snapshot(S);
+    window.GameUI.render();
+    var overlay = document.querySelector('.pacing-overlay'); if (overlay) overlay.scrollIntoView({ block: 'start' });
+  });
+  await page.waitForTimeout(150);
+  var phase53Mobile = await page.evaluate(function () {
+    return document.querySelectorAll('.pacing-event').length === 7 &&
+      document.documentElement.scrollWidth <= window.innerWidth;
+  });
+  if (!phase53Mobile) errors.push('phase53-mobile: Pacing-Auslöser fehlen oder Seite besitzt Überbreite');
+  await page.screenshot({ path: path.join(out, 'phase53-pacing-mobile.png') });
+  console.log('  📸 phase53-pacing-mobile.png');
+  await page.evaluate(function () { window.__TEMPEST__.state.pacing.overlay = false; window.GameUI.render(); });
   await page.evaluate(function () { var board = document.querySelector('.contract-board'); if (board) board.scrollIntoView({ block: 'start' }); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(out, 'phase49-contracts-mobile.png') });
@@ -343,6 +366,21 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await shot('uebersicht', '13-desktop-uebersicht');
+  await page.evaluate(function () {
+    window.__TEMPEST__.state.pacing.overlay = true;
+    window.GameUI.render();
+    var overlay = document.querySelector('.pacing-overlay'); if (overlay) overlay.scrollIntoView({ block: 'center' });
+  });
+  await page.waitForTimeout(150);
+  var phase53Desktop = await page.evaluate(function () {
+    var overlay = document.querySelector('.pacing-overlay');
+    return !!overlay && overlay.querySelectorAll('.pacing-event').length === 7 &&
+      document.documentElement.scrollWidth <= window.innerWidth;
+  });
+  if (!phase53Desktop) errors.push('phase53-desktop: Dashboard fehlt oder Seite besitzt Überbreite');
+  await page.screenshot({ path: path.join(out, 'phase53-pacing-desktop.png') });
+  console.log('  📸 phase53-pacing-desktop.png');
+  await page.evaluate(function () { window.__TEMPEST__.state.pacing.overlay = false; window.GameUI.render(); });
   var phase52Desktop = await page.evaluate(function () {
     var mark = document.querySelector('.scene-chronicle');
     return !!mark && mark.textContent.indexOf('Chronik 3') >= 0 && document.documentElement.scrollWidth <= window.innerWidth;
@@ -441,5 +479,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 42 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 44 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

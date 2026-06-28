@@ -15,6 +15,7 @@ import "../js/systems-bosses.js";
 import "../js/achievements.js";
 import "../js/completion-planner.js";
 import "../js/systems-chronicle.js";
+import "../js/systems-pacing.js";
 
 const GD = globalThis.GameData;
 const GST = globalThis.GameState;

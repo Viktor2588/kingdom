@@ -8,6 +8,7 @@
     "test": "bun test",
     "balance": "bun run dev/balance.js",
     "chronicle-sim": "bun run dev/chronicle-sim.js",
+    "pacing": "bun run dev/pacing-report.js",
     "shots": "bun run dev/shots.js",
     "chroma": "bun run dev/remove-chroma.js"
   },

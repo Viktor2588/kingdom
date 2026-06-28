@@ -9,7 +9,7 @@
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
   var CHRONICLE_KEY = 'tempest_kingdom_chronicles_v1';
-  var VERSION = 19;
+  var VERSION = 20;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -183,6 +183,22 @@
           bestTicks: {},
           archives: []
         }
+      },
+      pacing: {
+        enabled: true,
+        overlay: false,
+        startedTick: 0,
+        lastObservedTick: 0,
+        lastMeaningfulTick: 0,
+        lastQuestTick: 0,
+        questIndex: 0,
+        signature: '',
+        snapshot: null,
+        events: {},
+        actionCounts: {},
+        samples: [],
+        progressCurve: [],
+        stall: { kind: 'warming_up', sinceTick: 0, detail: '' }
       },
       completion: {
         enabled: false,
@@ -430,6 +446,30 @@
     meta.archives = meta.archives.filter(function (entry) {
       return entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id;
     });
+    if (!s.pacing || typeof s.pacing !== 'object' || Array.isArray(s.pacing)) {
+      s.pacing = JSON.parse(JSON.stringify(def.pacing));
+    }
+    fill(s.pacing, def.pacing);
+    s.pacing.enabled = s.pacing.enabled !== false;
+    s.pacing.overlay = !!s.pacing.overlay;
+    ['startedTick', 'lastObservedTick', 'lastMeaningfulTick', 'lastQuestTick', 'questIndex'].forEach(function (key) {
+      s.pacing[key] = Math.max(0, Math.floor(Number(s.pacing[key]) || 0));
+    });
+    if (typeof s.pacing.signature !== 'string') s.pacing.signature = '';
+    if (!s.pacing.snapshot || typeof s.pacing.snapshot !== 'object' || Array.isArray(s.pacing.snapshot)) s.pacing.snapshot = null;
+    if (!s.pacing.events || typeof s.pacing.events !== 'object' || Array.isArray(s.pacing.events)) s.pacing.events = {};
+    if (!s.pacing.actionCounts || typeof s.pacing.actionCounts !== 'object' || Array.isArray(s.pacing.actionCounts)) s.pacing.actionCounts = {};
+    for (var pacingAction in s.pacing.actionCounts) {
+      s.pacing.actionCounts[pacingAction] = Math.max(0, Math.floor(Number(s.pacing.actionCounts[pacingAction]) || 0));
+    }
+    if (!Array.isArray(s.pacing.samples)) s.pacing.samples = [];
+    s.pacing.samples = s.pacing.samples.filter(function (entry) { return entry && typeof entry === 'object'; }).slice(-120);
+    if (!Array.isArray(s.pacing.progressCurve)) s.pacing.progressCurve = [];
+    s.pacing.progressCurve = s.pacing.progressCurve.filter(function (entry) { return entry && typeof entry === 'object'; }).slice(-100);
+    if (!s.pacing.stall || typeof s.pacing.stall !== 'object' || Array.isArray(s.pacing.stall)) s.pacing.stall = JSON.parse(JSON.stringify(def.pacing.stall));
+    if (typeof s.pacing.stall.kind !== 'string') s.pacing.stall.kind = 'warming_up';
+    s.pacing.stall.sinceTick = Math.max(0, Math.floor(Number(s.pacing.stall.sinceTick) || 0));
+    if (typeof s.pacing.stall.detail !== 'string') s.pacing.stall.detail = '';
     if (!s.completion || typeof s.completion !== 'object' || Array.isArray(s.completion)) {
       s.completion = JSON.parse(JSON.stringify(def.completion));
     }

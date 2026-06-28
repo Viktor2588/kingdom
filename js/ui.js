@@ -531,6 +531,7 @@
               self.commit();
             }, { small: true, cls: watchDetailed ? 'btn-gold' : '' }),
             btn('⏩ Vorspulen 5 min', function () { self.fastForward(300); }, { small: true }),
+            btn('📊 Pacing', function () { if (self.togglePacingOverlay) self.togglePacingOverlay(); }, { small: true, cls: s.pacing && s.pacing.overlay ? 'btn-gold' : '' }),
             btn('📖 Kompendium', function () { if (self.openCodexModal) self.openCodexModal(); }, { small: true }),
             btn('⚙️ Einstellungen', function () { if (self.openSettingsModal) self.openSettingsModal(); }, { small: true })
           ]),
@@ -544,6 +545,7 @@
           watchCard.appendChild(wh);
         }
         box.appendChild(watchCard);
+        if (self.buildPacingOverlay) { var pacingOverlay = self.buildPacingOverlay(); if (pacingOverlay) box.appendChild(pacingOverlay); }
 
         // Onboarding: nächste Freischaltungen als Ausblick
         var goalIds = ['tab_karte', 'tab_magie', 'tab_schmiede', 'affinitaet', 'fusion'].filter(function (id) { return !SYS.featureUnlocked(s, id); });

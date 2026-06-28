@@ -151,6 +151,48 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   if (!phase51Elite) errors.push('phase51-elite: Jagdziel, Portrait oder Aktion fehlt');
   await page.screenshot({ path: path.join(out, 'phase51-elite-mobile.png') });
   console.log('  📸 phase51-elite-mobile.png');
+  await page.evaluate(function () {
+    var close = document.querySelector('.modal-close'); if (close) close.click();
+    var T = window.__TEMPEST__, S = T.state;
+    S.achievements = window.GameAchievements.ACHIEVEMENTS.map(function (entry) { return entry.id; });
+    S.seenSpecies = window.GameData.creatures.map(function (entry) { return entry.id; });
+    S.claimedRegions = window.GameData.regions.map(function (entry) { return entry.id; });
+    S.chronicle.generation = 2;
+    S.chronicle.challengeId = 'standard';
+    S.chronicle.seed = 2026;
+    S.chronicle.simSpeed = 2;
+    S.chronicle.bannerId = 'jura_koloss';
+    S.chronicle.meta.seals = 2;
+    S.chronicle.meta.maxSimSpeed = 2;
+    S.chronicle.meta.unlockedVariants = ['slime', 'undead', 'spirit'];
+    S.chronicle.meta.unlockedBanners = ['jura_koloss'];
+    S.chronicle.meta.bestTicks.standard = 6089;
+    S.chronicle.meta.archives = [{
+      id: 'chronicle_1_42_6581', generation: 1, seed: 42, challengeId: 'standard',
+      challengeName: 'Freie Chronik', ticks: 6581, deaths: 29, bossAttempts: 4,
+      rarestSpecies: { id: 'katastrophendrache', name: 'Katastrophendrache', icon: '🐉', rank: 'SS' }
+    }];
+    window.GameUI.activeTab = 'reich'; window.GameUI.render();
+    var board = document.querySelector('.chronicle-board'); if (board) board.scrollIntoView({ block: 'start' });
+  });
+  await page.waitForTimeout(150);
+  var phase52Chronicle = await page.evaluate(function () {
+    var board = document.querySelector('.chronicle-board');
+    return !!board && !!board.querySelector('.tag-ok') && !!board.querySelector('.chronicle-archive-row');
+  });
+  if (!phase52Chronicle) errors.push('phase52-chronicle: Abschlussstatus oder Archivzeile fehlt');
+  await page.screenshot({ path: path.join(out, 'phase52-chronicle-mobile.png') });
+  console.log('  📸 phase52-chronicle-mobile.png');
+  await page.evaluate(function () { window.GameUI.openChronicleRunModal(); });
+  await page.waitForTimeout(150);
+  var phase52Modal = await page.evaluate(function () {
+    return !!document.querySelector('.chronicle-modal') &&
+      document.querySelectorAll('.chronicle-select').length === 4 &&
+      document.querySelectorAll('select[aria-label="Challenge"] option').length === window.GameChronicle.CHALLENGES.length;
+  });
+  if (!phase52Modal) errors.push('phase52-modal: Start-, Challenge-, Tempo- oder Bannerauswahl fehlt');
+  await page.screenshot({ path: path.join(out, 'phase52-new-run-mobile.png') });
+  console.log('  📸 phase52-new-run-mobile.png');
   await page.evaluate(function () { var close = document.querySelector('.modal-close'); if (close) close.click(); });
   await shot('reich', '2-reich');
   await page.evaluate(function () { var board = document.querySelector('.special-board'); if (board) board.scrollIntoView({ block: 'start' }); });
@@ -301,6 +343,13 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await shot('uebersicht', '13-desktop-uebersicht');
+  var phase52Desktop = await page.evaluate(function () {
+    var mark = document.querySelector('.scene-chronicle');
+    return !!mark && mark.textContent.indexOf('Chronik 3') >= 0 && document.documentElement.scrollWidth <= window.innerWidth;
+  });
+  if (!phase52Desktop) errors.push('phase52-desktop: Chronikmarker fehlt oder Seite besitzt Überbreite');
+  await page.screenshot({ path: path.join(out, 'phase52-chronicle-desktop.png') });
+  console.log('  📸 phase52-chronicle-desktop.png');
   await page.evaluate(function () { var board = document.querySelector('.contract-board'); if (board) board.scrollIntoView({ block: 'start' }); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(out, 'phase49-contracts-desktop.png') });
@@ -392,5 +441,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 39 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 42 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

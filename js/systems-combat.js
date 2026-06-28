@@ -176,6 +176,7 @@
   function startCombat(state, regionId, creatureUids, rulerJoin, risk) {
     var check = canStartCombat(state, regionId, creatureUids, rulerJoin);
     if (!check.ok) return check;
+    if (root.GameChronicle) risk = root.GameChronicle.forceRisk(state, risk);
     if (!RISK[risk]) risk = 'normal';
     var r = GD().region(regionId), party = [];
     if (rulerJoin) party.push(battleActor(state, 'herrscher'));
@@ -262,7 +263,10 @@
           if (pg && pg.troops[pc.speciesId]) { pg.troops[pc.speciesId] = Math.max(0, pg.troops[pc.speciesId] - stackCount(pc)); if (!pg.troops[pc.speciesId]) delete pg.troops[pc.speciesId]; }
         }
       } } });
-      state.creatures = state.creatures.filter(function (pc) { return dead.indexOf(pc) < 0; });
+      if (dead.length) {
+        state.metrics.creaturesLost = (state.metrics.creaturesLost || 0) + dead.reduce(function (sum, creature) { return sum + stackCount(creature); }, 0);
+        state.creatures = state.creatures.filter(function (pc) { return dead.indexOf(pc) < 0; });
+      }
     } else {
       cbt.party.forEach(function (a) { if (a.key !== 'herrscher') { var pc = findCreature(state, a.key); if (pc) { pc.woundedUntil = state.tick + Math.max(6, region.dauer); wounded.push(pc); } } });
     }

@@ -425,6 +425,7 @@
           sceneLink('schmiede', 'Große Schmiede', 'Ausrüstung fertigen', [62, 32], [104, 88]),
           sceneLink('karte', 'Abenteuertor', 'Armeen befehligen', [19, 78], [120, 92]),
           self.buildSceneTrophies ? self.buildSceneTrophies() : null,
+          self.buildChronicleMark ? self.buildChronicleMark() : null,
           el('div', { class: 'scene-status' }, [
             el('span', null, [uiIcon('crown', 'Herrscher'), el('b', { text: stage.name })]),
             el('span', null, [uiIcon('combat', 'Kampfkraft'), el('b', { text: fmt(rp) + ' Kampfkraft' })]),
@@ -609,6 +610,7 @@
         ]));
         if (self.buildSpecializationBoard) box.appendChild(self.buildSpecializationBoard());
         if (self.buildTrophyRoom) box.appendChild(self.buildTrophyRoom());
+        if (self.buildChronicleBoard) box.appendChild(self.buildChronicleBoard());
 
         function buildCard(bd) {
           var lvl = s.buildings[bd.id] || 0;

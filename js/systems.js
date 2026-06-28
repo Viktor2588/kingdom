@@ -7,7 +7,7 @@
   'use strict';
   var root = (typeof window !== 'undefined') ? window : globalThis;
   function GD() { return root.GameData; }
-  function GS() { return root.GameState; }
+  function GS() { return root.GameState; } function CHRONICLE() { return root.GameChronicle; }
   var RULER_ARMY_ID = 0;
   var MAX_NAMED_CREATURES = 20;
 
@@ -301,9 +301,9 @@
     for (var k in bd.cost) cost[k] = Math.max(1, round(bd.cost[k] * Math.pow(bd.growth, lvl) * (1 - rab) * direction));
     return cost;
   }
-  function canBuild(state, id) { return canAfford(state, buildingCost(state, id)); }
+  function canBuild(state, id) { return (!CHRONICLE() || CHRONICLE().isBuildingAllowed(state, id)) && canAfford(state, buildingCost(state, id)); }
   function build(state, id) {
-    var bd = GD().building(id); if (!bd) return { ok: false };
+    var bd = GD().building(id); if (!bd) return { ok: false }; if (CHRONICLE() && !CHRONICLE().isBuildingAllowed(state, id)) return { ok: false, reason: 'Diese Challenge verbietet Handelsgebäude' };
     var cost = buildingCost(state, id);
     if (!canAfford(state, cost)) return { ok: false, missing: missingCost(state, cost) };
     pay(state, cost);
@@ -343,7 +343,7 @@
     var b = computeBonuses(state);
     var rates = { magie: 0, gold: 0, nahrung: 0, material: 0, seelen: 0, wissen: 0 };
     // Gebäude
-    GD().buildings.forEach(function (bd) {
+    GD().buildings.forEach(function (bd) { if (CHRONICLE() && !CHRONICLE().isBuildingAllowed(state, bd.id)) return;
       var lvl = state.buildings[bd.id] || 0;
       if (lvl > 0 && bd.producePer) {
         for (var res in bd.producePer) rates[res] += bd.producePer[res] * lvl;
@@ -362,7 +362,7 @@
     // Arbeitende Kreaturen
     state.creatures.forEach(function (c) {
       var job = JOB_BY[c.job];
-      if (job && job.res && !creatureBusy(state, c.uid)) {
+      if (job && job.res && (!CHRONICLE() || CHRONICLE().isJobAllowed(state, job.id)) && !creatureBusy(state, c.uid)) {
         rates[job.res] += workValue(state, c) * job.f * stackCount(c);
       }
     });
@@ -420,7 +420,7 @@
     var threat = stepThreat(state);
     var ev = stepEvents(state);
     var questsDone = checkQuests(state, false);
-    var achievementsDone = root.GameAchievements ? root.GameAchievements.evaluate(state) : [];
+    var achievementsDone = root.GameAchievements ? root.GameAchievements.evaluate(state) : []; if (root.GameChronicle) root.GameChronicle.observeCompletion(state);
     return { production: p, expeditionResults: results, raidWarning: threat.raidWarning, raidResult: threat.raidResult, event: ev, questsCompleted: questsDone, achievementsUnlocked: achievementsDone, mapRefresh: mapRefresh };
   }
 
@@ -445,8 +445,8 @@
     });
     state.expeditions = still;
     // anstehenden Rivalen-Angriff offline auflösen
-    var raidResult = null;
-    if (state.raid && state.tick >= state.raid.atTick && !(state.siege && state.siege.active)) raidResult = resolveRaid(state);
+    var raidResult = null; if (state.raid && state.tick >= state.raid.atTick && !(state.siege && state.siege.active)) raidResult = resolveRaid(state);
+    if (root.GameAchievements) root.GameAchievements.evaluate(state); if (root.GameChronicle) root.GameChronicle.observeCompletion(state);
     return { ticks: ticks, results: results, production: p, raidResult: raidResult };
   }
 
@@ -530,13 +530,11 @@
   }
   function summonableSpecies(state) {
     var maxIdx = maxSummonRankIndex(state);
-    return GD().creatures.filter(function (sp) {
-      return sp.summon && GD().rankIndex(sp.rank) <= maxIdx;
-    });
+    return GD().creatures.filter(function (sp) { return sp.summon && GD().rankIndex(sp.rank) <= maxIdx && (!CHRONICLE() || CHRONICLE().isSpeciesAllowed(state, sp)); });
   }
   function canSummon(state, speciesId) {
     var sp = GD().creature(speciesId);
-    if (!sp || !sp.summon) return { ok: false, reason: 'Nicht beschwörbar' };
+    if (!sp || !sp.summon) return { ok: false, reason: 'Nicht beschwörbar' }; if (CHRONICLE() && !CHRONICLE().isSpeciesAllowed(state, sp)) return { ok: false, reason: 'Diese Challenge erlaubt nur Untote' };
     if (GD().rankIndex(sp.rank) > maxSummonRankIndex(state)) return { ok: false, reason: 'Beschwörungskreis zu niedrig' };
     if (usedCapacity(state) >= capacity(state)) return { ok: false, reason: 'Keine Kapazität (Wohnbezirk bauen)' };
     var cost = summonCost(state, speciesId);
@@ -794,7 +792,7 @@
 
   // ---------- Jobs ----------
   function assignJob(state, uid, job) {
-    if (!JOB_BY[job]) return { ok: false };
+    if (!JOB_BY[job]) return { ok: false }; if (CHRONICLE() && !CHRONICLE().isJobAllowed(state, job)) return { ok: false, reason: 'Diese Challenge verbietet Handel' };
     var inst = findCreature(state, uid);
     if (!inst) return { ok: false };
     if (creatureBusy(state, uid)) return { ok: false, reason: 'Auf Expedition' };
@@ -1334,12 +1332,12 @@
   }
   function recruitableTroops(state) {
     var maxRank = maxSummonRankIndex(state);
-    return GD().creatures.filter(function (sp) { return !!sp.summon && GD().rankIndex(sp.rank) <= maxRank; });
+    return GD().creatures.filter(function (sp) { return !!sp.summon && GD().rankIndex(sp.rank) <= maxRank && (!CHRONICLE() || CHRONICLE().isSpeciesAllowed(state, sp)); });
   }
   function canRecruitTroops(state, groupId, speciesId, amount) {
     var group = findArmyGroup(state, groupId), sp = GD().creature(speciesId);
     amount = Math.max(1, Math.floor(amount || 1));
-    if (!group || !sp || !sp.summon) return { ok: false, reason: 'Unbekannte Armee oder Truppenart' };
+    if (!group || !sp || !sp.summon) return { ok: false, reason: 'Unbekannte Armee oder Truppenart' }; if (CHRONICLE() && !CHRONICLE().isSpeciesAllowed(state, sp)) return { ok: false, reason: 'Diese Challenge erlaubt nur Untote' };
     if (GD().rankIndex(sp.rank) > maxSummonRankIndex(state)) return { ok: false, reason: 'Beschwörungskreis zu niedrig' };
     var types = Object.keys(group.troops).filter(function (id) { return group.troops[id] > 0; });
     if (!group.troops[speciesId] && types.length >= MAX_TROOP_TYPES) return { ok: false, reason: 'Maximal ' + MAX_TROOP_TYPES + ' Truppentypen je Armee' };
@@ -1577,7 +1575,7 @@
     var group = findArmyGroup(state, groupId), region = group ? GD().region(group.position) : null;
     if (!group || !region) return { ok: false, reason: 'Die Armee steht in keiner angreifbaren Region' };
     if (!regionUnlocked(state, region.id)) return { ok: false, reason: 'Region noch nicht erreichbar' };
-    if (!RISK[risk]) risk = 'normal';
+    if (CHRONICLE()) risk = CHRONICLE().forceRisk(state, risk); if (!RISK[risk]) risk = 'normal';
     var power = armyGroupPower(state, group), won = power >= region.power, partial = !won && power >= region.power * 0.6;
     var lossRate = won ? 0.04 : (partial ? 0.18 : 0.36);
     if (risk === 'sicher') lossRate *= 0.65;
@@ -1595,7 +1593,7 @@
       for (var res in region.rewards) gains[res] = round(region.rewards[res] * mult * rk.reward);
       addResources(state, gains);
     }
-    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false, drop = null;
+    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false, terminalLosses = 0, drop = null;
     if (won) {
       if (state.claimedRegions.indexOf(region.id) < 0) state.claimedRegions.push(region.id);
       group.battlesWon = (group.battlesWon || 0) + 1;
@@ -1606,7 +1604,7 @@
       var armyTrack = awardBestiaryTracks(state, region.id, risk === 'riskant' ? 2 : 1);
     } else if (risk === 'riskant' && leader) {
       releaseCreatureEquipment(state, leader); leaderDead = true;
-      Object.keys(group.troops || {}).forEach(function (speciesId) { removeTroopStack(state, group.id, speciesId, group.troops[speciesId]); });
+      Object.keys(group.troops || {}).forEach(function (speciesId) { terminalLosses += group.troops[speciesId] || 0; removeTroopStack(state, group.id, speciesId, group.troops[speciesId]); });
       state.creatures = state.creatures.filter(function (c) { return c.uid !== leader.uid; });
       state.armyGroups = state.armyGroups.filter(function (g) { return g.id !== group.id; });
     } else if (leader) {
@@ -1619,6 +1617,7 @@
     if (totalLosses) log(state, '⚰️ Truppenverluste: ' + totalLosses + '.', won ? '' : 'bad');
     if (warded) log(state, '🛡️ Die Feldbarriere fängt einen Teil der Verluste ab.', 'good');
     if (leaderDead) log(state, '☠️ Anführer ' + leader.name + ' ist im riskanten Feldzug gefallen.', 'bad');
+    state.metrics.creaturesLost = (state.metrics.creaturesLost || 0) + totalLosses + terminalLosses + (leaderDead ? 1 : 0);
     if (drop) log(state, '🎁 Schmiedefund: ' + drop.name + '.', 'gold');
     if (armyTrack) log(state, '🔎 Bestiarium-Fährte: ' + armyTrack.line + ' +' + armyTrack.amount + ' (' + armyTrack.tracks + '/' + HUNT_TRACKS_PER_LURE + ').', armyTrack.ready ? 'gold' : '');
     return { ok: true, won: won, partial: partial, power: power, regionPower: region.power, losses: losses, totalLosses: totalLosses, gains: gains, drop: drop, leaderDead: leaderDead, warded: warded, track: armyTrack || null };
@@ -1772,7 +1771,7 @@
   }
   function challengeEcho(state, groupId, nodeId, risk) {
     var check = canChallengeEcho(state, groupId, nodeId); if (!check.ok) return check;
-    if (!RISK[risk]) risk = 'normal';
+    if (CHRONICLE()) risk = CHRONICLE().forceRisk(state, risk); if (!RISK[risk]) risk = 'normal';
     var group = check.group, node = check.node, power = check.power;
     var won = power >= node.power, partial = !won && power >= node.power * 0.65;
     var lossRate = won ? 0.035 : (partial ? 0.16 : 0.34);
@@ -1788,7 +1787,7 @@
       removeTroopStack(state, group.id, id, lost); losses[id] = lost; totalLosses += lost;
     });
     var gains = {}, forgeGains = {}, rk = RISK[risk];
-    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false;
+    var leader = group.rulerLed ? null : findCreature(state, group.leaderUid), leaderDead = false, terminalLosses = 0;
     if (won) {
       for (var res in node.reward.resources) gains[res] = round(node.reward.resources[res] * rk.reward);
       for (var materialId in node.reward.forgeMaterials) forgeGains[materialId] = Math.max(1, round(node.reward.forgeMaterials[materialId] * (risk === 'riskant' ? 1.5 : 1)));
@@ -1804,7 +1803,7 @@
       var echoTrack = awardBestiaryTracks(state, node.environmentId, node.boss ? 2 : 1);
     } else if (risk === 'riskant' && leader) {
       releaseCreatureEquipment(state, leader); leaderDead = true;
-      Object.keys(group.troops || {}).forEach(function (speciesId) { removeTroopStack(state, group.id, speciesId, group.troops[speciesId]); });
+      Object.keys(group.troops || {}).forEach(function (speciesId) { terminalLosses += group.troops[speciesId] || 0; removeTroopStack(state, group.id, speciesId, group.troops[speciesId]); });
       state.creatures = state.creatures.filter(function (c) { return c.uid !== leader.uid; });
       state.armyGroups = state.armyGroups.filter(function (g) { return g.id !== group.id; });
     } else if (leader) {
@@ -1813,6 +1812,7 @@
     log(state, won ? ('🌀 ' + group.name + ' bezwingt ' + node.name + '.') : ('💥 ' + group.name + ' scheitert im Echo ' + node.name + '.'), won ? 'good' : 'bad');
     if (node.boss && won) log(state, '👁️ Der Echo-Kern zerbricht. Ein stärkerer Zyklus kann geöffnet werden.', 'gold');
     if (totalLosses) log(state, '⚰️ Echo-Verluste: ' + totalLosses + '.', won ? '' : 'bad');
+    state.metrics.creaturesLost = (state.metrics.creaturesLost || 0) + totalLosses + terminalLosses + (leaderDead ? 1 : 0);
     if (echoTrack) log(state, '🔎 Bestiarium-Fährte: ' + echoTrack.line + ' +' + echoTrack.amount + ' (' + echoTrack.tracks + '/' + HUNT_TRACKS_PER_LURE + ').', echoTrack.ready ? 'gold' : '');
     return { ok: true, won: won, partial: partial, node: node, power: power, nodePower: node.power, losses: losses, totalLosses: totalLosses, gains: gains, forgeGains: forgeGains, leaderDead: leaderDead, warded: warded, track: echoTrack || null };
   }
@@ -1908,7 +1908,7 @@
     var check = canStartExpedition(state, regionId, creatureUids, rulerJoin);
     if (!check.ok) return { ok: false, reason: check.reason };
     var r = GD().region(regionId);
-    if (!RISK[risk]) risk = 'normal';
+    if (CHRONICLE()) risk = CHRONICLE().forceRisk(state, risk); if (!RISK[risk]) risk = 'normal';
     var power = expeditionPower(state, creatureUids, rulerJoin);
     var tempo = clamp(computeBonuses(state).expedTempo || 0, 0, 0.6);   // Magie verkürzt die Reise
     var dauer = Math.max(2, round(r.dauer * (1 - tempo)));
@@ -1992,7 +1992,7 @@
           }
         }
       });
-      if (dead.length) state.creatures = state.creatures.filter(function (c) { return dead.indexOf(c) < 0; });
+      if (dead.length) { state.metrics.creaturesLost = (state.metrics.creaturesLost || 0) + dead.reduce(function (sum, creature) { return sum + stackCount(creature); }, 0); state.creatures = state.creatures.filter(function (c) { return dead.indexOf(c) < 0; }); }
     } else if (!won) {
       var heil = clamp(b.heiltempo || 0, 0, 0.8);
       var dur = Math.max(4, round(r.dauer * 0.9 * (1 - heil)));
@@ -2040,7 +2040,7 @@
     var claimed = (state.claimedRegions || []).length;
     if (claimed <= 0) return 0;
     var ruhe = clamp(computeBonuses(state).threatRuhe || 0, 0, 0.8);   // Magie hält Rivalen in Schach
-    return (0.05 + 0.03 * claimed) * (1 - ruhe);
+    return (0.05 + 0.03 * claimed) * (1 - ruhe) * (CHRONICLE() ? CHRONICLE().threatMultiplier(state) : 1);
   }
   function pickRival(state) {
     var list = GD().rivals.filter(function (rival) { return !isRivalDefeated(state, rival.id); });
@@ -2238,7 +2238,7 @@
   };
   function featureUnlocked(state, id) { var f = FEATURES[id]; return f ? !!f.test(state) : true; }
   function featureHint(id) { var f = FEATURES[id]; return f ? f.hint : ''; }
-  function buildingUnlocked(state, id) { var u = BUILDING_UNLOCK[id]; return u ? !!u.test(state) : true; }
+  function buildingUnlocked(state, id) { var u = BUILDING_UNLOCK[id]; return (!CHRONICLE() || CHRONICLE().isBuildingAllowed(state, id)) && (u ? !!u.test(state) : true); }
   function buildingHint(id) { var u = BUILDING_UNLOCK[id]; return u ? u.hint : ''; }
   function tabUnlocked(state, tabId) {
     for (var id in FEATURES) { if (FEATURES[id].kind === 'tab' && FEATURES[id].tab === tabId) return FEATURES[id].test(state); }
@@ -2344,7 +2344,7 @@
     var wantArmy = Math.ceil(state.creatures.length * 0.35);
     if (featureUnlocked(state, 'tab_karte') && army < Math.max(2, wantArmy)) return 'armee';
     // sonst: Job zur knappsten Produktionsressource
-    var keys = ['magie', 'material', 'gold', 'nahrung', 'wissen'];
+    var keys = ['magie', 'material', 'gold', 'nahrung', 'wissen'].filter(function (key) { return !CHRONICLE() || CHRONICLE().isJobAllowed(state, RES_JOB[key]); });
     var lowest = keys[0], lo = Infinity;
     keys.forEach(function (k) { var v = state.resources[k] || 0; if (v < lo) { lo = v; lowest = k; } });
     return RES_JOB[lowest] || 'magie';

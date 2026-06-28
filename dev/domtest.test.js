@@ -16,7 +16,7 @@ var dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true, 
 var window = dom.window, document = window.document;
 
 // Skripte in Reihenfolge im window-Scope ausführen (wie der Browser)
-for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
+for (const f of ['js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js', 'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js', 'js/systems-chronicle.js', 'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js', 'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-chronicle.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js']) {
   window.eval(await Bun.file(dir + '/' + f).text());
 }
 
@@ -89,6 +89,7 @@ tryRender('Reich rendern & "Bauen"-Button klicken', function () {
   if (!document.querySelector('#screen .district-ledger')) throw new Error('kein materialisiertes Bezirksbrett');
   if (!document.querySelector('#screen .special-board')) throw new Error('strategische Ausrichtung fehlt');
   if (!document.querySelector('#screen .trophy-room')) throw new Error('Trophäenraum fehlt');
+  if (!document.querySelector('#screen .chronicle-board')) throw new Error('Chronikraum fehlt');
   if (document.querySelectorAll('#screen .special-auto .profile-segment').length !== 6) throw new Error('Auto-Doktrinprofile fehlen');
   if (document.querySelectorAll('#screen .special-slot').length !== 2) throw new Error('frühe Bezirks-Slots fehlen');
   if (!document.querySelector('#screen .district-card .district-icon .ui-icon')) throw new Error('Gebäudesymbole fehlen');
@@ -529,6 +530,23 @@ tryRender('Ressourcenanlage über die UI sichern und ausbauen', function () {
   document.querySelector('.modal-close').click();
 });
 window.GameUI.state = s;
+
+tryRender('vollständiger Run öffnet die New-Game+-Auswahl', function () {
+  s.achievements = window.GameAchievements.ACHIEVEMENTS.map(function (entry) { return entry.id; });
+  s.seenSpecies = window.GameData.creatures.map(function (entry) { return entry.id; });
+  s.claimedRegions = window.GameData.regions.map(function (entry) { return entry.id; });
+  window.GameUI.state = s; window.GameUI.activeTab = 'reich'; window.GameUI.render();
+  if (document.querySelector('#screen .chronicle-board .tag-ok') == null) throw new Error('Run nicht als versiegelbar markiert');
+  window.GameUI.openChronicleRunModal();
+  if (!document.querySelector('.modal.chronicle-modal')) throw new Error('kein Chronik-Modal');
+  if (document.querySelectorAll('#modal-root .chronicle-select').length !== 4) throw new Error('Start-, Challenge-, Tempo- oder Bannerauswahl fehlt');
+  if (document.querySelectorAll('#modal-root select[aria-label="Challenge"] option').length !== window.GameChronicle.CHALLENGES.length) throw new Error('Challenges unvollständig');
+  if (document.querySelectorAll('#modal-root select[aria-label="Startlinie"] option').length < 2) throw new Error('erste Meta-Startlinie nicht sofort verfügbar');
+  if (document.querySelectorAll('#modal-root select[aria-label="Simulationsgeschwindigkeit"] option').length < 2) throw new Error('2×-Simulation nicht sofort verfügbar');
+  if (!document.querySelector('#modal-root .chronicle-challenge-info').textContent) throw new Error('Challenge-Regel fehlt');
+  if (!document.querySelector('#modal-root .chronicle-seed')) throw new Error('Seed-Eingabe fehlt');
+  document.querySelector('.modal-close').click();
+});
 
 console.log('--- Spielstand-Reset (Phase 11) ---');
 tryRender('Alter Nazarick-Save-Key wird auf Tempest-v2 migriert', function () {

@@ -32,8 +32,8 @@
 
   // Haupt-Loop: 1 Tick pro Sekunde
   var loop = setInterval(function () {
-    var ev = SYS.tick(state);
-    UI.onTick(ev);
+    var steps = window.GameChronicle ? window.GameChronicle.simSpeed(state) : 1;
+    for (var i = 0; i < steps; i++) UI.onTick(SYS.tick(state));
   }, 1000);
 
   // Auto-Speichern alle 10 s
@@ -51,11 +51,33 @@
     if (!skipReload) window.location.reload();
   }
 
+  function startChronicleRun(options, skipReload) {
+    if (!window.GameChronicle) return { ok: false, reason: 'Chroniksystem nicht geladen.' };
+    var result = window.GameChronicle.startNewRun(state, options);
+    if (!result.ok) return result;
+    var archived = GST.storeChronicleArchive(result.archive);
+    if (!archived.ok) return { ok: false, reason: archived.reason === 'quota' ? 'Chronik-Archiv ist voll.' : 'Alter Run konnte nicht archiviert werden.' };
+    var saved = GST.saveResult(result.state);
+    if (!saved.ok) return { ok: false, reason: saved.reason === 'quota' ? 'Neuer Run passt nicht in den Spielstand.' : 'Neuer Run konnte nicht gespeichert werden.' };
+    if (skipReload) {
+      state = result.state;
+      UI.start(state, function (s) { GST.save(s); });
+      window.__TEMPEST__.state = state;
+      return result;
+    }
+    resetting = true;
+    clearInterval(loop);
+    clearInterval(saveLoop);
+    window.location.reload();
+    return result;
+  }
+
   // Für Debugging in der Browser-Konsole
   window.__TEMPEST__ = {
     state: state, SYS: SYS, GST: GST, UI: UI,
     stopLoop: function () { clearInterval(loop); clearInterval(saveLoop); },
     resetGame: resetGame,
+    startChronicleRun: startChronicleRun,
     isResetting: function () { return resetting; }
   };
 })();

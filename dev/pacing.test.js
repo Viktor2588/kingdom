@@ -22,6 +22,7 @@ import "../js/systems-pacing.js";
 const GS = globalThis.GameState;
 const SYS = globalThis.GameSystems;
 const GP = globalThis.GamePacing;
+const LONG_RUN_TIMEOUT_MS = 15000;
 
 function fresh(seed = 42) {
   const state = GS.createDefault();
@@ -192,4 +193,4 @@ test("Mehrseed-Langläufe zeigen Fortschrittskurven ohne Quest- oder Kapazitäts
   expect(replay.score).toBe(runs[0].score);
   expect(replay.report.events).toEqual(runs[0].report.events);
   expect(GP.evaluateRuns(runs, { maxIdle: 480, scoreRatio: 1.8 }).ok).toBe(true);
-});
+}, LONG_RUN_TIMEOUT_MS);

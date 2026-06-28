@@ -111,6 +111,7 @@ js/
   systems-bosses.js Boss-Leiter, Meisterschaften, Elite-Exemplare, Trophäen und Auto-Auflösung
   systems-chronicle.js Chronik-Abschluss, Meta-Fortschritt, Startvarianten und Challenge-Regeln
   systems-pacing.js Action-Dichte, Stall-Klassifikation, Fortschrittskurven und CI-Gates
+  systems-director.js Gruppierter Watch-Feed, Meilensteine und Zeitraffer-Stopps
   systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
   systems-skirmish.js Sturmeinsätze: Profile/Bossphasen, Konter, Haltungen, Ziele und Belohnungen
   systems-action.js Echtzeit-Action-Kampf: 30-Hz-Fixed-Step-Sim, Telegraf/Ausweichrolle, Hotbar, Gegnertypen + Boss, Combo (GameActionCombat)
@@ -125,6 +126,7 @@ js/
   ui-bosses.js       Bossbrett, Trophäenraum und Panorama-Trophäen
   ui-chronicle.js    Chronikraum, Archivexport und New-Game+-Auswahl
   ui-pacing.js       Einklappbares Pacing- und Blocker-Dashboard
+  ui-director.js      Director-Feed und ereignisbasierte Zeitraffer
   ui-action.js      Sturmeinsatz-Karte, Missionswahl und kompaktes Action-Gefechtsmodal
   ui-action-combat.js Echtzeit-Gefecht-Karte + Canvas-Modal mit Touch-/Tastatursteuerung
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
@@ -139,6 +141,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
   chronicle-sim.js   Deterministischer 100%-Vergleich mehrerer Run-Seeds
   pacing.test.js     Action-Dichte, Stall-Klassen, Regressionen und Mehrseed-Gates
   pacing-report.js   60-Minuten-Bericht für Seeds, Strategien, Blocker und Aktionsanteile
+  director.test.js   Feed-Gruppierung, Replays, Risiken und 60-Minuten-Regie
   canvas.test.js    Renderer-Vertrag, Hit-Test, Effektstufen und transparente Assets
   adventure-canvas.test.js Karten-View-Modell, Orts-/Armeeatlanten, Hit-Test und Blickrichtungen
   balance.js        Balance-Analyse der Kraftkurven (Bun)
@@ -164,7 +167,7 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v20 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt, Bestiarium-, Auftrags-, Krisen-, Spezialisierungs-, Boss-, Chronik- und Pacingfortschritte bleiben erhalten).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v21 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt, Chronik-, Pacing- und Director-Daten bleiben erhalten).
 - **Chronik-Archiv:** `tempest_kingdom_chronicles_v1` hält vollständige versiegelte Runs getrennt vom aktiven Save. Ein Archiv-/Quota-Fehler blockiert New Game+, statt den abgeschlossenen Stand zu überschreiben.
 - **Zurücksetzen:** im Spiel über **⚙️ Einstellungen** → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
@@ -265,9 +268,9 @@ Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test`                         | `162 pass` · gesamte Suite grün              |
+| `bun test`                         | `169 pass` · gesamte Suite grün              |
 | `bun test dev/sim.test.js`         | `1 pass` · `238 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `88 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/domtest.test.js`     | `1 pass` · `91 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/skirmish-profiles.test.js` | `7 pass` · Profile/Haltungen/Ziele/Save grün |
 | `bun test dev/contracts.test.js`   | `9 pass` · Aufträge/Krisen/Pacing/Auto grün  |
@@ -275,6 +278,7 @@ Erwartete Ausgabe (Soll-Stand):
 | `bun test dev/bosses.test.js`      | `9 pass` · Bosse/Meisterschaft/Eliten/Save grün |
 | `bun test dev/chronicle.test.js`   | `11 pass` · Archive/Meta/Challenges/Auto grün |
 | `bun test dev/pacing.test.js`      | `8 pass` · Auslöser/Stalls/Gates/Mehrseed grün |
+| `bun test dev/director.test.js`    | `7 pass` · Feed/Replays/Stopps/Langlauf grün |
 | `bun dev/completion-acceptance.js` | Tick `6391` · `42/42` Erfolge · `78/78` Formen |
 | `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
 | `bun run chronicle-sim`            | Seeds `42/1337/2026` erreichen 100 %; Bestzeit `6089` Ticks |
@@ -300,7 +304,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
-# → 44 aktuelle Aufnahmen; mit zwei Legacy-Referenzen liegen 46 PNGs in dev/screenshots/
+# → 46 aktuelle Aufnahmen; mit zwei Legacy-Referenzen liegen 48 PNGs in dev/screenshots/
 ```
 
 ---

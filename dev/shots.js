@@ -121,6 +121,20 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.screenshot({ path: path.join(out, 'phase53-pacing-mobile.png') });
   console.log('  📸 phase53-pacing-mobile.png');
   await page.evaluate(function () { window.__TEMPEST__.state.pacing.overlay = false; window.GameUI.render(); });
+  await page.evaluate(function () {
+    var S = window.__TEMPEST__.state;
+    window.GameDirector.observe(S, { text: '🏘️ Wohnbezirk Stufe 7.' });
+    S.seenSpecies.push('daemonenfuerst');
+    S.claimedRegions.push('sumpf');
+    S.tick += 20;
+    window.GameDirector.observe(S, { text: '🏆 Giftsumpf erobert.' });
+    window.GameUI.render();
+    var feed = document.querySelector('.director-feed'); if (feed) feed.scrollIntoView({ block: 'center' });
+  });
+  await page.waitForTimeout(150);
+  if (await page.locator('.director-entry').count() < 2) errors.push('phase47-mobile: Director-Feed fehlt');
+  await page.screenshot({ path: path.join(out, 'phase47-director-mobile.png') });
+  console.log('  📸 phase47-director-mobile.png');
   await page.evaluate(function () { var board = document.querySelector('.contract-board'); if (board) board.scrollIntoView({ block: 'start' }); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: path.join(out, 'phase49-contracts-mobile.png') });
@@ -381,6 +395,10 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
   await page.screenshot({ path: path.join(out, 'phase53-pacing-desktop.png') });
   console.log('  📸 phase53-pacing-desktop.png');
   await page.evaluate(function () { window.__TEMPEST__.state.pacing.overlay = false; window.GameUI.render(); });
+  await page.evaluate(function () { var feed = document.querySelector('.director-feed'); if (feed) feed.scrollIntoView({ block: 'center' }); });
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: path.join(out, 'phase47-director-desktop.png') });
+  console.log('  📸 phase47-director-desktop.png');
   var phase52Desktop = await page.evaluate(function () {
     var mark = document.querySelector('.scene-chronicle');
     return !!mark && mark.textContent.indexOf('Chronik 3') >= 0 && document.documentElement.scrollWidth <= window.innerWidth;
@@ -479,5 +497,5 @@ var fileUrl = 'file://' + path.join(dir, 'index.html');
 
   await browser.close();
   if (errors.length) { console.log('\n⚠️ Laufzeitfehler im Browser:'); errors.forEach(function (e) { console.log('   ' + e); }); process.exit(1); }
-  console.log('\nFertig — 44 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
+  console.log('\nFertig — 46 Screenshots in dev/screenshots/, keine Browser-Fehler ✔');
 })().catch(function (e) { console.error('FEHLER:', e); process.exit(1); });

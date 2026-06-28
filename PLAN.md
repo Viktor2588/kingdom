@@ -346,12 +346,14 @@ Diese Phasen sind bewusst als **offene, nicht begonnene** Arbeitspakete formulie
 - **Regelfehler behoben:** Evolutionsanforderungen liegen nicht mehr über dem erreichbaren Level-Cap; besiegte Rivalen werden bei neuen Angriffen übersprungen; Rekrutierung überschreitet die Wohnkapazität nicht.
 - **Abnahme:** `bun dev/completion-acceptance.js` erreicht mit Seed 42 bei Tick **7.810** exakt **42/42 Erfolge** und **78/78 Bestiarium-Formen**, ohne Kapazitäts-Overflow oder Restdiagnose. Gesamtsuite: **115 Tests, 0 Fehler**.
 
-[ ] **Phase 47 – Zuschauer-Modus als gute Show: Director, Highlights & Zeitraffer** — Watchmode soll unterhaltsam sein, nicht nur ein schneller Bot.
+[x] **Phase 47 – Zuschauer-Modus als gute Show: Director, Highlights & Zeitraffer (2026-06-28)** — Watchmode erzählt Fortschritt statt Bot-Spam.
 - **Director-Feed:** Entscheidungen werden gruppiert und erklärt ("Aufbau", "Jagd auf Phönixlinie", "Raid-Vorbereitung", "Schmiede-Ziel"). Der Feed fasst belanglose Wiederholungen zusammen und hebt nur relevante Wendepunkte hervor.
 - **Kamera-/Tab-Regie:** Im sichtbaren Modus springt die UI automatisch zu Karte, Kampf, Schmiede, Bestiarium oder Erfolgsliste, wenn dort etwas Interessantes passiert. Keine endlose Übersicht mit Toast-Spam.
 - **Meilenstein-Replays:** große Ereignisse erzeugen kurze Einträge mit Vorher/Nachher-Daten: neue Form, erster S-Rang, Set vervollständigt, Boss gelegt, Region erobert, Achievement-Kette abgeschlossen.
 - **Geschwindigkeitskontrolle:** neben 5-min-Vorspulen auch "bis zum nächsten Meilenstein", "bis ein Risiko entsteht" und "Pause bei Entscheidung". Sichtbar/Headless nutzen dieselbe Simulationslogik.
-- **Abnahme:** Ein 60-Minuten-Auto-Lauf produziert lesbare Highlight-Gruppen, keine Modal-Flut, keine doppelten Toasts und bleibt auf Mobile bedienbar.
+- **Umgesetzt:** `systems-director.js` gruppiert Aktionen in neun Themen, speichert maximal 30 Feed-Einträge und erzeugt deduplizierte Vorher/Nachher-Replays für Formen, S-Rang, Sets, Bosse, Regionen, Erfolge und Zielketten. Save-v21 normalisiert Feed, Meilensteine und Entscheidungspause.
+- **Regie & Zeitraffer:** Sichtbar wechselt der Director passend den Tab und zeigt normale Themen höchstens alle 30 Ticks; Watch-Toasts und Krisenmodals werden nicht dupliziert. **Bis Meilenstein**, **bis Risiko** und **Pause bei Entscheidung** nutzen mit Headless dieselbe `runUntil`-Logik.
+- **Abnahme:** `dev/director.test.js` prüft Gruppierung, sechs Replay-Arten, Deduplizierung, Risiken, Entscheidungsstopp und einen deterministischen 3.600-Tick-Lauf. `bun test` → **169/169**, DOM **91** Checks.
 
 [x] **Phase 48 – Bestiarium-Jagden & Monster-Ökologie (2026-06-27)** — das Bestiarium ist vom passiven Sammelalbum zu einem aktiven Spielziel geworden.
 - **DOM-freies Jagdmodul:** `js/systems-bestiary.js` erweitert `GameSystems` um Linienwissen, spoilerarme Hinweise, Fährten-/Köderlogik, Köderjagd-Schritte und Ökologie-Boni. `systems.js` bleibt unter dem 2800-Zeilen-Limit; Save-Schema **v15** normalisiert `state.bestiaryHunts`.

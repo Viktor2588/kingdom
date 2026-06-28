@@ -585,6 +585,20 @@ Auto-Profilen. Das Gate schlägt bei langen Fortschrittspausen, harten Blockern,
 
 ---
 
+## Watch-Director
+
+Der Zuschauer-Modus fasst Wiederholungen als **Aufbau**, **Feldzug**, **Monsterzucht**,
+**Forschung**, **Schmiede**, **Aufträge** oder **Reichsführung** zusammen. Meilensteine
+halten Vorher/Nachher-Werte für neue Formen, S-Rang, vollständige Sets, Bosse, Regionen,
+Erfolge und die Zielkette fest. Im sichtbaren Modus wechselt die Regie passend den Tab,
+zeigt aber höchstens alle 30 Ticks einen normalen Themenwechsel.
+
+Neben fünf Minuten Vorspulen stehen **⏭ Meilenstein** und **⚠ Risiko** bereit.
+**⏸ Entscheidung** pausiert den Auto-Modus, bevor ein Ereignis oder eine Krise automatisch
+beantwortet wird. Sichtbare UI und Headless-Tests verwenden dieselben Stop-Bedingungen.
+
+---
+
 ## Speichern & Tipps
 
 - **Automatisches Speichern** (alle 10 s und beim Verlassen) im Browser-Speicher; bei

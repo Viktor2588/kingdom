@@ -71,7 +71,7 @@ test("Save-v20 besitzt kompakte, defensiv normalisierte Pacing-Daten", () => {
     stall: { kind: 7, sinceTick: -9, detail: 12 }
   };
   const clean = GS.normalize(JSON.parse(JSON.stringify(dirty)));
-  expect(clean.version).toBe(20);
+  expect(clean.version).toBe(21);
   expect(clean.pacing.enabled).toBe(true);
   expect(clean.pacing.overlay).toBe(true);
   expect(clean.pacing.samples).toHaveLength(1);

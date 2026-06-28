@@ -196,24 +196,45 @@
     // Tick aus main.js: Topbar immer, Info-Tabs live
     onTick: function (events) {
       var watch = !!(this.state.settings && this.state.settings.watch);
+      var act = null, direction = null;
       // Zuschauer-Modus: ein Berater führt pro Tick eine sinnvolle Aktion aus
       var detailed = watch && !!this.state.settings.watchDetailed;
       if (watch && (!detailed || this.state.tick >= (this.state.settings.watchCooldownUntil || 0))) {
-        var act = SYS.autoPlayStep(this.state);
+        act = SYS.autoPlayStep(this.state);
         if (act && act.text) {
-          this.state.settings.watchHistory.unshift({ tick: this.state.tick, text: act.text });
-          this.state.settings.watchHistory = this.state.settings.watchHistory.slice(0, 8);
-          if (detailed) {
-            this.state.settings.watchCooldownUntil = this.state.tick + 3;
-            this.showWatchAction(act);
-          } else toast('🤖 ' + act.text, '');
+          if (!window.GameDirector) {
+            this.state.settings.watchHistory.unshift({ tick: this.state.tick, text: act.text });
+            this.state.settings.watchHistory = this.state.settings.watchHistory.slice(0, 8);
+            if (detailed) this.showWatchAction(act);
+            else toast('🤖 ' + act.text, '');
+          }
+        }
+      }
+      if (window.GameDirector) {
+        direction = window.GameDirector.observe(this.state, act, events);
+        if (watch && direction.risk && direction.risk.kind === 'decision' && this.state.settings.watchPauseDecision) {
+          this.state.settings.watch = false;
+          watch = false;
+          toast('⏸ Director pausiert für eine Entscheidung.', 'gold');
+        }
+        var groupFocus = direction.group && direction.group.count === 1 &&
+          this.state.tick - (this.state.director.lastPresentationTick || -999) >= 30 ? direction.group : null;
+        var focus = direction.milestones[0] || groupFocus;
+        if (detailed && focus) {
+          this.state.director.lastPresentationTick = this.state.tick;
+          this.state.settings.watchCooldownUntil = this.state.tick + 3;
+          if (focus.tab && SYS.tabUnlocked(this.state, focus.tab)) {
+            this.activeTab = focus.tab;
+            this.renderTabbar();
+          }
+          this.showWatchAction({ text: focus.important ? (focus.before + ' → ' + focus.after) : focus.latest }, focus.title);
         }
       }
       this.announceUnlocks();
       this.updateTopbar();
       if (watch || this.activeTab === 'uebersicht' || this.activeTab === 'karte') this.render();
       if (events && events.expeditionResults && events.expeditionResults.length) {
-        events.expeditionResults.forEach(function (r) {
+        if (!watch) events.expeditionResults.forEach(function (r) {
           var reg = GD.region(r.regionId);
           if (r.won) toast('🏆 ' + reg.name + ' erobert!', 'gold');
           else if (r.partial) toast('⚔️ Teilerfolg in ' + reg.name, '');
@@ -234,30 +255,30 @@
       }
       if (events && events.event) {
         var ed = GD.event(events.event.id);
-        if (events.event.auto) toast(ed.icon + ' ' + ed.title, 'gold');
+        if (events.event.auto && !watch) toast(ed.icon + ' ' + ed.title, 'gold');
         else if (!watch && this.state.activeEvent) this.openEventModal(events.event.id);  // Wahl-Event anbieten (im Auto-Modus übernimmt der Berater)
       }
       if (events && events.contracts) {
-        events.contracts.completed.forEach(function (contract) { toast(contract.icon + ' Auftrag erfüllt: ' + contract.title, 'gold'); });
-        events.contracts.expired.forEach(function (contract) { toast('⌛ Auftrag abgelaufen: ' + contract.title, 'bad'); });
-        if (events.contracts.crisisStarted && (!watch || detailed) && this.openCrisisModal) this.openCrisisModal();
+        if (!watch) events.contracts.completed.forEach(function (contract) { toast(contract.icon + ' Auftrag erfüllt: ' + contract.title, 'gold'); });
+        if (!watch) events.contracts.expired.forEach(function (contract) { toast('⌛ Auftrag abgelaufen: ' + contract.title, 'bad'); });
+        if (events.contracts.crisisStarted && !watch && this.openCrisisModal) this.openCrisisModal();
       }
       if (events && events.questsCompleted && events.questsCompleted.length) {
-        events.questsCompleted.forEach(function (q) { toast('🎯 Ziel erfüllt: ' + q.title, 'gold'); });
+        if (!watch) events.questsCompleted.forEach(function (q) { toast('🎯 Ziel erfüllt: ' + q.title, 'gold'); });
       }
-      if (events && events.achievementsUnlocked && events.achievementsUnlocked.length) {
+      if (!watch && events && events.achievementsUnlocked && events.achievementsUnlocked.length) {
         events.achievementsUnlocked.forEach(function (a) { toast('🏆 Erfolg: ' + a.title, 'gold'); });
       }
     },
 
-    showWatchAction: function (act) {
+    showWatchAction: function (act, title) {
       if (this.state.activeCombat && this.state.activeCombat.status === 'active') return;
       var content = el('div', { class: 'watch-dialog' }, [
         el('div', { class: 'watch-pulse', text: '🤖' }),
         el('p', { text: act.text }),
         el('div', { class: 'muted', style: 'font-size:12px', text: 'Der nächste Schritt folgt nach einer kurzen Pause.' })
       ]);
-      openModal('Berater-Aktion', content, '👁️');
+      openModal(title || 'Berater-Aktion', content, '👁️');
       var backdrop = $('modal-root').firstChild;
       if (backdrop) backdrop.setAttribute('data-watch-dialog', '1');
       setTimeout(function () {
@@ -531,6 +552,11 @@
               self.commit();
             }, { small: true, cls: watchDetailed ? 'btn-gold' : '' }),
             btn('⏩ Vorspulen 5 min', function () { self.fastForward(300); }, { small: true }),
+            btn('⏭ Meilenstein', function () { if (self.fastForwardUntil) self.fastForwardUntil('milestone'); }, { small: true }),
+            btn('⚠ Risiko', function () { if (self.fastForwardUntil) self.fastForwardUntil('risk'); }, { small: true }),
+            btn(s.settings.watchPauseDecision ? '⏸ Entscheidung' : '▶ Entscheidung', function () {
+              s.settings.watchPauseDecision = !s.settings.watchPauseDecision; self.commit();
+            }, { small: true, cls: s.settings.watchPauseDecision ? 'btn-gold' : '' }),
             btn('📊 Pacing', function () { if (self.togglePacingOverlay) self.togglePacingOverlay(); }, { small: true, cls: s.pacing && s.pacing.overlay ? 'btn-gold' : '' }),
             btn('📖 Kompendium', function () { if (self.openCodexModal) self.openCodexModal(); }, { small: true }),
             btn('⚙️ Einstellungen', function () { if (self.openSettingsModal) self.openSettingsModal(); }, { small: true })
@@ -544,6 +570,7 @@
           });
           watchCard.appendChild(wh);
         }
+        if (self.buildDirectorFeed) { var directorFeed = self.buildDirectorFeed(); if (directorFeed) watchCard.appendChild(directorFeed); }
         box.appendChild(watchCard);
         if (self.buildPacingOverlay) { var pacingOverlay = self.buildPacingOverlay(); if (pacingOverlay) box.appendChild(pacingOverlay); }
 

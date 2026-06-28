@@ -114,7 +114,7 @@ test("Save-v17 migriert beschädigte Spezialisierungen und unbekannte Schulen au
   state.creatures[0].named = true;
   state.creatures[0].schoolId = "erfunden";
   const clean = GST.normalize(state);
-  expect(clean.version).toBe(20);
+  expect(clean.version).toBe(21);
   expect(clean.specializations.doctrineId).toBeNull();
   expect(clean.specializations.autoDoctrine).toBe("adaptive");
   expect(clean.specializations.districts).toEqual(["archive", null, "bazaar"]);

@@ -39,6 +39,9 @@ Wirtschaft, Feldzügen und benannten Eliten unterschiedliche strategische Profil
 Eine vierstufige **Boss-Leiter** verbindet Regionen, Echo-Zyklen, Bestiarium und
 Hauptkampagne mit eigenen Action-/Taktikprofilen, exklusiven Artefakt-Bauplänen,
 Meisterschaftsmodifikatoren sowie einem sichtbaren Trophäenraum.
+Nach 100 % lässt sich der Run als **Chronik versiegeln**: Der vollständige alte Stand bleibt
+exportierbar, während New Game+ alternative Startlinien, kosmetische Banner, 2×/4×-Tempo,
+eigene Seeds und fünf Auto-fähige Challenge-Regeln öffnet.
 
 > Spieler-Handbuch (deutsch): siehe **[GAMEGUIDE.md](GAMEGUIDE.md)**
 > Verbindliche Spezifikation & Roadmap: siehe **[PLAN.md](PLAN.md)**
@@ -103,6 +106,7 @@ js/
   systems-contracts.js Rotierende Aufträge, mehrstufige Reichskrisen, Pacing und Auto-Profile
   systems-specializations.js Reichsdoktrinen, aktive Bezirke, Anführerschulen und Auto-Strategien
   systems-bosses.js Boss-Leiter, Meisterschaften, Elite-Exemplare, Trophäen und Auto-Auflösung
+  systems-chronicle.js Chronik-Abschluss, Meta-Fortschritt, Startvarianten und Challenge-Regeln
   systems-combat.js Taktischer 7×5-Elementkampf; erweitert GameSystems
   systems-skirmish.js Sturmeinsätze: Profile/Bossphasen, Konter, Haltungen, Ziele und Belohnungen
   systems-action.js Echtzeit-Action-Kampf: 30-Hz-Fixed-Step-Sim, Telegraf/Ausweichrolle, Hotbar, Gegnertypen + Boss, Combo (GameActionCombat)
@@ -115,6 +119,7 @@ js/
   ui-contracts.js   Auftragsbrett, Profilwahl und Krisenentscheidungen
   ui-specializations.js Doktrin-, Bezirks- und Anführerschul-Steuerung
   ui-bosses.js       Bossbrett, Trophäenraum und Panorama-Trophäen
+  ui-chronicle.js    Chronikraum, Archivexport und New-Game+-Auswahl
   ui-action.js      Sturmeinsatz-Karte, Missionswahl und kompaktes Action-Gefechtsmodal
   ui-action-combat.js Echtzeit-Gefecht-Karte + Canvas-Modal mit Touch-/Tastatursteuerung
   main.js           Init, Spiel-Loop (1 Tick/Sek.), Offline-Fortschritt, Auto-Save
@@ -125,6 +130,8 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
   contracts.test.js Auftrags-, Krisen-, Pacing-, Save- und Auto-Langlaufregressionen
   specializations.test.js Doktrin-, Bezirks-, Schul-, Save- und Strategieregressionen
   bosses.test.js     Bossprofile, Kampfadapter, Meisterschaft, Elitejagd, Save und Watchmode
+  chronicle.test.js  Archivschutz, v19-Migration, Meta, Challenges und Auto-Regeln
+  chronicle-sim.js   Deterministischer 100%-Vergleich mehrerer Run-Seeds
   canvas.test.js    Renderer-Vertrag, Hit-Test, Effektstufen und transparente Assets
   adventure-canvas.test.js Karten-View-Modell, Orts-/Armeeatlanten, Hit-Test und Blickrichtungen
   balance.js        Balance-Analyse der Kraftkurven (Bun)
@@ -150,11 +157,14 @@ dev/                Entwickler-Tests (NICHT Teil des Spiels) — siehe unten
 
 ## Spielstand & Debugging
 
-- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v18 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt, Bestiarium-, Auftrags-, Krisen-, Spezialisierungs- und Bossfortschritte sowie Freischaltungen bleiben erhalten).
+- **Save-Key:** `tempest_kingdom_save_v2` im `localStorage`, internes Schema v19 (alte Stände werden automatisch migriert; bestehende Ausrüstung, Kartenfortschritt, Bestiarium-, Auftrags-, Krisen-, Spezialisierungs-, Boss- und Chronikfortschritte bleiben erhalten).
+- **Chronik-Archiv:** `tempest_kingdom_chronicles_v1` hält vollständige versiegelte Runs getrennt vom aktiven Save. Ein Archiv-/Quota-Fehler blockiert New Game+, statt den abgeschlossenen Stand zu überschreiben.
 - **Zurücksetzen:** im Spiel über **⚙️ Einstellungen** → „🗑 Spielstand
   zurücksetzen", oder in der Browser-Konsole:
   ```js
-  localStorage.removeItem('tempest_kingdom_save_v2'); location.reload();
+  localStorage.removeItem('tempest_kingdom_save_v2');
+  localStorage.removeItem('tempest_kingdom_chronicles_v1');
+  location.reload();
   ```
 - **Debug-Handle** in der Browser-Konsole:
   ```js
@@ -182,7 +192,8 @@ mehrstufige Krisen löst der Berater nach dem gewählten Profil **Sicher**, **Ag
 **Sammler** oder **Fortschritt**. Im Reichs-Tab wählt er zusätzlich eine feste Doktrin oder
 richtet sie **adaptiv** nach Profil und aktuellem Completion-Ziel aus, bildet passende
 Anführerschulen aus und belegt die Spezialbezirke. Machbare offene Bosse und Elite-Exemplare
-werden in festen Abständen angegangen; ein aktiver Completion-Lauf behält Vorrang.
+werden in festen Abständen angegangen; ein aktiver Completion-Lauf behält Vorrang. Alle fünf
+Challenge-Runs können direkt mit Zuschauer-Modus starten und respektieren ihre Einschränkungen.
 
 **Im Spiel:** Zuschauer-Modus per **👁️-Schalter oben in der Top-Bar** ein/aus, oder Tab
 *Übersicht* → Karte **„Zuschauer-Modus"** → **▶ Starten**.
@@ -207,7 +218,8 @@ T.state.settings.watch = false;                   // wieder ausschalten
 require('./js/data-tables.js'); require('./js/data.js'); require('./js/state.js');
 require('./js/systems.js'); require('./js/systems-bestiary.js'); require('./js/systems-combat.js');
 require('./js/systems-contracts.js'); require('./js/systems-specializations.js');
-require('./js/systems-bosses.js');
+require('./js/systems-bosses.js'); require('./js/achievements.js');
+require('./js/completion-planner.js'); require('./js/systems-chronicle.js');
 const GST = globalThis.GameState, SYS = globalThis.GameSystems, GD = globalThis.GameData;
 
 const s = GST.createDefault();
@@ -237,22 +249,25 @@ bun test dev/sim.test.js     # nur die reinen Logiktests (ohne DOM)
 bun dev/completion-acceptance.js # Seed-42-Abnahme: 42/42 Erfolge und 78/78 Formen
 
 bun run balance              # Balance-Analyse (Kraftkurven je Rang, Regions-Monotonie)
+bun run chronicle-sim        # Seedvergleich: Ticks, Verluste, Bossversuche, seltenste Form
 ```
 
 Erwartete Ausgabe (Soll-Stand):
 
 | Befehl                             | Ergebnis (Konsole zeigt die Detailzählung)   |
 |------------------------------------|----------------------------------------------|
-| `bun test`                         | `143 pass` · gesamte Suite grün              |
+| `bun test`                         | `154 pass` · gesamte Suite grün              |
 | `bun test dev/sim.test.js`         | `1 pass` · `238 bestanden, 0 fehlgeschlagen` |
-| `bun test dev/domtest.test.js`     | `1 pass` · `85 bestanden, 0 fehlgeschlagen`  |
+| `bun test dev/domtest.test.js`     | `1 pass` · `86 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/playthrough.test.js` | `1 pass` · `61 bestanden, 0 fehlgeschlagen`  |
 | `bun test dev/skirmish-profiles.test.js` | `7 pass` · Profile/Haltungen/Ziele/Save grün |
 | `bun test dev/contracts.test.js`   | `9 pass` · Aufträge/Krisen/Pacing/Auto grün  |
 | `bun test dev/specializations.test.js` | `6 pass` · Doktrinen/Bezirke/Schulen/Strategien grün |
 | `bun test dev/bosses.test.js`      | `9 pass` · Bosse/Meisterschaft/Eliten/Save grün |
+| `bun test dev/chronicle.test.js`   | `11 pass` · Archive/Meta/Challenges/Auto grün |
 | `bun dev/completion-acceptance.js` | Tick `6391` · `42/42` Erfolge · `78/78` Formen |
 | `bun run balance`                  | Kraftkurven, Regionsbeute und Echo-Zyklen skalieren monoton |
+| `bun run chronicle-sim`            | Seeds `42/1337/2026` erreichen 100 %; Bestzeit `6089` Ticks |
 
 ### Screenshots (optional, Linux/WSL)
 
@@ -274,7 +289,7 @@ apt-get download fonts-noto-color-emoji && dpkg-deb -x fonts-noto-color-emoji_*.
 
 # Screenshots erzeugen
 LD_LIBRARY_PATH=/tmp/chromedeps/usr/lib/x86_64-linux-gnu bun run shots
-# → 39 aktuelle Aufnahmen; mit zwei Legacy-Referenzen liegen 41 PNGs in dev/screenshots/
+# → 42 aktuelle Aufnahmen; mit zwei Legacy-Referenzen liegen 44 PNGs in dev/screenshots/
 ```
 
 ---

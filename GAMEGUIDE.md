@@ -526,10 +526,53 @@ Bosse und jagt Elite-Exemplare, ohne Krisenentscheidungen zu übergehen.
 
 ---
 
+## Chronik-Runs / New Game+
+
+Sobald ein normaler Run **42/42 Erfolge** und **78/78 Bestiarium-Formen** erreicht, wird der
+Chronikraum im *Reich* als versiegelbar markiert. Bei späteren Challenge-Runs gilt stattdessen
+das jeweils angezeigte Challenge-Ziel. Das Versiegeln läuft atomar: Zuerst wird der
+vollständige alte Run im separaten Chronik-Archiv gesichert, erst danach entsteht der neue
+aktive Save. Reicht der Browser-Speicher nicht aus oder ist das Archiv beschädigt, bleibt der
+abgeschlossene Run aktiv.
+
+Jede Archivzeile zeigt Seed, Zielzeit, Todesfälle, Bossversuche und seltenste entdeckte Form.
+Der **⬇ Export**-Knopf speichert den vollständigen alten Run als JSON. Ziel- und
+100%-Abschluss-Tick werden beim ersten Erreichen eingefroren; späteres Weiterspielen
+verschlechtert die Bestzeit nicht.
+
+### Meta-Freischaltungen
+
+- **1. Siegel:** Startlinie *Totenwacht* und **2× Simulation**.
+- **2. Siegel:** Startlinie *Geisterhain*.
+- **3. Siegel:** Startlinie *Jägerbund* und **4× Simulation**.
+- **Meisterbanner:** Bereits bezwungene Boss-Meisterschaften liefern auswählbare kosmetische
+  Banner für das Reichspanorama.
+
+Name von Reich und Herrscher sowie die Darstellungsstufe bleiben erhalten. Gebäude,
+Ressourcen, Kampfkraft und Ausrüstung beginnen bewusst neu; es gibt keine dauerhafte
+Power-Spirale.
+
+### Challenge-Runs
+
+- **Nur Untote:** Start als Totenwacht; Beschwörung, Rekrutierung und Köderjagd bleiben auf
+  die Untotenlinie beschränkt. Ziel: alle Regionen.
+- **Kein Handel:** Markt, Handelshafen, Handelsjob, Handelsdoktrin und Basar sind gesperrt.
+  Ziel: alle Regionen.
+- **Rivalen aggressiv:** Bedrohung steigt 2,5-mal so schnell. Ziel: Kampagne und alle Rivalen.
+- **Bestiarium-Speedrun:** Der Completion-Planer verfolgt ausschließlich alle 78 Formen.
+- **Riskanter Permadeath:** Expeditionen, Armee-Feldzüge, Echos und taktische Einsätze
+  verwenden immer das riskante Verlustmodell. Ziel: alle Regionen.
+
+Alle Profile können mit einem frei gewählten Seed und sofort aktivem Zuschauer-Modus starten.
+`bun run chronicle-sim` vergleicht mehrere Seeds als vollständige Headless-Runs.
+
+---
+
 ## Speichern & Tipps
 
 - **Automatisches Speichern** (alle 10 s und beim Verlassen) im Browser-Speicher; bei
   Abwesenheit wird **Offline-Fortschritt** angerechnet (bis zu 8 Stunden).
+- **Chronik-Archive** liegen getrennt vom aktiven Save und bleiben einzeln exportierbar.
 - **Zurücksetzen** im Herrscher-Modal (oben links) → „🗑 Spielstand zurücksetzen".
 
 **Tipps für den Einstieg**

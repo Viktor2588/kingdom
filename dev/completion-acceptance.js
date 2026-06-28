@@ -13,6 +13,7 @@ import "../js/systems-specializations.js";
 import "../js/systems-bosses.js";
 import "../js/achievements.js";
 import "../js/completion-planner.js";
+import "../js/systems-chronicle.js";
 
 const GD = globalThis.GameData;
 const GST = globalThis.GameState;

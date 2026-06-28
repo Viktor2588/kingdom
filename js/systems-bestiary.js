@@ -164,6 +164,9 @@
   function huntPlan(state, speciesId) {
     var target = GD().creature(speciesId);
     if (!target) return { ok: false, reason: 'Unbekannte Form' };
+    if (root.GameChronicle && !root.GameChronicle.isSpeciesAllowed(state, target)) {
+      return { ok: false, reason: 'Diese Challenge erlaubt nur Untote' };
+    }
     if ((state.seenSpecies || []).indexOf(speciesId) >= 0) return { ok: false, reason: 'Form bereits entdeckt' };
     var h = hunts(state);
     if ((h.lures[target.line] || 0) < 1) return { ok: false, reason: 'Kein gebundener Köder für die ' + target.line + '-Linie' };

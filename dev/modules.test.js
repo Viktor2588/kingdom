@@ -4,9 +4,9 @@ import { test, expect } from "bun:test";
 const root = import.meta.dir + '/..';
 const expectedOrder = [
   'js/data-tables.js', 'js/data.js', 'js/art-data.js', 'js/state.js',
-  'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js',
+  'js/systems.js', 'js/systems-bestiary.js', 'js/systems-combat.js', 'js/systems-skirmish.js', 'js/systems-siege.js', 'js/systems-battle.js', 'js/systems-action.js', 'js/systems-contracts.js', 'js/systems-specializations.js', 'js/systems-bosses.js', 'js/achievements.js', 'js/completion-planner.js', 'js/systems-chronicle.js',
   'js/render/canvas-core.js', 'js/render/effects.js', 'js/render/battle-scene.js', 'js/render/adventure-scene.js', 'js/render/action-scene.js',
-  'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js'
+  'js/ui.js', 'js/ui-adventure.js', 'js/ui-progress.js', 'js/ui-contracts.js', 'js/ui-specializations.js', 'js/ui-bosses.js', 'js/ui-chronicle.js', 'js/ui-action.js', 'js/ui-siege.js', 'js/ui-battle.js', 'js/ui-action-combat.js', 'js/main.js'
 ];
 
 function scriptSources(html) {
@@ -30,6 +30,7 @@ test('Systemmodule bleiben DOM-frei und Kernmonolithen unter den vereinbarten Gr
   const contracts = await Bun.file(root + '/js/systems-contracts.js').text();
   const specializations = await Bun.file(root + '/js/systems-specializations.js').text();
   const bosses = await Bun.file(root + '/js/systems-bosses.js').text();
+  const chronicle = await Bun.file(root + '/js/systems-chronicle.js').text();
   const combat = await Bun.file(root + '/js/systems-combat.js').text();
   const skirmish = await Bun.file(root + '/js/systems-skirmish.js').text();
   const completion = await Bun.file(root + '/js/completion-planner.js').text();
@@ -39,7 +40,7 @@ test('Systemmodule bleiben DOM-frei und Kernmonolithen unter den vereinbarten Gr
   const battleScene = await Bun.file(root + '/js/render/battle-scene.js').text();
   const adventureScene = await Bun.file(root + '/js/render/adventure-scene.js').text();
 
-  [systems, bestiary, contracts, specializations, bosses, combat, skirmish, completion].forEach(function (source) {
+  [systems, bestiary, contracts, specializations, bosses, chronicle, combat, skirmish, completion].forEach(function (source) {
     expect(source).not.toMatch(/\bdocument\s*[.[]/);
     expect(source).not.toContain('innerHTML');
   });
@@ -48,6 +49,7 @@ test('Systemmodule bleiben DOM-frei und Kernmonolithen unter den vereinbarten Gr
   expect(lines(contracts)).toBeLessThan(620);
   expect(lines(specializations)).toBeLessThan(620);
   expect(lines(bosses)).toBeLessThan(620);
+  expect(lines(chronicle)).toBeLessThan(620);
   expect(lines(ui)).toBeLessThan(1900);
   expect(lines(combat)).toBeGreaterThan(350);
   expect(lines(skirmish)).toBeGreaterThan(200);

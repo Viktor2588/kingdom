@@ -136,6 +136,7 @@
   function canSetDoctrine(state, id) {
     var spec = ensure(state);
     if (!DOCTRINE_BY[id]) return { ok: false, reason: 'Unbekannte Doktrin' };
+    if (root.GameChronicle && !root.GameChronicle.isDoctrineAllowed(state, id)) return { ok: false, reason: 'Diese Challenge verbietet Handel' };
     if (spec.doctrineId === id) return { ok: false, reason: 'Doktrin bereits aktiv' };
     if ((state.tick || 0) < spec.doctrineLockedUntil) return { ok: false, reason: 'Neuausrichtung noch ' + (spec.doctrineLockedUntil - state.tick) + ' s gesperrt' };
     var cost = doctrineChangeCost(state, id);
@@ -156,6 +157,7 @@
   }
   function setAutoDoctrine(state, id) {
     var spec = ensure(state);
+    if (root.GameChronicle && id !== 'adaptive' && !root.GameChronicle.isDoctrineAllowed(state, id)) id = 'adaptive';
     spec.autoDoctrine = id === 'adaptive' || DOCTRINE_BY[id] ? id : 'adaptive';
     return spec.autoDoctrine;
   }
@@ -168,6 +170,7 @@
     var spec = ensure(state);
     slot = Math.floor(num(slot));
     if (!DISTRICT_BY[districtId]) return { ok: false, reason: 'Unbekannter Bezirk' };
+    if (root.GameChronicle && !root.GameChronicle.isDistrictAllowed(state, districtId)) return { ok: false, reason: 'Diese Challenge verbietet den Basar' };
     if (slot < 0 || slot >= districtSlots(state)) return { ok: false, reason: 'Bezirksslot noch gesperrt' };
     if (spec.rebuild) return { ok: false, reason: 'Ein Bezirk wird bereits umgebaut' };
     if (spec.districts[slot] === districtId) return { ok: false, reason: 'Bezirk bereits aktiv' };
@@ -269,7 +272,9 @@
   };
   function desiredDoctrine(state) {
     var spec = ensure(state);
-    if (spec.autoDoctrine !== 'adaptive') return { id: spec.autoDoctrine, reason: 'festes Watchmode-Profil' };
+    if (spec.autoDoctrine !== 'adaptive') {
+      if (!root.GameChronicle || root.GameChronicle.isDoctrineAllowed(state, spec.autoDoctrine)) return { id: spec.autoDoctrine, reason: 'festes Watchmode-Profil' };
+    }
     if (state.completion && state.completion.enabled) {
       if ((state.seenSpecies || []).length < GD().creatures.length) return { id: 'breeding', reason: 'Completion: fehlende Bestiarium-Formen' };
       if ((state.claimedRegions || []).length < GD().regions.length) return { id: 'conquest', reason: 'Completion: offene Hauptkampagne' };
@@ -277,10 +282,12 @@
       return { id: 'trade', reason: 'Completion: Ressourcen für Restziele' };
     }
     var profileId = state.contracts && state.contracts.autoProfile;
-    return {
+    var desired = {
       id: { aggressive: 'conquest', collector: 'breeding', safe: 'labyrinth', progress: 'research' }[profileId] || 'trade',
       reason: 'abgeleitet aus Auto-Profil ' + (profileId || 'ausgeglichen')
     };
+    if (root.GameChronicle && !root.GameChronicle.isDoctrineAllowed(state, desired.id)) desired.id = 'research';
+    return desired;
   }
   function cheapestPreferredBuilding(state, selected) {
     var candidates = selected.preferredBuildings.filter(function (id) {
@@ -310,7 +317,9 @@
       var schoolId = DOCTRINE_SCHOOLS[selected.id], trained = assignSchool(state, unschooled.uid, schoolId);
       if (trained.ok) return { text: trained.school.icon + ' ' + unschooled.name + ' besucht die ' + trained.school.name + '-Schule.' };
     }
-    var wanted = DOCTRINE_DISTRICTS[selected.id] || [], slots = districtSlots(state);
+    var wanted = (DOCTRINE_DISTRICTS[selected.id] || []).filter(function (id) {
+      return !root.GameChronicle || root.GameChronicle.isDistrictAllowed(state, id);
+    }), slots = districtSlots(state);
     for (var slot = 0; slot < slots; slot++) {
       var districtId = wanted[slot];
       if (districtId && spec.districts[slot] !== districtId) {

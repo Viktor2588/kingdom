@@ -8,7 +8,8 @@
   var root = (typeof window !== 'undefined') ? window : globalThis;
   var SAVE_KEY = 'tempest_kingdom_save_v2';
   var LEGACY_SAVE_KEY = 'tempest_nazarick_save_v1';
-  var VERSION = 18;
+  var CHRONICLE_KEY = 'tempest_kingdom_chronicles_v1';
+  var VERSION = 19;
   var RULER_ARMY_ID = 0;
 
   function GD() { return root.GameData; }
@@ -61,6 +62,7 @@
   }
 
   function createDefault() {
+    var runSeed = Math.max(1, Math.floor(Date.now() % 2147483646));
     var s = {
       version: VERSION,
       tick: 0,
@@ -99,7 +101,7 @@
       mapSiteLevels: {},
       echoes: {
         cycle: 1,
-        seed: Math.max(1, Math.floor(Date.now() % 2147483646)),
+        seed: runSeed,
         nodes: [],
         completed: [],
         stability: 0,
@@ -162,6 +164,26 @@
         lastResult: null,
         lastAutoTick: -999
       },
+      chronicle: {
+        generation: 0,
+        runId: 'run_0_' + runSeed,
+        seed: runSeed,
+        startedAt: Date.now(),
+        objectiveCompletionTick: null,
+        fullCompletionTick: null,
+        challengeId: 'standard',
+        startVariantId: 'slime',
+        bannerId: null,
+        simSpeed: 1,
+        meta: {
+          seals: 0,
+          maxSimSpeed: 1,
+          unlockedVariants: ['slime'],
+          unlockedBanners: [],
+          bestTicks: {},
+          archives: []
+        }
+      },
       completion: {
         enabled: false,
         target: 'all',
@@ -171,7 +193,7 @@
       },
       settings: { watch: false, watchDetailed: false, watchCooldownUntil: 0, watchHistory: [], effects: 'full' },
       log: [],
-      metrics: { summoned: 0, named: 0, evolutions: 0, rankCEvolutions: 0, expeditions: 0, expeditionsWon: 0, riskyWins: 0, crafted: 0, tempered: 0, epicForged: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, activeSiegesWon: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, bossesDefeated: 0, eliteHunts: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, contractsCompleted: 0, contractsFailed: 0, crisesResolved: 0, seelenGesamt: 0 }
+      metrics: { summoned: 0, named: 0, evolutions: 0, rankCEvolutions: 0, expeditions: 0, expeditionsWon: 0, riskyWins: 0, creaturesLost: 0, crafted: 0, tempered: 0, epicForged: 0, recipesUnlocked: 0, salvaged: 0, raidsRepelled: 0, activeSiegesWon: 0, fused: 0, armyVictories: 0, echoesCleared: 0, echoBosses: 0, bossesDefeated: 0, eliteHunts: 0, tacticalWins: 0, skirmishesPlayed: 0, skirmishesWon: 0, skirmishBestCombo: 0, skirmishObjectives: 0, bestiaryTracks: 0, bestiaryLures: 0, bestiaryHunts: 0, contractsCompleted: 0, contractsFailed: 0, crisesResolved: 0, seelenGesamt: 0 }
     };
     var slime = newCreature(s, 'schleim');
     var goblins = newCreature(s, 'goblin');
@@ -363,6 +385,51 @@
     s.bosses.banners = Math.max(0, Math.floor(Number(s.bosses.banners) || 0));
     s.bosses.lastAutoTick = isFinite(Number(s.bosses.lastAutoTick)) ? Math.floor(Number(s.bosses.lastAutoTick)) : -999;
     if (s.bosses.lastResult != null && (typeof s.bosses.lastResult !== 'object' || Array.isArray(s.bosses.lastResult))) s.bosses.lastResult = null;
+    // Chronik-Runs v19: Der aktive Save enthält nur Meta-Fortschritt und
+    // Zusammenfassungen; vollständige versiegelte Runs liegen separat.
+    if (!s.chronicle || typeof s.chronicle !== 'object' || Array.isArray(s.chronicle)) {
+      s.chronicle = JSON.parse(JSON.stringify(def.chronicle));
+    }
+    fill(s.chronicle, def.chronicle);
+    var challengeIds = ['standard', 'undead_only', 'no_trade', 'aggressive_rivals', 'bestiary_speedrun', 'permadeath'];
+    var variantIds = ['slime', 'undead', 'spirit', 'kobold'];
+    s.chronicle.generation = Math.max(0, Math.floor(Number(s.chronicle.generation) || 0));
+    s.chronicle.seed = Math.max(1, Math.min(2147483646, Math.floor(Number(s.chronicle.seed) || def.chronicle.seed)));
+    s.chronicle.startedAt = Math.max(0, Math.floor(Number(s.chronicle.startedAt) || Date.now()));
+    ['objectiveCompletionTick', 'fullCompletionTick'].forEach(function (key) {
+      if (s.chronicle[key] == null) s.chronicle[key] = null;
+      else {
+        s.chronicle[key] = Math.floor(Number(s.chronicle[key]));
+        if (!isFinite(s.chronicle[key]) || s.chronicle[key] < 0) s.chronicle[key] = null;
+      }
+    });
+    if (challengeIds.indexOf(s.chronicle.challengeId) < 0) s.chronicle.challengeId = 'standard';
+    if (variantIds.indexOf(s.chronicle.startVariantId) < 0) s.chronicle.startVariantId = 'slime';
+    if (typeof s.chronicle.runId !== 'string' || !s.chronicle.runId) s.chronicle.runId = 'run_' + s.chronicle.generation + '_' + s.chronicle.seed;
+    if (!s.chronicle.meta || typeof s.chronicle.meta !== 'object' || Array.isArray(s.chronicle.meta)) {
+      s.chronicle.meta = JSON.parse(JSON.stringify(def.chronicle.meta));
+    }
+    fill(s.chronicle.meta, def.chronicle.meta);
+    var meta = s.chronicle.meta;
+    meta.seals = Math.max(0, Math.floor(Number(meta.seals) || 0));
+    meta.maxSimSpeed = meta.seals >= 3 ? 4 : (meta.seals >= 1 ? 2 : 1);
+    meta.unlockedVariants = variantIds.filter(function (id, index) {
+      return index === 0 || meta.seals >= index;
+    });
+    if (!Array.isArray(meta.unlockedBanners)) meta.unlockedBanners = [];
+    meta.unlockedBanners = meta.unlockedBanners.filter(function (id, i, all) { return bossIds.indexOf(id) >= 0 && all.indexOf(id) === i; });
+    if (s.chronicle.bannerId != null && meta.unlockedBanners.indexOf(s.chronicle.bannerId) < 0) s.chronicle.bannerId = null;
+    s.chronicle.simSpeed = [1, 2, 4].indexOf(Number(s.chronicle.simSpeed)) >= 0 ? Number(s.chronicle.simSpeed) : 1;
+    if (s.chronicle.simSpeed > meta.maxSimSpeed) s.chronicle.simSpeed = meta.maxSimSpeed;
+    if (!meta.bestTicks || typeof meta.bestTicks !== 'object' || Array.isArray(meta.bestTicks)) meta.bestTicks = {};
+    for (var challengeId in meta.bestTicks) {
+      if (challengeIds.indexOf(challengeId) < 0 || !isFinite(Number(meta.bestTicks[challengeId])) || Number(meta.bestTicks[challengeId]) <= 0) delete meta.bestTicks[challengeId];
+      else meta.bestTicks[challengeId] = Math.floor(Number(meta.bestTicks[challengeId]));
+    }
+    if (!Array.isArray(meta.archives)) meta.archives = [];
+    meta.archives = meta.archives.filter(function (entry) {
+      return entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id;
+    });
     if (!s.completion || typeof s.completion !== 'object' || Array.isArray(s.completion)) {
       s.completion = JSON.parse(JSON.stringify(def.completion));
     }
@@ -614,14 +681,58 @@
     return { ok: true, state: state };
   }
 
+  function chronicleStore() {
+    if (!hasStorage()) return { archives: [], error: 'unavailable' };
+    try {
+      var raw = localStorage.getItem(CHRONICLE_KEY);
+      if (!raw) return { archives: [], error: null };
+      var parsed = JSON.parse(raw);
+      var archives = parsed && Array.isArray(parsed.archives) ? parsed.archives.filter(function (entry) {
+        return entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.run && typeof entry.run === 'object';
+      }) : [];
+      return { archives: archives, error: null };
+    } catch (e) {
+      return { archives: [], error: 'corrupt' };
+    }
+  }
+
+  function storeChronicleArchive(record) {
+    if (!record || typeof record !== 'object' || typeof record.id !== 'string' || !record.run) return { ok: false, reason: 'invalid' };
+    var loaded = chronicleStore();
+    if (loaded.error) return { ok: false, reason: loaded.error };
+    var archives = loaded.archives.filter(function (entry) { return entry.id !== record.id; });
+    archives.push(record);
+    try {
+      localStorage.setItem(CHRONICLE_KEY, JSON.stringify({ version: 1, archives: archives }));
+      return { ok: true, id: record.id };
+    } catch (e) {
+      var quota = !!(e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014));
+      return { ok: false, reason: quota ? 'quota' : 'error' };
+    }
+  }
+
+  function listChronicleArchives() {
+    return chronicleStore().archives.map(function (entry) { return entry.summary; }).filter(Boolean);
+  }
+
+  function exportChronicleArchive(id) {
+    var record = chronicleStore().archives.filter(function (entry) { return entry.id === id; })[0];
+    return record ? JSON.stringify(record.run) : null;
+  }
+
   function reset() {
     if (!hasStorage()) return;
-    try { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_SAVE_KEY); } catch (e) {}
+    try {
+      localStorage.removeItem(SAVE_KEY);
+      localStorage.removeItem(LEGACY_SAVE_KEY);
+      localStorage.removeItem(CHRONICLE_KEY);
+    } catch (e) {}
   }
 
   root.GameState = {
     SAVE_KEY: SAVE_KEY,
     LEGACY_SAVE_KEY: LEGACY_SAVE_KEY,
+    CHRONICLE_KEY: CHRONICLE_KEY,
     VERSION: VERSION,
     RULER_ARMY_ID: RULER_ARMY_ID,
     createDefault: createDefault,
@@ -634,6 +745,9 @@
     loadResult: loadResult,
     exportSave: exportSave,
     importSave: importSave,
+    storeChronicleArchive: storeChronicleArchive,
+    listChronicleArchives: listChronicleArchives,
+    exportChronicleArchive: exportChronicleArchive,
     reset: reset
   };
 })();

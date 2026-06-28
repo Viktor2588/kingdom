@@ -185,7 +185,7 @@ test("vollständige Bestiarium-Linien öffnen Elite-Exemplare mit Komponente und
   expect(BOSS.earnedTrophies(state).some(function (entry) { return entry.id === "line_Goblin"; })).toBe(true);
 });
 
-test("Save-v18 normalisiert beschädigte Bossdaten und schützt Meisterschaftskonsistenz", () => {
+test("Save-v18 migriert beschädigte Bossdaten und schützt Meisterschaftskonsistenz", () => {
   const state = GST.createDefault();
   state.version = 17;
   state.bosses = {
@@ -198,7 +198,7 @@ test("Save-v18 normalisiert beschädigte Bossdaten und schützt Meisterschaftsko
     lastResult: "kaputt"
   };
   const clean = GST.normalize(state);
-  expect(clean.version).toBe(18);
+  expect(clean.version).toBe(19);
   expect(clean.bosses.defeated).toEqual(["jura_koloss"]);
   expect(clean.bosses.hardDefeated).toEqual(["jura_koloss"]);
   expect(clean.bosses.attempts.jura_koloss).toBe(3);

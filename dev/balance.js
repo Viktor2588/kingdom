@@ -11,6 +11,9 @@ import "../js/systems-combat.js";
 import "../js/systems-contracts.js";
 import "../js/systems-specializations.js";
 import "../js/systems-bosses.js";
+import "../js/achievements.js";
+import "../js/completion-planner.js";
+import "../js/systems-chronicle.js";
 var GD = globalThis.GameData, GST = globalThis.GameState, SYS = globalThis.GameSystems;
 
 function pad(s, n) { s = '' + s; while (s.length < n) s += ' '; return s; }
